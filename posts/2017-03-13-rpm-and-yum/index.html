@@ -1,0 +1,24 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Linux-软件包管理</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Linux-软件包管理</h1><b><time>2017.03.13 22:41</time></b>
+<a href=/tags/linux>Linux</a>
+<a href=/tags/rpm>rpm</a>
+<a href=/tags/yum>yum</a><div><h6 id=来一首歌当背景音乐>来一首歌当背景音乐</h6><h2 id=rpm软件包管理>rpm软件包管理</h2><p>简称: Redhat Package Manager</p><h5 id=挂载光盘>挂载光盘</h5><p>[root@localhost ~]# umount /dev/sr0 卸载
+[root@localhost ~]# mount /dev/sr0 /mnt/ 挂载</p><h5 id=rpm包名结构>rpm包名结构</h5><p>zsh-5.0.2-14.el7.x86_64.rpm</p><table><thead><tr><th style=text-align:center>zsh</th><th style=text-align:center>-5</th><th style=text-align:center>.0</th><th style=text-align:center>.2</th><th style=text-align:center>-el7</th><th style=text-align:center>x86</th><th style=text-align:center>64</th></tr></thead><tbody><tr><td style=text-align:center>软件名</td><td style=text-align:center>主版本号</td><td style=text-align:center>次版本号</td><td style=text-align:center>修订号</td><td style=text-align:center>RHEL7</td><td style=text-align:center>CPU架构平台</td><td style=text-align:center>支持系统位数</td></tr></tbody></table><h5 id=安装rpm软件>安装rpm软件</h5><ul><li>-i, &ndash;install 安装软件包</li><li>&ndash;nodeps 不验证软件包依赖</li><li>-v, &ndash;verbose 提供更多的详细信息输出</li><li>-h, &ndash;hash 软件包安装的时候列出哈希标记</li></ul><h5 id=rpm查询功能>rpm查询功能</h5><p>rpm -qa…</p><ul><li>-a  查询所有已安装的软件包</li><li>-f  查询 文件所属软件包</li><li>-p  查询软件包（通常用来看下还未安装的软件包）</li><li>-i  显示软件包信息</li><li>-l  显示软件包中的文件列表</li><li>-d  显示被标注为文档的文件列表</li><li>-c  显示被标注为配置文件的文件列表</li></ul><p>通常可以配合管道 | more 来使用，使得结果更易读。</p><h5 id=rpm包-升级>rpm包 升级</h5><ul><li>rpm -Uvh [包名]</li></ul><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/rpm-Uvh.png alt></figure></p><h5 id=rpm包-卸载>rpm包 卸载</h5><ul><li>rpm -e [包名]</li></ul><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/rpm-e.png alt></figure></p><h2 id=yum软件包管理>yum软件包管理</h2><p>YUM 自动装软件包（软件包管理）</p><p>解决依赖关系问题、自动下载软件包，基于C/S架构。</p><h5 id=配置本地yum源的配置文件>配置本地yum源的配置文件</h5><pre><code>[root@localhost ~]#monut /dev/sr0 /mnt      #挂载光盘    
+[root@localhost ~]# rm -rf /etc/yum.repos.d/*
+[root@localhost ~]# vim /etc/yum.repos.d/rhel7.repo
+[rhel7-yum]					#yum源名称，唯一的，用来区分不同的yum源
+name=rhel7-source			#对yum源描述信息
+baseurl=file:///mnt			#yum源的路径（repodata目录所在的目录）
+#或baseurl=http://mirrors.aliyun.com/help/epel
+#或baseurl=ftp://192.168.1.63/pub
+enabled=1					#为1，表示启用yum源
+gpgcheck=0					#为1，使用公钥检验rpm的正确性
+</code></pre><h5 id=主要操作>主要操作</h5><ul><li>安装 yum  install -y</li><li>检测升级 yum  check-update</li><li>升级 yum  update</li><li>软件包查询 yum  list</li><li>软件包信息 yum  info</li><li>卸载 yum  remove</li><li>帮助 yum  -help 或 man  yum</li></ul><h4 id=安装一组软件包>安装一组软件包</h4><ul><li>yum grouplist 查看包组</li><li>yum groupinstall &ldquo;Security Tools&rdquo;</li><li>yum groupinstall &ldquo;安全性工具&rdquo; -y</li></ul></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

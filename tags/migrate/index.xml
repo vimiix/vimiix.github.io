@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>migrate on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/migrate/</link><description>Recent content in migrate on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Wed, 24 Oct 2018 19:22:48 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/migrate/index.xml" rel="self" type="application/rss+xml"/><item><title>七牛云数据自动迁移到阿里云OSS</title><link>https://vimiix.com/posts/2018-10-24-move-qiniuyun-to-alioss/</link><pubDate>Wed, 24 Oct 2018 19:22:48 +0000</pubDate><guid>https://vimiix.com/posts/2018-10-24-move-qiniuyun-to-alioss/</guid><description>&lt;h3 id="背景">背景&lt;/h3>
+&lt;p>近期收到两封七牛云发来的邮件：&lt;/p>
+&lt;blockquote>
+&lt;p>测试域名回收通知&lt;/p>
+&lt;p>您的账号 xxx 在七牛云融合 CDN 加速平台有以下测试域名&lt;strong>还剩 7 个自然日会被系统自动回收&lt;/strong>&lt;/p>
+&lt;/blockquote>
+&lt;p>由于，我博客所有的图片文件都是存储在七牛云的，这个域名也使用了一年多了，怎么突然要回收呢？&lt;/p>
+&lt;p>上网一搜才知道，大概是有什么不法分子之类的，使用七牛云的免费空间传播色情暴力之类的内容，被 Godday 制裁了，现在新申请的 bucket 只能使用一个月，要想绑定域名，还得备案操作。俺这小博客，也就自己玩玩的一个国外服务器，也备不了案啊。&lt;/p>
+&lt;p>无奈，看网上很多人都是被回收了才知道自己的图片都访问不了。还好我习惯性的看这些推送邮件，给自己留了一周时间用来备份转移。既然免费的不好用了，微博之类的图床不好迁移，所以就买了一年阿里云的 OSS 服务。&lt;/p>
+&lt;p>虽然我的图片还算不是很多，但要是一张一张手动下载再上传到阿里云，也是不小的工作量，而且太浪费时间了。&lt;/p></description></item></channel></rss>

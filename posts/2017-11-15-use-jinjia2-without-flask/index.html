@@ -1,0 +1,76 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>脱离Flask上下文，使用jinja2渲染html模板</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>脱离Flask上下文，使用jinja2渲染html模板</h1><b><time>2017.11.15 00:59</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/template>template</a>
+<a href=/tags/jinja2>jinja2</a><div><h2 id=前言>前言</h2><p>首先，如果一个正常的 flask 带路由的接口，我们是不需要关心上下文对象的，Flask 做了很多“魔术”的方法，当一个 Flask 应用接收到一个请求的时候，它会在将逻辑委托给你的视图函数之前，创建好一个上下文对象。</p><p>当我们返回的时候调用<code>render_template(template, **context)</code>，就可以正常的渲染界面返回，在这个函数中，如果看一下源码就会发现，返回渲染之前，会创建一个 ctx 去获得当前环境的<code>app</code>变量。然后通过这个 ctx 去渲染传进来的<code>context</code>参数列表。</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>render_template</span>(template_name_or_list, <span style=color:#f92672>**</span>context):
+    <span style=color:#e6db74>&#34;&#34;&#34;Renders a template from the template folder with the given
+</span><span style=color:#e6db74>    context.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>    :param template_name_or_list: the name of the template to be
+</span><span style=color:#e6db74>                                  rendered, or an iterable with template names
+</span><span style=color:#e6db74>                                  the first one existing will be rendered
+</span><span style=color:#e6db74>    :param context: the variables that should be available in the
+</span><span style=color:#e6db74>                    context of the template.
+</span><span style=color:#e6db74>    &#34;&#34;&#34;</span>
+    ctx <span style=color:#f92672>=</span> _app_ctx_stack<span style=color:#f92672>.</span>top
+    ctx<span style=color:#f92672>.</span>app<span style=color:#f92672>.</span>update_template_context(context)
+    <span style=color:#66d9ef>return</span> _render(ctx<span style=color:#f92672>.</span>app<span style=color:#f92672>.</span>jinja_env<span style=color:#f92672>.</span>get_or_select_template(template_name_or_list),
+                   context, ctx<span style=color:#f92672>.</span>app)
+</code></pre></div><p>基于之前知道有这个函数可以替换 html 中的模板变量，今天在写代码的过程中，需要将一个 html 文件中变量动态更新后通过邮件发送走。出于惯性思维，理所当然的就直接撸代码：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> flask <span style=color:#f92672>import</span> render_template
+<span style=color:#75715e># 要更新模板中的用户名和密码,返回要邮件发送的内容</span>
+message <span style=color:#f92672>=</span> render_template(<span style=color:#e6db74>&#34;email.html&#34;</span>, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;xxx&#34;</span>, password<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;xxx&#39;</span>)
+</code></pre></div><p>一运行结果就报错：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>Traceback (most recent call last):
+  File <span style=color:#e6db74>&#34;xxx.py&#34;</span>, line <span style=color:#ae81ff>14</span>, <span style=color:#f92672>in</span> <span style=color:#f92672>&lt;</span>module<span style=color:#f92672>&gt;</span>
+    message <span style=color:#f92672>=</span> render_template(<span style=color:#e6db74>&#34;email.html&#34;</span>, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;xxx&#34;</span>, password<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;xxx&#39;</span>))
+  File <span style=color:#e6db74>&#34;/usr/local/lib/python2.7/dist-packages/flask/templating.py&#34;</span>, line <span style=color:#ae81ff>123</span>, <span style=color:#f92672>in</span> render_template
+    ctx<span style=color:#f92672>.</span>app<span style=color:#f92672>.</span>update_template_context(context)
+<span style=color:#a6e22e>AttributeError</span>: <span style=color:#e6db74>&#39;NoneType&#39;</span> object has no attribute <span style=color:#e6db74>&#39;app&#39;</span>
+</code></pre></div><p>经过一番摸索，大概知道这个<code>ctx</code>为嘛是个<code>None</code>，在<code>werkzeug/local.py</code>中有说明：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#a6e22e>@property</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>top</span>(self):
+    <span style=color:#e6db74>&#34;&#34;&#34;The topmost item on the stack.  If the stack is empty,
+</span><span style=color:#e6db74>    `None` is returned.
+</span><span style=color:#e6db74>    &#34;&#34;&#34;</span>
+    <span style=color:#66d9ef>try</span>:
+        <span style=color:#66d9ef>return</span> self<span style=color:#f92672>.</span>_local<span style=color:#f92672>.</span>stack[<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>]
+    <span style=color:#66d9ef>except</span> (<span style=color:#a6e22e>AttributeError</span>, <span style=color:#a6e22e>IndexError</span>):
+        <span style=color:#66d9ef>return</span> None
+</code></pre></div><p>果不其然，在这段代码中，我直接调用了<code>render_template()</code>,并没有通过 Flask 路由，所以，上下文对象并没有被创建。而<code>render_template()</code>尝试去通过<code>ctx</code>获取当前应用的<code>app</code>对象，所以 ctx 被赋值为 None,因而出现上面的报错信息。</p><h2 id=提出问题>提出问题</h2><p>这个问题该如何解决呢？我在这个地方，并不需要创建也不应该创建一个 flask 应用，但我又想使用 jinja2 的模板语言去更新数据。</p><h2 id=解决问题>解决问题</h2><p>首先，发生这个错误，是因为 Flask 帮我们代理了 jinja2 的渲染动作，提供出一些更适合开发者使用的接口。也就是 Flask 把 jinja2 藏在了它内部，包装了一下，我们想直接用里面的东西，Flask 就不干了。明白人都看得出来，一切都是 Flask 引起的，负全责，jinja2 是清白的。既然这样，我们的解决方法就是拨调 flask 的包装， 直接去调用 jinja2 的渲染机制，这个过程就需要我们自己来写个小函数实现渲染功能。</p><p>示例代码如下：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> jinja2
+
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>render_without_request</span>(template_name, <span style=color:#f92672>**</span>context):
+    <span style=color:#e6db74>&#34;&#34;&#34;
+</span><span style=color:#e6db74>    用法同 flask.render_template:
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>    render_without_request(&#39;template.html&#39;, var1=&#39;foo&#39;, var2=&#39;bar&#39;)
+</span><span style=color:#e6db74>    &#34;&#34;&#34;</span>
+    env <span style=color:#f92672>=</span> jinja2<span style=color:#f92672>.</span>Environment(
+        loader<span style=color:#f92672>=</span>jinja2<span style=color:#f92672>.</span>PackageLoader(<span style=color:#e6db74>&#39;package&#39;</span>,<span style=color:#e6db74>&#39;templates&#39;</span>)
+    )
+    template <span style=color:#f92672>=</span> env<span style=color:#f92672>.</span>get_template(template_name)
+    <span style=color:#66d9ef>return</span> template<span style=color:#f92672>.</span>render(<span style=color:#f92672>**</span>context)
+</code></pre></div><p>这个函数假设你的应用程序文件结构普通的那种。具体来说，你的项目结构应该是这个样子：</p><pre><code>package/
+├── __init__.py &lt;--- init文件必须保留，python包的标志
+└── templates/
+    └── template.html
+</code></pre><p>这里需要主要就是关注一下 jinja2 的<code>PackageLoader</code>这个函数，设计到文件之间的引用关系，可以参考一下源码,在<code>jinjia2/loaders.py</code>文件：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>PackageLoader</span>(BaseLoader):
+    <span style=color:#e6db74>&#34;&#34;&#34;Load templates from python eggs or packages.  It is constructed with
+</span><span style=color:#e6db74>    the name of the python package and the path to the templates in that
+</span><span style=color:#e6db74>    package::
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>        loader = PackageLoader(&#39;mypackage&#39;, &#39;views&#39;)
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>    If the package path is not given, ``&#39;templates&#39;`` is assumed.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>    Per default the template encoding is ``&#39;utf-8&#39;`` which can be changed
+</span><span style=color:#e6db74>    by setting the `encoding` parameter to something else.  Due to the nature
+</span><span style=color:#e6db74>    of eggs it&#39;s only possible to reload templates if the package was loaded
+</span><span style=color:#e6db74>    from the file system and not a zip file.
+</span><span style=color:#e6db74>    &#34;&#34;&#34;</span>
+</code></pre></div><p>初始化这个类的时候，第一个参数是模板所在的目录包名，第二个是模板目录名，可选，默认为<code>templates</code>，第三个可选参数是<code>encoding</code>,默认为<code>utf-8</code></p><p>至此我们这个函数写好以后，就可以直接像<code>flask.render_template()</code>一样来调用了，它可以单纯的帮助我们把 html 模板渲染出来啦！</p><p>单纯多美好~~^.^</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

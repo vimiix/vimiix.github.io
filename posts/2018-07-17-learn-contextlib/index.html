@@ -1,0 +1,60 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>浅谈Python中的上下文管理</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>浅谈Python中的上下文管理</h1><b><time>2018.07.18 00:56</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/context>context</a><div><h2 id=with-语法>with 语法</h2><p>平常在写 Python 代码的时候，经常会用到<code>with</code> 来处理一个上下文环境，比如文件的打开关闭，数据库的连接关闭等等。</p><p><code>with</code>语法的使用，需要我们处理的对象实现<code>__enter__</code>和<code>__exit__</code>两个魔术方法来支持。<code>__enter__</code>函数处理逻辑函数之前需要做的事情，并返回操作对象作为<code>as</code>后面的变量，<code>__exit__</code>函数处理当代码离开<code>with</code>代码块以后的事情。</p><p><code>with</code>语法非常方便的让我使用资源并且不用操心忘记后续操作所带来的隐患。</p><p>下面是一个简单的自己实现支持<code>with</code>的类对象示例：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MyContextManager</span>(object):
+
+    <span style=color:#66d9ef>def</span> __enter__(self):
+        <span style=color:#66d9ef>print</span>(<span style=color:#e6db74>&#34;Hello&#34;</span>)
+        <span style=color:#66d9ef>return</span> self
+
+    <span style=color:#66d9ef>def</span> __exit__(self, <span style=color:#f92672>*</span>args):
+        <span style=color:#66d9ef>print</span>(<span style=color:#e6db74>&#34;Bye&#34;</span>)
+
+    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>work</span>(self):
+        <span style=color:#66d9ef>print</span>(<span style=color:#e6db74>&#34;Do something...&#34;</span>)
+
+<span style=color:#66d9ef>with</span> MyContextManager() <span style=color:#66d9ef>as</span> worker:
+    worker<span style=color:#f92672>.</span>work()
+
+</code></pre></div><p>运行以后结果为：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>Hello
+Do something<span style=color:#f92672>...</span>
+Bye
+</code></pre></div><p>并且<code>with</code>语法还支持嵌套，可以同时打开多个上下文环境，有时候这对于我们同时操作多个对象是很方便的，例如我们需要同时打开两个文件，一个读一个写，这时候就可以这样写：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>with</span> open(file_A) <span style=color:#66d9ef>as</span> reader, open(file_B, <span style=color:#e6db74>&#39;w&#39;</span>) <span style=color:#66d9ef>as</span> writer:
+    <span style=color:#66d9ef>for</span> index, line <span style=color:#f92672>in</span> enumerate(reader):
+        writer<span style=color:#f92672>.</span>write(line)
+</code></pre></div><h2 id=contextlib-内置库>contextlib 内置库</h2><p>除了我们熟悉的在对象中实现<code>__enter__</code>和<code>__exit__</code>方法来支持<code>with</code>语法外，python 还自带一个用于上下文管理处理的 <a href=https://github.com/python/cpython/blob/master/Lib/contextlib.py><strong>contextlib</strong></a> 库。</p><p>contextlib 库是一个非常优美的库，它是为了加强<code>with</code>语句，提供上下文机制的模块，它是通过 Generator 实现的。通过定义类以及写<code>__enter__</code>和<code>__exit__</code>来进行上下文管理虽然不难，但是很繁琐。contextlib 中的 contextmanager 作为装饰器来提供一种针对函数级别的上下文管理机制。</p><p>时至今日，contextlib 库中不仅提供同步的<code>contextmanager</code>装饰器，同时也支持编写协程时处理异步的上下文环境的<code>asynccontextmanager</code>装饰器。两者的用法稍有不同，但思路是相同的。</p><p>###@contextmanager</p><p>对于<code>contextmanager</code>装饰器的原理，通过阅读源码，我的理解是：<strong>&ldquo;插入式编码&rdquo;</strong>。这里我有思考过和普通的装饰器怎么的不同，我自己定义为普通的装饰器是**&ldquo;包裹式编码&rdquo;**，看一个装饰器的功能往往是从装饰角度由外向内观察逻辑，而<code>contextmanager</code>却不同，它是"插入式"的，需要从函数出发由内向外观察。</p><p>怎么说是插入式呢？一个函数原本是自上向下顺序执行，突然在代码的中间，我们想要做点什么，就把代码卡在这里，去做想做的事情，等做完了以后，再回来接着执行相应的代码。</p><p>要做到这一点，就借助到了<code>yield</code>关键字，<code>contextmanager</code>接受一个 Generator 来借助<code>with ... as ..</code>的语法特性，在内部实现了<code>__enter__</code>和<code>__exit__</code>方法后，将<code>yield</code>返回的对象输出出去，这样就可以衔接上了。比较官方的用法是下面这样：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#a6e22e>@contextmanager</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>some_generator</span>():
+    <span style=color:#75715e># 这里处理之前的事情</span>
+    <span style=color:#66d9ef>try</span>:
+        <span style=color:#66d9ef>yield</span> value<span style=color:#75715e>#这里 yield 返回要操作的变量</span>
+    <span style=color:#66d9ef>finally</span>:
+        <span style=color:#75715e># 这里处理之后的事情</span>
+
+<span style=color:#66d9ef>with</span> some_generator() <span style=color:#66d9ef>as</span> variable:
+    <span style=color:#75715e># 处理逻辑</span>
+</code></pre></div><p>这样的写法执行顺序就等价于：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># 这里处理之前的事情</span>
+<span style=color:#66d9ef>try</span>:
+    variable <span style=color:#f92672>=</span> value
+    <span style=color:#75715e># 处理逻辑</span>
+<span style=color:#66d9ef>finally</span>:
+    <span style=color:#75715e># 这里处理之后的事情</span>
+</code></pre></div><h3 id=asynccontextmanager>@asynccontextmanager</h3><p><code>asynccontextmanager</code>装饰器和<code>contextmanager</code>类似，但其内部实现是通过<code>async</code>和<code>await</code>协程语法实现的，所以它装饰的函数也必须是异步的实现。（这个语法支持需要 python 版本大于 3.5）</p><p>示例逻辑代码如下：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#a6e22e>@asynccontextmanager</span>
+async <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>some_async_generator</span>():
+    <span style=color:#75715e># 这里处理之前的事情</span>
+    <span style=color:#66d9ef>try</span>:
+        <span style=color:#66d9ef>yield</span> value<span style=color:#75715e>#这里 yield 返回要操作的变量</span>
+    <span style=color:#66d9ef>finally</span>:
+        <span style=color:#75715e># 这里处理之后的事情</span>
+
+async <span style=color:#66d9ef>with</span> some_async_generator() <span style=color:#66d9ef>as</span> variable:
+     <span style=color:#75715e># 处理逻辑</span>
+</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

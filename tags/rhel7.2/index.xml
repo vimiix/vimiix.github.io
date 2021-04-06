@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>rhel7.2 on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/rhel7.2/</link><description>Recent content in rhel7.2 on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Wed, 08 Mar 2017 23:00:31 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/rhel7.2/index.xml" rel="self" type="application/rss+xml"/><item><title>Linux-rhel7.2操作系统安装</title><link>https://vimiix.com/posts/2017-03-08-rhel7-2-os-setup/</link><pubDate>Wed, 08 Mar 2017 23:00:31 +0000</pubDate><guid>https://vimiix.com/posts/2017-03-08-rhel7-2-os-setup/</guid><description>RHEL7 红帽公司发布的企业 Linux7 版本。
+RHEL6 与 RHEL7 的关键区别： 显著提升 Docker 的兼容性 （Docker 容器级虚拟化技术）
+默认文件系统从 EXT4 改为 XFS
+系统管理的进一步简化
+新版本内核 3.10 提供更多文件系统的支持
+RHEL7 的安装 启动画面
+界面说明：
+** Install Red Hat Enterprise Linux 7.2 ** #安装 RHEL 7.2
+** Test this media &amp;amp; install Red Hat Enterprise Linux 7.2** #测试安装文件并安装 RHEL 7.2
+** Troubleshooting** #修复故障
+一般选择第一项就可以了
+注：在 Trobleshooting 模式下，界面如下：</description></item></channel></rss>

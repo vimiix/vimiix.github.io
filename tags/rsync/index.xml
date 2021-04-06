@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>rsync on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/rsync/</link><description>Recent content in rsync on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 30 Oct 2017 13:12:48 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/rsync/index.xml" rel="self" type="application/rss+xml"/><item><title>rsync服务器配置文件参数备忘</title><link>https://vimiix.com/posts/2017-10-30-rsync-params/</link><pubDate>Mon, 30 Oct 2017 13:12:48 +0000</pubDate><guid>https://vimiix.com/posts/2017-10-30-rsync-params/</guid><description>最近工作中用到了 rsync 服务器，对于 rsync 服务器的配置来说，不是很复杂，网上有很多介绍。rsync 的配置文件是最重要的一部分。有很多参数需要了解一下，所以今天记录整理一下，方便以后自己查看。
+基本介绍 Rsync（remote synchronize）是一个远程数据同步工具，可通过 LAN/WAN 快速同步多台主机间的文件。Rsync 使用所谓的“Rsync 算法”来使本地和远 程两个主机之间的文件达到同步，这个算法只传送两个文件的不同部分，而不是每次都整份传送，因此速度相当快。
+rsync 的配置文件是由一个或多个模块结构组成。一个模块定义是以方括弧中的模块名开始，直到下一个模块定义开始或者文件结束。
+模块中包含格式为name = value的参数定义。每个模块其实就对应需要备份的一个目录树，比方说在实际环境中，有三个目录树需要备份：/www/、/home/web_user1/和/home/web_user2/，那么就需要在配置文件中定义三个模块，分别对应三个目录树。
+配置文件是行为单位的，也就是说每个新行都表示一个新的注释、模块定义或者参数赋值。以#开始的行表示注释，以&amp;quot;&amp;ldquo;结束的行表示下面一行是该行的继续。参数赋值中等号后可能是一个大小写不敏感的字符串、一个以trure/false或者yes/no表示的布尔值。
+全局参数 在文件中[modlue]之前的所有参数都是全局参数，当然也可以在全局参数部分定义模块参数，这时候该参数的值就是所有模块的默认值。
+motd file 指定一个消息文件，当客户连接服务器时该文件的内容显示给客户，默认是没有 motd 文件的。该文件有无都不影响 rsync 的正常使用。
+log file 指定 rsync 的日志文件，而不将日志发送给syslog。
+pid file 指定 rsync 的 pid 文件。
+syslog facility 指定 rsync 发送日志消息给 syslog 时的消息级别，常见的消息级别是：uth, authpriv, cron, daemon, ftp, kern, lpr, mail, news, security, sys-log, user, uucp, local0, local1, local2, local3,local4, local5, local6和local7。
+默认值是daemon。
+模块参数 在全局参数之后就需要定义一个或多个模块了，模块中可以定义以下参数：</description></item></channel></rss>

@@ -1,0 +1,24 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Linux|CentOS系统yum安装pip及遇到的问题解决方法</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Linux|CentOS系统yum安装pip及遇到的问题解决方法</h1><b><time>2017.08.27 14:16</time></b>
+<a href=/tags/centos>CentOS</a>
+<a href=/tags/python>Python</a>
+<a href=/tags/pip>pip</a><div><p><strong>pip 是一个以 Python 计算机程序语言写成的软件包管理系统，他可以安装和管理软件包，另外不少的软件包也可以在“Python 软件包索引”（英语：Python Package Index，简称 PyPI）中找到。</strong></p><h2 id=常规的安装-pip-方法>常规的安装 pip 方法</h2><p>首先安装扩展源 EPEL</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Bash data-lang=Bash>	sudo yum -y install epel-release
+</code></pre></div><p>然后再安装 pip</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Bash data-lang=Bash>	sudo yum -y install python-pip
+</code></pre></div><h2 id=手动下载编译安装-pip>手动下载编译安装 pip</h2><p>一般上面的方法就可以安装成功了。今天我在新买的云主机上面也这样做，epel 扩展源确认已经安装，但还是一直提示我 python-pip 这个模块找不到。这种情况，只能自己手动下载源文件编译安装了。</p><p>截至书写本文时间，pip 的最新版本为<code>9.0.1</code></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Bash data-lang=Bash>	wget --no-check-certificate https://github.com/pypa/pip/archive/9.0.1.tar.gz
+</code></pre></div><p><em>注意：wget 获取 https 的时候需要加上：<code>--no-check-certificate</code></em></p><p>下载下来以后，解压安装</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Bash data-lang=Bash>	tar zvxf 9.0.1.tar.gz
+	cd pip-9.0.1/
+	python setup.py install
+</code></pre></div><h4 id=缺少setiptools模块>缺少<code>setiptools模块</code></h4><p>此时在安装 pip 的过程执行<code>python setup.py install</code>时报错，提示：<code>ImportError No module named setuptools</code>字面意思就是本地缺少 setuptools 这个模块。</p><h4 id=解决方法>解决方法</h4><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Bash data-lang=Bash>	wget http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz
+	tar zxvf setuptools-0.6c11.tar.gz
+	cd setuptools-0.6c11
+	python setup.py install
+</code></pre></div><p><code>setuptools</code>安装成功以后，再返回去 pip 的解压目录执行<code>python setup.py install</code>，此时没有报错，且安装成功。</p><h2 id=pip-升级>pip 升级</h2><p>pip 安装成功以后，我喜欢把软件都更新到最新版，更新 pip 执行</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Bash data-lang=Bash>	pip install --upgrade pip
+</code></pre></div><p>至此，pip 就安装完整的安装成功了。</p><h3 id=_参考资料_><em>参考资料</em></h3><ol><li><a href=https://zh.wikipedia.org/wiki/Pip_(%E8%BB%9F%E4%BB%B6%E5%8C%85%E7%AE%A1%E7%90%86%E7%B3%BB%E7%B5%B1)>pip（软件包管理系统）-维基百科</a></li><li><a href=http://blog.csdn.net/yangbodong22011/article/details/52456581>pip 安装使用 ImportError: No module named setuptools 解决方法</a></li><li><a href=http://www.jincon.com/archives/159/>包子博客</a></li></ol></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

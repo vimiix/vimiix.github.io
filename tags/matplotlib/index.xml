@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>matplotlib on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/matplotlib/</link><description>Recent content in matplotlib on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Tue, 16 Oct 2018 11:22:48 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/matplotlib/index.xml" rel="self" type="application/rss+xml"/><item><title>macOXS中使用matplotlib遇到的问题及探究</title><link>https://vimiix.com/posts/2018-10-16-explore-the-problem-of-matplotlib-on-macosx/</link><pubDate>Tue, 16 Oct 2018 11:22:48 +0000</pubDate><guid>https://vimiix.com/posts/2018-10-16-explore-the-problem-of-matplotlib-on-macosx/</guid><description>&lt;p>第一次在 mac 系统上使用&lt;strong>matplotlib&lt;/strong>库的时候，在执行的时候，往往会遇到下面这样的问题：&lt;/p>
+&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">ImportError: Python is not installed as a framework. balabala....
+&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="解决方案">解决方案&lt;/h3>
+&lt;p>当然这个问题很好解决，网上有一搜就会找到如下两种解决方案：&lt;/p>
+&lt;h4 id="第一种方案是在系统中设置">第一种方案是在系统中设置：&lt;/h4>
+&lt;ul>
+&lt;li>假设你已经通过&lt;code>pip install matplotlib&lt;/code>安装了 matplotlib，那么在你的根目录中会有一个名为&lt;code>〜/ .matplotlib&lt;/code>的目录。&lt;/li>
+&lt;li>在这个目录中创建一个&lt;code>matplotlibrc&lt;/code>的文件 ,在里面添加一行代码：&lt;code>backend: TkAgg&lt;/code>，保存退出即可。&lt;/li>
+&lt;/ul>
+&lt;p>总结为一行 shell 命令就是：&lt;code>echo &amp;quot;backend: TkAgg&amp;quot; &amp;gt;&amp;gt; ~/.matplotlib/matplotlibrc&lt;/code>&lt;/p>
+&lt;p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。&lt;/p>
+&lt;h4 id="第二种方案是在代码中设置">第二种方案是在代码中设置：&lt;/h4>
+&lt;p>在引用&lt;code>matplotlib&lt;/code>库的代码之前，添加如下两行代码（确认安装 TkInter）：&lt;/p>
+&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-python" data-lang="python">&lt;span style="color:#f92672">import&lt;/span> matplotlib
+matplotlib&lt;span style="color:#f92672">.&lt;/span>use(&lt;span style="color:#e6db74">&amp;#39;TkAgg&amp;#39;&lt;/span>)
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>这样也可以临时的修改前面提到的 &lt;code>backend&lt;/code>变量。&lt;/p></description></item></channel></rss>

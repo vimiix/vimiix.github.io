@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>web on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/web/</link><description>Recent content in web on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 26 Feb 2018 12:20:48 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/web/index.xml" rel="self" type="application/rss+xml"/><item><title>[Python]Uvicorn初体验</title><link>https://vimiix.com/posts/2018-02-26-first-practise-of-uvicorn/</link><pubDate>Mon, 26 Feb 2018 12:20:48 +0000</pubDate><guid>https://vimiix.com/posts/2018-02-26-first-practise-of-uvicorn/</guid><description>&lt;h2 id="uvicorn-简介">uvicorn 简介&lt;/h2>
+&lt;p>&lt;code>uvicorn&lt;/code>是一个基于&lt;code>asyncio&lt;/code>开发的一个轻量级高效的 web 服务器框架。&lt;/p>
+&lt;blockquote>
+&lt;p>官网：&lt;a href="http://www.uvicorn.org">http://www.uvicorn.org&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;p>&lt;code>uvicorn&lt;/code> 设计的初衷是想要实现两个目标：&lt;/p>
+&lt;ul>
+&lt;li>使用&lt;a href="https://github.com/MagicStack/uvloop">&lt;code>uvloop&lt;/code>&lt;/a>和&lt;a href="https://github.com/MagicStack/httptools">&lt;code>httptools&lt;/code>&lt;/a>实现一个极速的&lt;code>asyncio&lt;/code>服务器。&lt;/li>
+&lt;li>实现一个基于&lt;a href="http://channels.readthedocs.io/en/stable/asgi.html">&lt;code>ASGI(异步服务器网关接口)&lt;/code>&lt;/a>的最小的应用程序接口。&lt;/li>
+&lt;/ul>
+&lt;p>它目前支持&lt;code>http&lt;/code>，&lt;code>websockets&lt;/code>，&lt;code>Pub/Sub&lt;/code> 广播，并且可以扩展到其他协议和消息类型。&lt;/p></description></item></channel></rss>

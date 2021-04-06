@@ -1,0 +1,34 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>《算法图解》读书笔记1-二分和大O</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>《算法图解》读书笔记1-二分和大O</h1><b><time>2018.05.23 23:20</time></b>
+<a href=/tags/algorithms>algorithms</a>
+<a href=/tags/linux>Linux</a><div><blockquote><p>算法是一组完成任务的指令</p></blockquote><h2 id=为什么要学习算法>为什么要学习算法</h2><p>这次是我第二次读《算法图解》，当我第一次看这本书的时候，我更兴奋于书中有什么内容，迫不及待的去过内容，学习那些算法概念。但当我第二次准备开始读这本书的时候，我脑海中出现的了一个问题：“为什么要学习算法？”，这个问题也许会有人和我一样，之前根本没有好好的去思考，只是知道，作为一个程序员我应该学习算法。当然，能够有这个觉悟，说明我们还算是个合格的程序员。</p><p>但是，不妨认真思考一下，为什么要学习算法？算法应该怎么学？</p><p>首先，我觉得算法是一种思想，并不只是一段代码。它不拘泥于形式，而在于我们去如何运用这种思想。我们目前接触到的算法，都可以算作是前辈们通过不断的实践经验而得出的一种总结。算法可以帮助我们写出性价比更高的程序，来应对实际生产中的种种挑战。既然算法是一种思想，那么他就不会是一陈不变的，在学习的过程中，要保持一颗怀疑的态度，不断的试图对已有算法举反例验证。若能针对已有的算法提出自己的改进，那真是一件有意义的事情。</p><p>再者，算法好比我们学语言的时候，需要先学习语法，才能够将学到的词汇灵活的整理成话语。说话的方式千奇百怪，不同的场合下，我们会选择说合适的话。算法也一样，不能单纯的从运行时间上对比两个算法的优劣，有的场合内存要求高，时间要求不高，这时候可以能就需要牺牲时间来满足内存要求。将不同的算法，放置到不同的生产要求环境中，再选择适宜的算法，这是我接下来学习每个算法应该思考的出发点。</p><p>最后，学好算法，有助于提升我们的技术水平，找到更好的工作机会，赚更多的钱。最后走上人生巅峰，迎娶白富美。[自行脑补&mldr;&mldr;]</p><h2 id=二分查找>二分查找</h2><p>二分查找算法（binary search），也称为折半搜索（英语：half-interval search），对数搜索（英语：logarithmic search）。是一种在有序数组中查找某一特定元素的搜索算法。</p><p>算法前提：</p><ul><li>有序数组</li></ul><p>算法步骤图示：</p><p><figure><img src=http://ww1.sinaimg.cn/large/8d56d744ly1frkjc3ktw7j20am06swec.jpg alt></figure></p><p>算法 python3 代码实现：(针对元素互不相同的情况，若有连续相同的，见讨论区补充)</p><ul><li>递归实现</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>binary_search</span>(list, item):
+    low <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>
+    high <span style=color:#f92672>=</span> len(list) <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>
+
+    mid <span style=color:#f92672>=</span> (low <span style=color:#f92672>+</span> high)<span style=color:#f92672>//</span><span style=color:#ae81ff>2</span>
+    <span style=color:#66d9ef>if</span> list[mid] <span style=color:#f92672>&gt;</span> item:
+        <span style=color:#66d9ef>return</span> binary_search(list[:mid], item)
+    <span style=color:#66d9ef>if</span> list[mid] <span style=color:#f92672>&lt;</span> item:
+        <span style=color:#66d9ef>return</span> binary_search(list[mid:], item)
+    <span style=color:#66d9ef>return</span> mid
+</code></pre></div><ul><li>循环实现</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>binary_search</span>(list, item):
+    low <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>
+    high <span style=color:#f92672>=</span> len(list) <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>
+
+    <span style=color:#66d9ef>while</span> low <span style=color:#f92672>&lt;=</span> high:
+        mid <span style=color:#f92672>=</span> (low <span style=color:#f92672>+</span> high)<span style=color:#f92672>//</span><span style=color:#ae81ff>2</span>
+        <span style=color:#66d9ef>if</span> list[mid] <span style=color:#f92672>&lt;</span> item:
+            low <span style=color:#f92672>=</span> mid <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>
+        <span style=color:#66d9ef>elif</span> list[mid] <span style=color:#f92672>&gt;</span> item:
+            high <span style=color:#f92672>=</span> mid <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>
+        <span style=color:#66d9ef>else</span>:
+            <span style=color:#66d9ef>return</span> mid
+</code></pre></div><p>算法复杂度：</p><ul><li>最优时间复杂度：O(1)</li><li>最坏时间复杂度：O(logn)</li><li>平均时间复杂度：O(logn)</li><li>空间复杂度：迭代实现：O(1)；循环实现：O(logn)</li></ul><h2 id=大-o-表示法>大 O 表示法</h2><p>大 O 表示法指出了算法的效率。</p><blockquote><p>Wikipedia：<strong>大 O 符号</strong>（英语：Big O notation），又称为<strong>渐进符号</strong>，是用于描述<a href=https://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B0>函数</a><a href=https://zh.wikipedia.org/wiki/%E6%B8%90%E8%BF%91%E5%88%86%E6%9E%90>渐近行为</a>的<a href=https://zh.wikipedia.org/wiki/%E6%95%B0%E5%AD%A6>数学</a>符号。更确切地说，它是用另一个（通常更简单的）函数来描述一个函数<a href=https://zh.wikipedia.org/wiki/%E6%95%B0%E9%87%8F%E7%BA%A7>数量级</a>的<strong>渐近上界</strong>。</p></blockquote><p>每个算法都可以通过一个数学公式表达，大 O 表示法，标记的是一个函数中起主导作用的一项，而其他项可以被忽略。举个例子，解决一个规模为 n 的问题所需步骤的数目可以表示为：</p><p><figure><img src=https://wikimedia.org/api/rest_v1/media/math/render/svg/679aea9b28e1092062bb5b79f3a89cde55e7710d alt="T(n)=4n^{2}-2n+2"></figure></p><p>当 n 增大时，n 平方项将主导整个算式结果的走向，其他项的影响将越来越小，甚至忽略不计。用大 O 表示法就是：</p><p><figure><img src=https://wikimedia.org/api/rest_v1/media/math/render/svg/68b71c2ae4dc99e2e197d28c6537c475a1a07a73 alt="T(n)=\mathrm {O} (n^{2})"></figure></p><p>我们就说该算法具有平方阶的时间复杂度。</p><h2 id=常用函数阶>常用函数阶</h2><p><figure><img src=http://ww1.sinaimg.cn/large/8d56d744ly1frkkjdko4vj20pk0j8dj1.jpg alt></figure></p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

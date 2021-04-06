@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>blockchain on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/blockchain/</link><description>Recent content in blockchain on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Sun, 21 Jan 2018 22:37:48 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/blockchain/index.xml" rel="self" type="application/rss+xml"/><item><title>[区块链]区块链和通证的应用与技术路径</title><link>https://vimiix.com/posts/2018-01-21-blockchain-and-token/</link><pubDate>Sun, 21 Jan 2018 22:37:48 +0000</pubDate><guid>https://vimiix.com/posts/2018-01-21-blockchain-and-token/</guid><description>&lt;blockquote>
+&lt;p>前言：1 月 21 日参加 CSDN 举办的区块链沙龙，以下是来自 CSDN 副总裁孟岩的 Slide 笔记。表达上使用了个人的理解，如果有哪里理解错误，还请在评论中指正。&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="产业形势和发展方向">产业形势和发展方向&lt;/h2>
+&lt;h3 id="三大派别">三大派别&lt;/h3>
+&lt;p>目前国内的区块链产业形势分为 &lt;code>币&lt;/code>，&lt;code>证&lt;/code>，&lt;code>链&lt;/code>三个派别，这三个群体需要分开来评判看待。&lt;/p>
+&lt;p>最为我们大众所熟知的一些企业，或者说是一些数字货币，大都属于&lt;code>币&lt;/code>圈公司。这一类公司可以用六个字总结：“只造势，不做事”。各种铺天盖地的宣传，为的是制造其发行的数字货币的影响力，而并没有实际的实体价值依托。&lt;/p>
+&lt;p>因为我们大家日常接触或听到的大部分都是币圈的公司信息，所以常常会有人说：“区块链这个技术没有实际的落地应用，只是个噱头”。其实不然，国外其实有很多的公司在做着基于区块链技术的应用，只是因为这一类的公司不会去发行数字货币，也不发通证（通证的概念后面会提到），只是在借助区块链技术在做着一些实际的应用产品，所以往往不被人所了解。这一类的公司就属于&lt;code>链圈&lt;/code>公司范畴。链圈的公司会有很多基于区块链技术的落地应用，但是因为每个产品都是独立的，影响力是很有限的，所以无法对全球产生&lt;code>革命&lt;/code>性的改变。&lt;/p>
+&lt;p>还有第三个派别就是&amp;mdash;“通证派”。首先理解一下通证的定义，通证，英文的名字是&lt;code>Token&lt;/code>，还有的人译作“代币”，但是这个真不是一个很雅的翻译，我更倾向于称之为“通证”。通证的核心是&lt;code>通&lt;/code>，流通，通证是一种价值转移的载体形式。&lt;/p>
+&lt;p>通证有广义的通证和狭义的通证之分，狭义的通证包含但不限于：身份证，房产证，信用卡，用户积分，通行证，门票，购物卡，发票，股票，债券等等&amp;hellip;广义的通证是在狭义的通证基础上多一个&lt;code>数字加密货币&lt;/code>。&lt;/p></description></item></channel></rss>

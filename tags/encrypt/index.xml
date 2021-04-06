@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>encrypt on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/encrypt/</link><description>Recent content in encrypt on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 28 Mar 2019 16:22:48 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/encrypt/index.xml" rel="self" type="application/rss+xml"/><item><title>HLS视频加密</title><link>https://vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</link><pubDate>Thu, 28 Mar 2019 16:22:48 +0000</pubDate><guid>https://vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</guid><description>&lt;blockquote>
+&lt;p>最近在做视频管理后台，主要提供点播服务，涉及到需要对视频进行加密处理以防止视频被随意下载。&lt;/p>
+&lt;p>调研了一番之后确定使用 HLS(HTTP Live Streaming) 基于 HTTP 的流媒体网络传输协议技术来处理视频。&lt;/p>
+&lt;p>所以本文主要记录关于学习 HLS 视频加密技术的笔记&lt;/p>
+&lt;/blockquote>
+&lt;h3 id="为什么要加密">为什么要加密？&lt;/h3>
+&lt;p>简单的说就是：增加获取被加密资源的代价。对于视频这种资源来说，绝对的加密就是不要上线给人看，但那是不可能的，因为提供的服务就是给人看视频，只要上线，别人就可以通过各种手段解密或者简单的录屏的方式来传播，所以目前俩看，不存在绝对的加密。只要让恶意的人获取源视频的代价很大，就可以阻挡绝大多数的不法分子。这样，加密的目的也就基本达到了。&lt;/p></description></item></channel></rss>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>magic method on Hi, I'm Vimiix</title><link>https://vimiix.com/tags/magic-method/</link><description>Recent content in magic method on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 04 Jun 2018 13:20:48 +0000</lastBuildDate><atom:link href="https://vimiix.com/tags/magic-method/index.xml" rel="self" type="application/rss+xml"/><item><title>[转]Python中的魔术方法汇总</title><link>https://vimiix.com/posts/2018-06-04-python-magic-methods/</link><pubDate>Mon, 04 Jun 2018 13:20:48 +0000</pubDate><guid>https://vimiix.com/posts/2018-06-04-python-magic-methods/</guid><description>&lt;blockquote>
+&lt;p>这是一篇很不错的总结文章，简单易理解，洒家忍不住要转载收藏一下。&lt;/p>
+&lt;p>源文链接：&lt;a href="http://algo.site/?cat=60">http://algo.site/?cat=60&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;h3 id="基础">基础:&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>如果你想…&lt;/th>
+&lt;th>所以,你写…&lt;/th>
+&lt;th>Python 调用…&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>初始化一个实例&lt;/td>
+&lt;td>&lt;code>x = MyClass()&lt;/code>&lt;/td>
+&lt;td>&lt;code>x.__init__()&lt;/code>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>作为一个字符串的&amp;quot;官方&amp;quot;表示&lt;/td>
+&lt;td>&lt;code>repr(x)&lt;/code>&lt;/td>
+&lt;td>&lt;code>x.__repr__()&lt;/code>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>作为一个字符串&lt;/td>
+&lt;td>&lt;code>str(x)&lt;/code>&lt;/td>
+&lt;td>&lt;code>x.__str__()&lt;/code>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>作为字节数组&lt;/td>
+&lt;td>&lt;code>bytes(x)&lt;/code>&lt;/td>
+&lt;td>&lt;code>x.__bytes__()&lt;/code>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>作为格式化字符串&lt;/td>
+&lt;td>&lt;code>format(x, format_spec)&lt;/code>&lt;/td>
+&lt;td>&lt;code>x.__format__(format_spec)&lt;/code>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table></description></item></channel></rss>

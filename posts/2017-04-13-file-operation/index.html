@@ -1,0 +1,62 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Python-文件操作</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Python-文件操作</h1><b><time>2017.04.13 15:50</time></b>
+<a href=/tags/file>file</a>
+<a href=/tags/python>Python</a><div><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/uDCgf4.jpg alt=header></figure></p><h2 id=打开文件>打开文件</h2><p>在 Pyhton 中，使用open()函数打开文件，并返回文件对象，拿到这个文件对象，就可以读取或修改这个文件。open()是一个 python 内建函数，可以直接调用。</p><pre><code class=language-Pyhton data-lang=Pyhton>	#open()函数在python2.7的介绍
+	Help on built-in function open in module __builtin__:
+
+	open(...)
+	    open(name[, mode[, buffering]]) -&gt; file object
+
+	    Open a file using the file() type, returns a file object.  This is the
+	    preferred way to open a file.  See file.__doc__ for further information.
+</code></pre><p>上面的介绍是在 Python2.7 中的介绍，python3 中新增了很多参数，暂不需要了解。目前只需要关注前两个参数。</p><p>第一个参数name：是传入的文件名，如果只是文件名，不带路径的话，Python 会在当前文件夹中去寻找该文件并打开。</p><p>第二个参数mode：指定文件打开的模式，默认为&rsquo;r'</p><table><thead><tr><th style=text-align:center>打开模式</th><th style=text-align:center>对应操作</th></tr></thead><tbody><tr><td style=text-align:center>&lsquo;r&rsquo;</td><td style=text-align:center>只读方式打开文件，文件的指针将会放在文件的开头（默认）</td></tr><tr><td style=text-align:center>&lsquo;w&rsquo;</td><td style=text-align:center>只写方式打开文件，如果该文件已存在则将其覆盖，如果该文件不存在，创建新文件</td></tr><tr><td style=text-align:center>&lsquo;a&rsquo;</td><td style=text-align:center>追加方式打开文件。如果该文件已存在，文件指针将会放在文件的结尾，新的内容将会被写入到已有内容之后。如果该文件不存在，创建新文件并写入</td></tr><tr><td style=text-align:center>&lsquo;r+&rsquo;</td><td style=text-align:center>打开一个文件用于读写,文件指针将会放在文件的开头</td></tr><tr><td style=text-align:center>&lsquo;w+&rsquo;</td><td style=text-align:center>打开一个文件用于读写,如果该文件已存在则将其覆盖,如果该文件不存在，创建新文件</td></tr><tr><td style=text-align:center>&lsquo;a+&rsquo;</td><td style=text-align:center>打开一个文件用于读写,如果该文件已存在，文件指针将会放在文件的结尾，文件打开时会是追加模式，如果该文件不存在，创建新文件用于读写</td></tr><tr><td style=text-align:center>&lsquo;b&rsquo;</td><td style=text-align:center>以二进制模式打开文件</td></tr></tbody></table><p>示例：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	f<span style=color:#f92672>=</span>open(<span style=color:#e6db74>&#39;test.txt&#39;</span>,<span style=color:#e6db74>&#39;w&#39;</span>)<span style=color:#75715e>#以只写方式打开文件test.txt</span>
+	f<span style=color:#f92672>.</span>close() <span style=color:#75715e>#关闭文件</span>
+</code></pre></div><p>1、执行 open 语句后没有报错，就说明文件被成功的打开了。</p><p>2、调用 close()方法关闭文件。文件使用完毕后必须关闭，因为文件对象会占用操作系统的资源，并且操作系统同一时间能打开的文件数量也是有限的</p><h2 id=文件对象的方法>文件对象的方法</h2><table><thead><tr><th style=text-align:center>文件对象方法</th><th style=text-align:center>对应操作</th></tr></thead><tbody><tr><td style=text-align:center>close()</td><td style=text-align:center>关闭文件</td></tr><tr><td style=text-align:center>read([size])</td><td style=text-align:center>从文件中读取 size 个字符，没有给定 size 时，读取文件所有字符，并返回一个字符串</td></tr><tr><td style=text-align:center>readline()</td><td style=text-align:center>读取一行，遇到'\n&rsquo;停止</td></tr><tr><td style=text-align:center>readlines（）</td><td style=text-align:center>一次读取所有内容，并按行返回 list</td></tr><tr><td style=text-align:center>write(str)</td><td style=text-align:center>将字符串 str 写入文件</td></tr><tr><td style=text-align:center>writelines(seq)</td><td style=text-align:center>向文件写入字符串序列 seq，seq 应该是一个返回字符串的可迭代对象</td></tr><tr><td style=text-align:center>seek(offset[, whence])</td><td style=text-align:center>在文件中移动文件指针，从 whence(0:文件起始位置，1:当前位置，2:文件末尾)偏移 offset 个字节</td></tr></tbody></table><h2 id=读文件操作优化本段摘自廖雪峰教程-文件读写httpwwwliaoxuefengcomwiki001374738125095c955c1e6d8bb493182103fac9270762a000001386820066616a77f826d876b46b9ac34cb5f34374f7a000>读文件操作优化（本段摘自<a href=http://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/001386820066616a77f826d876b46b9ac34cb5f34374f7a000>廖雪峰教程-文件读写</a>）</h2><p>由于文件读写时都有可能产生<strong>IOError</strong>，一旦出错，后面的**f.close()**就不会调用。</p><p>所以，为了保证无论是否出错都能正确地关闭文件，我们可以使用<strong>try &mldr; finally</strong>来实现：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>try</span>:
+	    f <span style=color:#f92672>=</span> open(<span style=color:#e6db74>&#39;/path/to/file&#39;</span>, <span style=color:#e6db74>&#39;r&#39;</span>)
+	    <span style=color:#66d9ef>print</span> f<span style=color:#f92672>.</span>read()
+	<span style=color:#66d9ef>finally</span>:
+	    <span style=color:#66d9ef>if</span> f:
+	        f<span style=color:#f92672>.</span>close()
+</code></pre></div><p>但是每次都这么写实在太繁琐，所以，Python 引入了<strong>with</strong>语句来自动帮我们调用 close()方法：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>with</span> open(<span style=color:#e6db74>&#39;/path/to/file&#39;</span>, <span style=color:#e6db74>&#39;r&#39;</span>) <span style=color:#66d9ef>as</span> f:
+	    <span style=color:#66d9ef>print</span> f<span style=color:#f92672>.</span>read()
+</code></pre></div><p>这和前面的 try &mldr; finally 是一样的，但是代码更佳简洁，并且不必调用 f.close()方法。</p><p>调用 read()会一次性读取文件的全部内容，如果文件有 10G，内存就爆了，所以，要保险起见，可以反复调用 read(size)方法，每次最多读取 size 个字节的内容。另外，调用 readline()可以每次读取一行内容，调用 readlines()一次读取所有内容并按行返回 list。因此，要根据需要决定怎么调用。</p><p>如果文件很小，read()一次性读取最方便；如果不能确定文件大小，反复调用 read(size)比较保险；如果是配置文件，调用 readlines()最方便：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>for</span> line <span style=color:#f92672>in</span> f<span style=color:#f92672>.</span>readlines():
+	    <span style=color:#66d9ef>print</span>(line<span style=color:#f92672>.</span>strip()) <span style=color:#75715e># 把末尾的&#39;\n&#39;删掉</span>
+</code></pre></div><h2 id=文件的定位-seekoffset-whence>文件的定位 seek(offset[, whence])</h2><p>当以不同的方式打开文件的时候，文件指针存在的位置是不同的，比如以&rsquo;w&rsquo;方式打开文件，文件指针是在文件起始位置，如果以&rsquo;a&rsquo;方式打开，文件指针是在文件末尾的。</p><p>通过 seek(offset[, whence])方法，就可以控制文件指针的位置，定位在我们需要的地方。</p><p>参数 offset 表示从文件中移动 offset 个操作标记（文件指针），正往结束方向移动，负往开始方向移动。whence，就以 whence 设定的起始位为准，0 代表从头开始，1 代表当前位置，2 代表文件最末尾位置。</p><p>实例：</p><pre><code class=language-Pyhton data-lang=Pyhton>	#coding=utf-8
+
+	# 打开一个foo.txt文件
+	f = open(&quot;foo.txt&quot;, &quot;r+&quot;)
+	print &quot;Name of the file: &quot;, f.name
+
+	# 假设文件中包含下面5行内容
+	# This is 1st line
+	# This is 2nd line
+	# This is 3rd line
+	# This is 4th line
+	# This is 5th line
+
+	line = f.readline()
+	print &quot;Read Line: %s&quot; % (line)
+
+	# 将文件指针移回起始位置
+	f.seek(0, 0)
+	line = f.readline()
+	print &quot;Read Line: %s&quot; % (line)
+
+	# 关闭文件
+	f.close()
+</code></pre><p>执行结果：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#f92672>==================</span> RESTART: C:<span style=color:#f92672>/</span>Users<span style=color:#f92672>/</span>vimiix<span style=color:#f92672>/</span>Desktop<span style=color:#f92672>/</span>test<span style=color:#f92672>.</span>py <span style=color:#f92672>==================</span>
+	Name of the file:  foo<span style=color:#f92672>.</span>txt
+	Read Line: This <span style=color:#f92672>is</span> <span style=color:#ae81ff>1</span>st line
+
+	Read Line: This <span style=color:#f92672>is</span> <span style=color:#ae81ff>1</span>st line
+
+	<span style=color:#f92672>&gt;&gt;&gt;</span>
+</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

@@ -1,0 +1,58 @@
+<!doctype html><html lang=cn-zh><head><meta name=generator content="Hugo 0.81.0"><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Hi, I'm Vimiix</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=/index.xml title="Hi, I'm Vimiix"></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1><a href=https://vimiix.com/posts/2018-05-01-linux-history/>TPLI笔记—linux/unix标准和历史</a></h1><b><time>2018.05.01 19:20</time></b>
+<a href=/tags/tlpi>tlpi</a>
+<a href=/tags/linux>Linux</a>
+<a href=/tags/note>note</a>
+<a href=/tags/posix>POSIX</a><div><h2 id=前言>前言</h2><p>最近开始阅读<a href=https://book.douban.com/subject/25809330/>《Linux/Unix 系统编程手册》</a> 这本书，重新系统的学习一下 linux 系统编程方面的知识。</p><p>在阅读完第一章《历史和标准》以后，对于很多标准名词都见过，但是对于他们之间的发展历程很是模糊，通读这部分内容后豁然开朗，尤其本章最后总结部分，对于前面的概况的既简练还没有遗漏。不禁在书上用笔写下：<strong>“牛 B 总结，一气呵成”</strong>。</p><p>方便以后不去翻书回顾，特花点时间摘录至此。</p><a href=https://vimiix.com/posts/2018-05-01-linux-history/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-04-02-python-websocket/>[python]记录关于websocket的原理和使用</a></h1><b><time>2018.04.02 19:20</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/websocket>websocket</a>
+<a href=/tags/note>note</a>
+<a href=/tags/django>django</a><div><h2 id=什么是-websocket>什么是 websocket</h2><p>WebSocket 是一种在单个 TCP 连接上进行<a href=https://zh.wikipedia.org/wiki/%E5%85%A8%E9%9B%99%E5%B7%A5>全双工</a>通讯的协议。WebSocket 使得客户端和服务器之间的数据交换变得更加简单，允许服务端主动向客户端推送数据。在 WebSocket API 中，浏览器和服务器只需要完成一次握手，两者之间就直接可以创建<strong>持久性</strong>的连接，并进行双向数据传输。</p><p>Websocket 是一个持久化的协议，相对于 HTTP 这种非持久的协议来说的。</p><p>举个例子：</p><blockquote><p>HTTP 的生命周期通过 Request 来界定，也就是发送一次 Request，收到一次 Response ，那么在 HTTP1.0 中，这次 HTTP 请求就结束了</p><p>在 HTTP1.1 中进行了改进，使得有一个 keep-alive，也就是说，在一个 HTTP 连接中，可以发送多个 Request，接收多个 Response。但是请记住 Request = Response ， 在 HTTP 中永远是这样，也就是说一个 request 只能有一个 response。而且这个 response 也是被动的，不能主动发起。</p><p>而对于 websocket 来说，在 HTTP 的握手基础上建立起链接，服务器端可以主动的向客户端发送数据。</p></blockquote><a href=https://vimiix.com/posts/2018-04-02-python-websocket/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-03-18-git-push-hangs-on-chunked/>[笔记]git push卡主不动问题记录：Git push hangs on POST git-receive-pack</a></h1><b><time>2018.03.18 18:20</time></b>
+<a href=/tags/git>git</a>
+<a href=/tags/note>note</a>
+<a href=/tags/solution>solution</a><div><h2 id=问题>问题</h2><p>昨天完成了<a href=https://github.com/pythonzhichan/django-beginners-guide/blob/master/ClassBasedViews.md>《一个完整的 Django 入门指南》 - 第 6 部分</a>的翻译工作，本地在翻译的过程中，存储了十几张原文中的 <code>png</code> 格式的插图。</p><p>在 <code>git push</code> 提交 <strong>github</strong> 仓库的时候，终端显示写成功 100%, 但是一直卡在了下面这里没有推送成功：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Counting objects: 21, <span style=color:#66d9ef>done</span>.
+Delta compression using up to <span style=color:#ae81ff>8</span> threads.
+Compressing objects: 100% <span style=color:#f92672>(</span>21/21<span style=color:#f92672>)</span>, <span style=color:#66d9ef>done</span>.
+Writing objects: 100% <span style=color:#f92672>(</span>21/21<span style=color:#f92672>)</span>, 1018.52 KiB | 17.87 MiB/s, <span style=color:#66d9ef>done</span>.
+Total <span style=color:#ae81ff>21</span> <span style=color:#f92672>(</span>delta 7<span style=color:#f92672>)</span>, reused <span style=color:#ae81ff>0</span> <span style=color:#f92672>(</span>delta 0<span style=color:#f92672>)</span>
+<span style=color:#75715e># 卡在这里</span>
+</code></pre></div><a href=https://vimiix.com/posts/2018-03-18-git-push-hangs-on-chunked/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-03-11-manage-your-virtualenv-with-pipenv/>[Python]使用pipenv管理python虚拟环境</a></h1><b><time>2018.03.11 18:20</time></b>
+<a href=/tags/pipenv>pipenv</a>
+<a href=/tags/autoenv>autoenv</a>
+<a href=/tags/python>Python</a>
+<a href=/tags/virtualenv>virtualenv</a><div><h2 id=前言>前言</h2><p>近期的项目中，我开始尝试着从 virtualenv 管理 python 虚拟环境，切换到用 pipenv 来管理。</p><p>经过一段时间的使用，着实觉得 pipenv 使用的更加顺手，更加的便捷。这当然也延续了 <a href=https://www.kennethreitz.org/>Kenneth</a> 大神一贯的项目作风&ndash; <strong><code>For Humans</code></strong> 。</p><p>再配合上 <strong><code>autoenv</code></strong>（自动激活虚拟环境的工具），更加的 Perfect！</p><a href=https://vimiix.com/posts/2018-03-11-manage-your-virtualenv-with-pipenv/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-02-26-first-practise-of-uvicorn/>[Python]Uvicorn初体验</a></h1><b><time>2018.02.26 12:20</time></b>
+<a href=/tags/uvicorn>uvicorn</a>
+<a href=/tags/web>web</a>
+<a href=/tags/python>Python</a>
+<a href=/tags/asyncio>asyncio</a><div><h2 id=uvicorn-简介>uvicorn 简介</h2><p><code>uvicorn</code>是一个基于<code>asyncio</code>开发的一个轻量级高效的 web 服务器框架。</p><blockquote><p>官网：<a href=http://www.uvicorn.org>http://www.uvicorn.org</a></p></blockquote><p><code>uvicorn</code> 设计的初衷是想要实现两个目标：</p><ul><li>使用<a href=https://github.com/MagicStack/uvloop><code>uvloop</code></a>和<a href=https://github.com/MagicStack/httptools><code>httptools</code></a>实现一个极速的<code>asyncio</code>服务器。</li><li>实现一个基于<a href=http://channels.readthedocs.io/en/stable/asgi.html><code>ASGI(异步服务器网关接口)</code></a>的最小的应用程序接口。</li></ul><p>它目前支持<code>http</code>，<code>websockets</code>，<code>Pub/Sub</code> 广播，并且可以扩展到其他协议和消息类型。</p><a href=https://vimiix.com/posts/2018-02-26-first-practise-of-uvicorn/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-02-07-dp-note/>[算法笔记]动态规划之最长公共子串和最长公共子序列</a></h1><b><time>2018.02.07 12:27</time></b>
+<a href=/tags/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92>动态规划</a>
+<a href=/tags/algorithms>algorithms</a>
+<a href=/tags/python>Python</a><div><blockquote><p>本文是《算法图解》笔记</p></blockquote><h2 id=应用场景>应用场景</h2><p>一切脱离实际应用场景的算法都是耍流氓！</p><ul><li>生物学家根据最长公共序列来确定 DNA 链的相似性，进而判断两种动物或疾病有多相似。最长公共序列还被用来寻找多发性硬化症治疗方案。</li><li>源代码管理中，<code>git diff</code>指令，可以查找出编辑前后文件的差异，这是基于动态规划实现的。</li><li>编辑距离（<code>levenshtein distance</code>），判断字符串的相似程度，也是基于动态规划计算。可以通过这个技术从拼写检查到判断用户上传的资料是否是盗版。（<em>这样看来，我猜想大学论文查重应该也是基于动态规划算法:P</em>）</li><li>Microsoft Word 等软件中具有断字功能，使用动态规划可以确定什么地方断字以确保行长一致。</li></ul><a href=https://vimiix.com/posts/2018-02-07-dp-note/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-01-31-err-403-in-ci/>[Jenkins]Error:403 No valid crumb was included in the request</a></h1><b><time>2018.01.31 12:27</time></b>
+<a href=/tags/ci>CI</a>
+<a href=/tags/error>ERROR</a>
+<a href=/tags/jenkins>jenkins</a>
+<a href=/tags/csrf>csrf</a><div><h1 id=错误备忘>错误备忘</h1><p>配置 <code>jenkins</code> 的时候，一直报这个错，是因为 <code>jenkins</code> 默认安全设置里面开启了 <code>防止款站点请求伪造</code>。</p><a href=https://vimiix.com/posts/2018-01-31-err-403-in-ci/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-01-30-how-to-connect-mysql-and-oracle/>[Python]python如何方便的操作MySQL和Oracle数据库</a></h1><b><time>2018.01.30 01:27</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/pymysql>pymysql</a>
+<a href=/tags/cx_oracle>cx_Oracle</a><div><h1 id=环境>环境</h1><ul><li>python3 <a href=https://www.python.org/downloads/release/python-364/>官方网站下载</a></li><li>pymysql <code>pip3 install pymysql</code></li><li>cx_Oracle <code>pip3 install cx-Oracle</code></li></ul><a href=https://vimiix.com/posts/2018-01-30-how-to-connect-mysql-and-oracle/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-01-21-blockchain-and-token/>[区块链]区块链和通证的应用与技术路径</a></h1><b><time>2018.01.21 22:37</time></b>
+<a href=/tags/blockchain>blockchain</a>
+<a href=/tags/note>note</a>
+<a href=/tags/%E9%80%9A%E8%AF%81%E7%BB%8F%E6%B5%8E>通证经济</a><div><blockquote><p>前言：1 月 21 日参加 CSDN 举办的区块链沙龙，以下是来自 CSDN 副总裁孟岩的 Slide 笔记。表达上使用了个人的理解，如果有哪里理解错误，还请在评论中指正。</p></blockquote><h2 id=产业形势和发展方向>产业形势和发展方向</h2><h3 id=三大派别>三大派别</h3><p>目前国内的区块链产业形势分为 <code>币</code>，<code>证</code>，<code>链</code>三个派别，这三个群体需要分开来评判看待。</p><p>最为我们大众所熟知的一些企业，或者说是一些数字货币，大都属于<code>币</code>圈公司。这一类公司可以用六个字总结：“只造势，不做事”。各种铺天盖地的宣传，为的是制造其发行的数字货币的影响力，而并没有实际的实体价值依托。</p><p>因为我们大家日常接触或听到的大部分都是币圈的公司信息，所以常常会有人说：“区块链这个技术没有实际的落地应用，只是个噱头”。其实不然，国外其实有很多的公司在做着基于区块链技术的应用，只是因为这一类的公司不会去发行数字货币，也不发通证（通证的概念后面会提到），只是在借助区块链技术在做着一些实际的应用产品，所以往往不被人所了解。这一类的公司就属于<code>链圈</code>公司范畴。链圈的公司会有很多基于区块链技术的落地应用，但是因为每个产品都是独立的，影响力是很有限的，所以无法对全球产生<code>革命</code>性的改变。</p><p>还有第三个派别就是&mdash;“通证派”。首先理解一下通证的定义，通证，英文的名字是<code>Token</code>，还有的人译作“代币”，但是这个真不是一个很雅的翻译，我更倾向于称之为“通证”。通证的核心是<code>通</code>，流通，通证是一种价值转移的载体形式。</p><p>通证有广义的通证和狭义的通证之分，狭义的通证包含但不限于：身份证，房产证，信用卡，用户积分，通行证，门票，购物卡，发票，股票，债券等等&mldr;广义的通证是在狭义的通证基础上多一个<code>数字加密货币</code>。</p><a href=https://vimiix.com/posts/2018-01-21-blockchain-and-token/>Read more...</a></div></article><article><h1><a href=https://vimiix.com/posts/2018-01-08-autoreload-code-in-python/>[python]web框架中的代码自动重载怎么实现</a></h1><b><time>2018.01.08 22:37</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/reload>reload</a>
+<a href=/tags/flask>Flask</a>
+<a href=/tags/django>Django</a>
+<a href=/tags/uwsgi>uWSGI</a><div><p>在开发和调试 wsgi 应用程序时，有很多方法可以自动重新加载代码。例如，如果你使用的是<code>werkzeug</code>，则只需要传<code>use_reloader</code>参数即可：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>run_sumple(<span style=color:#e6db74>&#39;127.0.0.1&#39;</span>, <span style=color:#ae81ff>5000</span>, app, use_reloader<span style=color:#f92672>=</span>True)
+</code></pre></div><p>对于 Flask,实际上在内部使用 werkzeug，所以你需要设置 debug = true：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>app<span style=color:#f92672>.</span>run(debug<span style=color:#f92672>=</span>True)
+</code></pre></div><p>django 会在你修改任何代码的时候自动为你重新加载：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>python manage<span style=color:#f92672>.</span>py runserver
+</code></pre></div><p>所有这些例子在本地开发的时候都非常有用，但是，建议不要在实际生产中使用。</p><p>作为学习，可以一起来看一下，python 是如何让代码自动地重新加载的？</p><a href=https://vimiix.com/posts/2018-01-08-autoreload-code-in-python/>Read more...</a></div></article><div><a href=/page/3/>Previous Page</a>
+4 of 8
+<a href=/page/5/>Next Page</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

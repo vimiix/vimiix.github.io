@@ -1,0 +1,20 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Linux-git branch用法(查看、新建、删除、重命名)</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Linux-git branch用法(查看、新建、删除、重命名)</h1><b><time>2017.03.08 10:41</time></b>
+<a href=/tags/linux>Linux</a>
+<a href=/tags/git>git</a>
+<a href=/tags/branch>branch</a><div><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/KQLlUb.jpg alt></figure></p><h2 id=查看分支-git-branch--r-a>查看分支 git branch [-r|-a]:</h2><p>1、git branch 查看本地所有分支</p><p>2、git branch -r 查看远程所有分支</p><p>3、git branch -a 查看本地和远程所有分支</p><h2 id=新建分支-git-branch--f-branchname>新建分支 git branch [-f] ：</h2><p>1、git branch 新建分支，但不切换到新分支</p><p>2、git checkout -b 新建并切换到新分支</p><h2 id=删除分支-git-branch--d-d-branchname>删除分支 git branch (-d|-D) :</h2><p>1、git branch -d 删除本地分支</p><p>2、git branch -d -r 删除远程分支，删除后，还要推送（ git push origin : ）到服务器才可以。</p><h2 id=重命名分支-git-branch--m-m-oldbranch-newbranch>重命名分支 git branch (-m|-M) :</h2><p>使用-m 表示强制重命名。</p><p>如果需要重命名远程分支，建议的做法是：</p><p>1、删除远程待修改的分支</p><p>2、push 本地新分支名到远程</p><h2 id=it-中-参数解释>it 中 参数解释</h2><h3 id=-d>-d</h3><pre><code>--delete:删除
+</code></pre><h3 id=-d-1>-D</h3><pre><code>--delete --force 强制删除的快捷方式
+</code></pre><h3 id=-f>-f</h3><pre><code>--force:强制
+</code></pre><h3 id=-m>-m</h3><pre><code>--move:移动或重命名
+</code></pre><h3 id=-m-1>-M</h3><pre><code>--move --force 强制移动或重命名的快捷方式
+</code></pre><h3 id=-r>-r</h3><pre><code>--remote：远程
+</code></pre><h3 id=-a>-a</h3><pre><code>--all:所有
+</code></pre></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

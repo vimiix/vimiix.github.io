@@ -1,0 +1,57 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Golang如何确保一个类型实现了某个interface</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Golang如何确保一个类型实现了某个interface</h1><b><time>2019.08.29 16:22</time></b>
+<a href=/tags/note>note</a>
+<a href=/tags/interface>interface</a>
+<a href=/tags/golang>golang</a><div><p>在 golang 中，接口（interface）代表一种『协议』存在，它是一个声明了多个方法的集合。</p><p>接口是被隐式实现的，也就是说，我们在开发中定义一个类型（type）的时候，不需要声明这个类型实现了哪个接口。在使用的时候往往通过断言来的 ok-idom 来进行类型判断该类型是否实现了目标接口，放置调用方法失败抛出 panic：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>if</span> <span style=color:#a6e22e>value</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>AType</span>.(<span style=color:#a6e22e>BInterface</span>) {
+  <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;ok&#34;</span>)
+} <span style=color:#66d9ef>else</span> {
+  <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;no&#34;</span>)
+}
+</code></pre></div><p>如果断言失败，那么 ok 的值将会是 false,但是如果断言成功 ok 的值将会是 true,同时 value 将会得到所期待的正确的值。</p><p>但是，在某些情况下，我们可能希望明确地检查接口中哪些方法没有被实现。最好的方法就是借助编译器地检查功能。</p><p>假设定义了一个 <code>Programmer</code> 接口，一个 <code>Human</code> 类型：</p><p><a href=https://play.golang.org/p/Az2TON0ZDXD>&#187;> 试一下</a></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Programmer</span> <span style=color:#66d9ef>interface</span> {
+  <span style=color:#a6e22e>Code</span>() <span style=color:#66d9ef>string</span>
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Human</span> <span style=color:#66d9ef>struct</span> {}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {}
+</code></pre></div><p>这段代码没有做任何操作，可以正常地执行。</p><p>假设我们希望 <code>Human</code> 类型实现了 <code>Programmer</code> 接口，可以在代码中定义一个 <code>_</code> （下划线表示忽略这个变量）变量来实现检测效果</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Programmer</span> <span style=color:#66d9ef>interface</span> {
+  <span style=color:#a6e22e>Code</span>() <span style=color:#66d9ef>string</span>
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Human</span> <span style=color:#66d9ef>struct</span> {}
+
+<span style=color:#75715e>// 利用编译器检查接口实现
+</span><span style=color:#75715e></span><span style=color:#66d9ef>var</span> <span style=color:#a6e22e>_</span> <span style=color:#a6e22e>Programmer</span> = (<span style=color:#f92672>*</span><span style=color:#a6e22e>Human</span>)(<span style=color:#66d9ef>nil</span>)
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {}
+</code></pre></div><p>当再次执行这段代码地时候，就会报出如下编译错误：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>./prog.go:10:5: cannot use <span style=color:#f92672>(</span>*Human<span style=color:#f92672>)(</span>nil<span style=color:#f92672>)</span> <span style=color:#f92672>(</span>type *Human<span style=color:#f92672>)</span> as type Programmer in assignment:
+	*Human does not implement Programmer <span style=color:#f92672>(</span>missing Code method<span style=color:#f92672>)</span>
+</code></pre></div><p>这个时候，编译器很友好地将我们在 <code>Human</code> 类型中缺少地方法显示了出来。避免上线后出问题。其实，如果是在 Goland 类似有实时提示的 IDE 中开发的话，当这段代码被写完的时候，开发环境就会实时检测出来，甚至都不需要自己编译：</p><p><figure><img src=https://vimiix-blog.oss-cn-qingdao.aliyuncs.com/1567154584416.jpg alt=img></figure></p><p>当我们给 <code>Human</code> 类型实现了对应的方法以后，就不会报错了：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Programmer</span> <span style=color:#66d9ef>interface</span> {
+    <span style=color:#a6e22e>Code</span>() <span style=color:#66d9ef>string</span>
+}
+
+<span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Human</span> <span style=color:#66d9ef>struct</span> {}
+
+<span style=color:#66d9ef>func</span> (<span style=color:#f92672>*</span><span style=color:#a6e22e>Human</span>) <span style=color:#a6e22e>Code</span>() <span style=color:#66d9ef>string</span>{
+    <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;BUG&#34;</span>
+}
+
+<span style=color:#75715e>// here
+</span><span style=color:#75715e></span><span style=color:#66d9ef>var</span> <span style=color:#a6e22e>_</span> <span style=color:#a6e22e>Programmer</span> = (<span style=color:#f92672>*</span><span style=color:#a6e22e>Human</span>)(<span style=color:#66d9ef>nil</span>)
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {}
+</code></pre></div><p><a href=https://play.golang.org/p/S1F-i4Ba15B>&#187;>试一下</a></p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

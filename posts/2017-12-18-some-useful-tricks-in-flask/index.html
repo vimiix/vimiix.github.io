@@ -1,0 +1,63 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>写Flask应用时的一些优雅技巧</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>写Flask应用时的一些优雅技巧</h1><b><time>2017.12.18 18:56</time></b>
+<a href=/tags/python>python</a>
+<a href=/tags/flask>flask</a>
+<a href=/tags/pythonic>pythonic</a>
+<a href=/tags/tricks>tricks</a><div><h2 id=借助find_modulesimport_string优雅地注册蓝图模块>借助<code>find_modules</code>,<code>import_string</code>优雅地注册蓝图模块</h2><p><a href=http://werkzeug.pocoo.org/docs/0.13/utils/#werkzeug.utils.find_modules><code>find_modules</code></a>, <a href=http://werkzeug.pocoo.org/docs/0.13/utils/#werkzeug.utils.import_string><code>import_string</code></a>这两个函数包含在<code>werkzeug.utils</code>工具包中，借助着两个工具函数可以帮助我们在更优雅的给应用注册<code>blueprint</code>模块，尤其是当项目中<code>blueprint</code>模块很多的时候，会节省很多行代码，看起来更加的舒服。</p><h4 id=import_stringimport_name-silentfalse>import_string(import_name, silent=False)</h4><p>import_string 可以通过字符串导出需要导入的模块或对象：</p><p><strong>参数</strong></p><ul><li>import_name：要导入的对象的模块或对象名称</li><li>silent：如果设置为 True，则忽略导入错误，相反则返回 None</li></ul><h4 id=find_modulesimport_path-include_packagesfalse-recursivefalse>find_modules(import_path, include_packages=False, recursive=False)</h4><p>找到一个包下面的所有模块,这对于自动导入所有蓝图模块是非常有用的</p><p><strong>参数</strong></p><ul><li>import_path：包路径</li><li>include_packages：如果设置为 True,会返回包内的子包</li><li>recursive：是否递归搜索子包</li></ul><h4 id=示例代码>示例代码</h4><p><em>blueprints/example.py</em></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># 模块部分</span>
+<span style=color:#75715e># create  blueprint :)</span>
+bp <span style=color:#f92672>=</span> Blueprint(<span style=color:#e6db74>&#39;bp_name&#39;</span>, __name__)
+
+</code></pre></div><p><em>app.py</em></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e># 注册部分</span>
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>register_blueprints</span>(app):
+    <span style=color:#e6db74>&#34;&#34;&#34;Register all blueprint modules&#34;&#34;&#34;</span>
+    <span style=color:#66d9ef>for</span> name <span style=color:#f92672>in</span> find_modules(<span style=color:#e6db74>&#39;blueprints&#39;</span>):
+        module <span style=color:#f92672>=</span> import_string(name)
+        <span style=color:#66d9ef>if</span> hasattr(module, <span style=color:#e6db74>&#39;bp&#39;</span>):
+            app<span style=color:#f92672>.</span>register_blueprint(module<span style=color:#f92672>.</span>bp)
+    <span style=color:#66d9ef>return</span> None
+</code></pre></div><h2 id=使用-flask-中的-flash-闪存传递反馈信息>使用 Flask 中的 flash 闪存传递反馈信息</h2><p>flask 的闪存系统主要是用来想用户提供反馈信息。内容一般是对用户上一次请求中的操作给出反馈。反馈信息存储在服务端，用户可以在本次（且只能在本次）请求中访问上一次的反馈信息，当用户获得了这些反馈信息以后，就会被服务端删除。Flask 为 jinja2 开放了一个<a href=http://flask.pocoo.org/docs/0.12/api/#flask.get_flashed_messages><code>get_flashed_messages(with_categories=False, category_filter=[])</code></a>函数来获取上一次的闪存信息,这个函数可以<strong>直接在模板中使用</strong>。</p><p><strong>参数</strong></p><ul><li>with_categories：True 返回元祖，False 返回消息本身</li><li>category_filter：过滤分类关键词（字符串或列表）</li></ul><p>后台当请求结束准备返回的时候，使用<a href=http://flask.pocoo.org/docs/0.12/api/#flask.flash><code>flash(message, category='message')</code></a>函数来为下次请求保存一条反馈信息。</p><p><strong>参数</strong></p><ul><li>message：信息文本</li><li>category：自定义分类关键词</li></ul><h4 id=官方示例代码httpflaskpocooorgdocs012patternsflashingmessage-flashing-pattern><a href=http://flask.pocoo.org/docs/0.12/patterns/flashing/#message-flashing-pattern>官方示例代码</a></h4><h2 id=使用-flask-中内置日志系统发送错误日志邮件>使用 Flask 中内置日志系统发送错误日志邮件</h2><p>Flask 使用 python 内置的日志系统，它实际上可以发送错误邮件。</p><h4 id=示例代码-1>示例代码：</h4><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>ADMINS <span style=color:#f92672>=</span> [<span style=color:#e6db74>&#39;yourname@example.com&#39;</span>]
+<span style=color:#66d9ef>if</span> <span style=color:#f92672>not</span> app<span style=color:#f92672>.</span>debug:
+    <span style=color:#f92672>import</span> logging
+    <span style=color:#f92672>from</span> logging.handlers <span style=color:#f92672>import</span> SMTPHandler
+    mail_handler <span style=color:#f92672>=</span> SMTPHandler(<span style=color:#e6db74>&#39;127.0.0.1&#39;</span>, <span style=color:#75715e>#邮件服务器</span>
+                               <span style=color:#e6db74>&#39;server-error@example.com&#39;</span>, <span style=color:#75715e>#发件人</span>
+                               ADMINS, <span style=color:#75715e>#收件人</span>
+                               <span style=color:#e6db74>&#39;YourApplication Failed&#39;</span>) <span style=color:#75715e>#邮件主题</span>
+    mail_handler<span style=color:#f92672>.</span>setLevel(logging<span style=color:#f92672>.</span>ERROR)
+    app<span style=color:#f92672>.</span>logger<span style=color:#f92672>.</span>addHandler(mail_handler)
+</code></pre></div><p>还可以更进一步，将错误日志格式化，方便阅读：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> logging <span style=color:#f92672>import</span> Formatter
+mail_handler<span style=color:#f92672>.</span>setFormatter(Formatter(<span style=color:#e6db74>&#39;&#39;&#39;
+</span><span style=color:#e6db74>Message type:       </span><span style=color:#e6db74>%(levelname)s</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Location:           </span><span style=color:#e6db74>%(pathname)s</span><span style=color:#e6db74>:</span><span style=color:#e6db74>%(lineno)d</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Module:             </span><span style=color:#e6db74>%(module)s</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Function:           </span><span style=color:#e6db74>%(funcName)s</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Time:               </span><span style=color:#e6db74>%(asctime)s</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>Message:
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74></span><span style=color:#e6db74>%(message)s</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>&#39;&#39;&#39;</span>))
+</code></pre></div><p>关于 SMTPHandler 的介绍，访问<a href=https://docs.python.org/dev/library/logging.handlers.html#smtphandler>官网 SMTPHandler 手册</a></p><h2 id=提前中断请求返回错误码并定制相应错误页面>提前中断请求返回错误码，并定制相应错误页面</h2><p>在 Flask 中我们能够用<code>redirect()</code>函数重定向用户到其它地方。还能够用 <a href=http://flask.pocoo.org/docs/0.12/api/#flask.abort><code>abort()</code></a> 函数提前中断一个请求并带有一个错误代码。</p><h4 id=示例代码-2>示例代码</h4><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> flask <span style=color:#f92672>import</span> abort, redirect, url_for
+
+<span style=color:#a6e22e>@app.route</span>(<span style=color:#e6db74>&#39;/&#39;</span>)
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>index</span>():
+    <span style=color:#66d9ef>return</span> redirect(url_for(<span style=color:#e6db74>&#39;login&#39;</span>))
+
+<span style=color:#a6e22e>@app.route</span>(<span style=color:#e6db74>&#39;/login&#39;</span>)
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>login</span>():
+    abort(<span style=color:#ae81ff>404</span>)
+    this_is_never_executed() <span style=color:#75715e># 永远不会被执行到</span>
+</code></pre></div><p>配合 Flask 提供的 <a href=http://flask.pocoo.org/docs/0.12/patterns/errorpages/#error-handlers><code>errorhandler()</code></a> 装饰器定制自己的相应错误界面</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> flask <span style=color:#f92672>import</span> render_template
+
+<span style=color:#a6e22e>@app.errorhandler</span>(<span style=color:#ae81ff>404</span>)
+<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>page_not_found</span>(error):
+    <span style=color:#66d9ef>return</span> render_template(<span style=color:#e6db74>&#39;page_not_found.html&#39;</span>), <span style=color:#ae81ff>404</span>
+</code></pre></div><p>注意到 <code>404</code> 是在 <code>render_template()</code> 调用之后。告诉 Flask 该页的错误代码应是 <code>404</code> ， 即没有找到。``</p><blockquote><p>原文链接：<a href=http://vimiix.com/post/2017/12/18/some-useful-tricks-in-flask/>http://vimiix.com/post/2017/12/18/some-useful-tricks-in-flask/</a></p></blockquote></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

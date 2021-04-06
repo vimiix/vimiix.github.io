@@ -1,0 +1,35 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Python|使用Anaconda完成Python多环境配置</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends><b>友链</b></a>.
+<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Python|使用Anaconda完成Python多环境配置</h1><b><time>2017.06.01 09:53</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/anaconda>Anaconda</a><div><p>今天是六月一号，国际儿童节，首先祝生活中的每一个宝宝（<em>只要你觉得自己是宝宝，那你就是</em>）Happy Children&rsquo;s Day!!!</p><p>OK,言归正传，昨天开始学习 Django 开发，个人认为，作为主流趋势，我倾向于用 pyhton3.x 开发，因为 web 开发有别与其他，对于实时响应要求相对较高，python3 可以更好的优化。在刚刚结束的 Pycon2017 上，来自 Instagram 的 Lisa Guo 和 Hui Ding（两位华裔）分别介绍了<a href="https://www.youtube.com/watch?v=66XoCk79kjM">Instagram 为何选择 py3 以及整个网站迁移 py3 的过程</a>。虽然还不是很具体了解其中的差别，但一个体量不小的公司做出了向 python3 迁移的举动，一定说明 python3 在 web 开发上有肯定的优势。</p><p>诚然，对于 devops 来说，使用 python2 的确是比 python3 更方便，虽然很多的主流框架还不支持 python3，但我觉得，这只是个时间问题。</p><p>因为我电脑上装的是 python2.7 版本，但学习 Django,又想用 py3,所以就面临了多版本开发的情况。经过一番搜索安装学习，我放弃了<a href=https://virtualenv.pypa.io/en/stable/>virtualenv</a>，选择了用<a href=https://www.continuum.io/downloads>Anaconda</a>，莫名的感觉这个略屌。</p><blockquote><p>windows 下用 python 非常的麻烦。所以想要一个包管理的东西，那么 Anaconda 是非常好的一个管理工具，无论你是想用 python2.7 还是 python3.4。</p></blockquote><p>这句话是从网上摘的，主要是要强调一点:</p><blockquote><p>对于 Anaconda 来说，任何模块都看作是一个包，甚至 python，甚至 anaconda 自己。</p></blockquote><p><strong>接下来就开始 Anaconda 的发现之旅！</strong></p><h3 id=0>#0</h3><p>首先需要下载 Anaconda,可以去<a href=https://www.continuum.io/downloads>官网</a>选择你对应的系统版本下载。官网服务器在国外，如果下载速度太慢，清华镜像站也提供了下载地址(<a href=https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/>https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/</a>)，至于 anaconda 的版本选择 2 还是 3，网上一致的说法是&mdash;-<strong>随便</strong>，因为他是一个多版本管理工具，后面会创建不同 python 版本的分支。</p><h3 id=1>#1</h3><p>然后就是安装，下载好以后双击开始安装，基本都直接选择下一步，文件安装路径可以自行选择一下。然后就是等待完成。</p><h3 id=2>#2</h3><p>安装结束以后，打开<code>cmd</code>，输入<code>conda --version</code>查看版本号，如果显示出版本号，证明环境安装成功了。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/conda-version.png alt></figure></p><h3 id=3>#3</h3><p>开始创建 python 多版本环境，这里先理解一个简单的概念，其实一个 python 环境，就是使用命令调用当前目录下的 python 编译器。不同的版本，可以理解为在不同文件夹下的不同 python 版本的编译器。没有创建分支环境时，anaconda 有个默认的分支<code>root</code>，这里不是根的意思，这个 root 指得就是系统环境的 python 环境。</p><p><strong>创建一个除了 root 分支之外的 2.7.× 的 python 环境</strong></p><pre><code>	# 创建一个名为python27的环境，指定Python版本是2.7（不用管是2.7.x，conda会为我们自动寻找2.7.x中的最新版本）
+	conda create --name python27 python=2.7
+</code></pre><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/anaconda.png alt></figure></p><p>等待自动安装完成，到对应的目录下<code>（[Anaconda的安装目录]\env)</code>查看，自动生成一个 python27 的文件夹，就说明安装好了一个 python2.7 的环境了。</p><p>同理，在创建一个 python3.4 的环境</p><pre><code>	conda create --name python34 python=3.4
+</code></pre><p>再看目录，自动生成 python34 文件夹，那么就成功安装了两个版本的 python 环境。</p><p><strong>查看当前版本分支</strong></p><pre><code>	conda info -e
+</code></pre><p>在这里可以看到你所在的 python 环境分支（分支前面带个*号），以及已安装的所有版本分支。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/anaconda-info.png alt></figure></p><p><strong>切换到需要的 python 版本分支</strong></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#75715e>#window系统</span>
+	activate pyhton27
+
+	<span style=color:#75715e>#linux,OS X系统</span>
+	source activate python27
+</code></pre></div><p>window 下直接在 cmd 里输入<code>activate python27</code>就可以切换到 python2.7 版本的环境下，终端在文件路径前多了一个<code>(python27)</code>,就表示切换成功了。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/anaconda-activate.png alt></figure></p><p>进入以后就是和系统默认隔离的一个 python 环境，可以在这个环境里面肆意的造了，想装什么包，就装什么包，方法类似<code>pip</code></p><pre><code class=language-Pyhton data-lang=Pyhton>	#查找beautifulsoup4的包
+	conda search beautifulsoup4
+
+	#为python34安装beautifulsoup
+	#NOTE: You must tell conda the name of the environment (--name bunnies) OR it will install in the current environment.你必须告诉conda你要安装包的环境的名称，不然会安装在当前环境下。我这里的环境就是python34
+	conda install [--name python34] beautifulsoup4
+
+	#查看你安装的包
+	conda list
+</code></pre><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/conda-install.png alt></figure></p><p><strong>退出当前 python 分支</strong></p><pre><code>	#windows
+	deactivate
+
+	#linux, OS X
+	source deactivate
+</code></pre><p>我的 windows 系统，在当前环境下，输入<code>deactivate</code>，就退出了。</p><h6 id=更多>更多</h6><p>更多 conda 的指令，需查阅<a href=https://conda.io/docs/announcements.html>官方手册</a>。</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>
