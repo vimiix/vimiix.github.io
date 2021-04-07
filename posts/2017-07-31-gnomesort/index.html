@@ -7,7 +7,7 @@
 <a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>[算法笔记]侏儒排序算法实现和复杂度分析</h1><b><time>2017.07.31 15:58</time></b>
 <a href=/%20/tags/algorithms>algorithms</a>
 <a href=/%20/tags/python>Python</a>
-| <a class=disqus-comment-count href=https://www.vimiix.com/posts/2017-07-31-gnomesort/#disqus_thread></a><div><h1 id=侏儒排序>侏儒排序</h1><h3 id=介绍>介绍</h3><p>侏儒排序是由 Hamid Sarbazi-Azad 在 2000 年提出的，也叫愚人排序法（Stupid sort）。这种排序算法一种简单的复杂度为<code>平方级</code>的排序算法，一般实际生产中不会用到。</p><h3 id=python-代码>Python 代码</h3><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>gnomesort</span>(seq):
+| <a class=disqus-comment-count href=/posts/2017-07-31-gnomesort/#disqus_thread></a><div><h1 id=侏儒排序>侏儒排序</h1><h3 id=介绍>介绍</h3><p>侏儒排序是由 Hamid Sarbazi-Azad 在 2000 年提出的，也叫愚人排序法（Stupid sort）。这种排序算法一种简单的复杂度为<code>平方级</code>的排序算法，一般实际生产中不会用到。</p><h3 id=python-代码>Python 代码</h3><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>gnomesort</span>(seq):
 	  i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>
 	  <span style=color:#66d9ef>while</span> i <span style=color:#f92672>&lt;</span> len(seq):
 	    <span style=color:#66d9ef>if</span> i<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>or</span> seq[i<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>]<span style=color:#f92672>&lt;=</span>seq[i]:

@@ -9,7 +9,7 @@
 <a href=/%20/tags/video>video</a>
 <a href=/%20/tags/cdn>CDN</a>
 <a href=/%20/tags/%E5%8F%88%E6%8B%8D%E4%BA%91>又拍云</a>
-| <a class=disqus-comment-count href=https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/#disqus_thread></a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>pip install upyun
+| <a class=disqus-comment-count href=/posts/2019-01-30-get-video-duration-by-upyun-sdk/#disqus_thread></a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>pip install upyun
 </code></pre></div><p>（官方代码开源地址：<a href=https://github.com/upyun/python-sdk/>https://github.com/upyun/python-sdk/</a> )</p><h3 id=继承官方类编写需求代码>继承官方类，编写需求代码</h3><p>官方的 SDK 中只提供了一些基础的方法，可以在源码的依赖文件中看到，只依赖 <code>requests</code> 一个包，所以，官方库其实是实现了对网络交互的封装，没有实际的业务功能，真正又拍云 CDN 提供的服务，需要自己通过这个 SDK 发起 api 请求来获取。</p><p>既然这样，那就继承官方提供的 SDK，增加自己需要的方法：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> upyun <span style=color:#f92672>import</span> UpYun
 <span style=color:#f92672>from</span> config <span style=color:#f92672>import</span> BUCKET, USER, PASSWORD
 

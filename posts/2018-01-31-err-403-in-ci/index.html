@@ -9,7 +9,7 @@
 <a href=/%20/tags/error>ERROR</a>
 <a href=/%20/tags/jenkins>jenkins</a>
 <a href=/%20/tags/csrf>csrf</a>
-| <a class=disqus-comment-count href=https://www.vimiix.com/posts/2018-01-31-err-403-in-ci/#disqus_thread></a><div><h1 id=错误备忘>错误备忘</h1><p>配置 <code>jenkins</code> 的时候，一直报这个错，是因为 <code>jenkins</code> 默认安全设置里面开启了 <code>防止款站点请求伪造</code>。</p><h3 id=方法>方法：</h3><blockquote><p>取消勾选这一项，就可以成功集成了</p></blockquote><p>位置： <code>Jenkins > 全局安全配置 > CSRF Protection</code></p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/VJvLEn.jpg alt></figure></p><p>以前配置的时候都会上来先关掉这个，今天忘记了，一直报标题的错误。特记录下来，防止自己以后再忘记。</p><h1 id=附让-jenkins-以-root-权限执行-shell-命令>附：让 jenkins 以 root 权限执行 shell 命令</h1><ol><li>打开此脚本（使用 VIM 或其他编辑器）：</li></ol><pre><code>vim /etc/sysconfig/jenkins
+| <a class=disqus-comment-count href=/posts/2018-01-31-err-403-in-ci/#disqus_thread></a><div><h1 id=错误备忘>错误备忘</h1><p>配置 <code>jenkins</code> 的时候，一直报这个错，是因为 <code>jenkins</code> 默认安全设置里面开启了 <code>防止款站点请求伪造</code>。</p><h3 id=方法>方法：</h3><blockquote><p>取消勾选这一项，就可以成功集成了</p></blockquote><p>位置： <code>Jenkins > 全局安全配置 > CSRF Protection</code></p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/VJvLEn.jpg alt></figure></p><p>以前配置的时候都会上来先关掉这个，今天忘记了，一直报标题的错误。特记录下来，防止自己以后再忘记。</p><h1 id=附让-jenkins-以-root-权限执行-shell-命令>附：让 jenkins 以 root 权限执行 shell 命令</h1><ol><li>打开此脚本（使用 VIM 或其他编辑器）：</li></ol><pre><code>vim /etc/sysconfig/jenkins
 </code></pre><ol start=2><li>找到 <code>$JENKINS_USER并更改为“root”</code>：</li></ol><pre><code>$JENKINS_USER=&quot;root&quot;
 </code></pre><ol start=3><li>然后更改 Jenkins 主页，webroot 和日志的所有权：</li></ol><pre><code>chown -R root:root /var/lib/jenkins
 chown -R root:root /var/cache/jenkins

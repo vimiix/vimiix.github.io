@@ -7,7 +7,7 @@
 <a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>[算法笔记]使用L形砖拼接国际象棋棋盘</h1><b><time>2017.08.01 19:54</time></b>
 <a href=/%20/tags/algorithms>algorithms</a>
 <a href=/%20/tags/python>Python</a>
-| <a class=disqus-comment-count href=https://www.vimiix.com/posts/2017-08-01-cover-board-game/#disqus_thread></a><div><h2 id=递归解决棋盘拼接问题>递归解决棋盘拼接问题</h2><h3 id=题目介绍>题目介绍</h3><p>如图所示，图中有一块角上缺了一个方格的国际象棋棋盘，现在我们想用 L 形砖拼接出这样一块棋盘。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/chess-board.jpg alt></figure></p><h3 id=python-代码>Python 代码</h3><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>
+| <a class=disqus-comment-count href=/posts/2017-08-01-cover-board-game/#disqus_thread></a><div><h2 id=递归解决棋盘拼接问题>递归解决棋盘拼接问题</h2><h3 id=题目介绍>题目介绍</h3><p>如图所示，图中有一块角上缺了一个方格的国际象棋棋盘，现在我们想用 L 形砖拼接出这样一块棋盘。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/chess-board.jpg alt></figure></p><h3 id=python-代码>Python 代码</h3><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>
 	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>cover</span>(board, lab<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>, top<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>, left<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>, side<span style=color:#f92672>=</span>None):
 	  <span style=color:#66d9ef>if</span> side <span style=color:#f92672>is</span> None:
 	    side <span style=color:#f92672>=</span> len(board)
