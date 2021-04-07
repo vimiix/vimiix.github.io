@@ -1,0 +1,95 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Golang的并行模式实践</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Golang的并行模式实践</h1><b><time>2021.04.07 18:15</time></b>
+<a href=/%20/tags/concurrency>concurrency</a>
+<a href=/%20/tags/golang>golang</a>
+<a href=/%20/tags/goroutine>goroutine</a><div><h2 id=goroutine>Goroutine</h2><p>C#、Lua、Python 的用户可能会发现 Go 的 goroutine 和协程之间有很多相似之处，没错，从命名上也可以看出二者具有相似性。</p><p>但二者之间也有些区别：</p><ul><li>goroutine 隐含了并行的特性，一切交给 go 的 runtime 来实现调度，而协程需要应用自己来编写并行代码</li><li>goroutine 通过信道（<code>Channel</code>）进行通信；协程通过 <code>yield</code> 和 <code>next</code>操作进行通信</li></ul><p>一般来说，goroutine 比协程更强大。而且，我们可以很容易地将协程的逻辑移植到 goroutine 来获得更好的并行效果。</p><h2 id=generators>Generators</h2><p>在 python 中，要实现一个生成器，需要通过 <code>yield</code> 生成数据，通过 <code>next</code> 获取数据：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>integers</span>():
+  i <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>
+  <span style=color:#66d9ef>while</span> True:
+    <span style=color:#66d9ef>yield</span> i
+    i<span style=color:#f92672>+=</span><span style=color:#ae81ff>1</span>
+
+integerGenerator <span style=color:#f92672>=</span> integers()
+next(integerGenerator)
+<span style=color:#75715e># 1</span>
+next(integerGenerator)
+<span style=color:#75715e># 2</span>
+next(integerGenerator)
+<span style=color:#75715e># 3</span>
+</code></pre></div><p>同样的，生成器也可以在 Go 中实现，只是使用了 <code>channel</code> 来代替 <code>yield</code>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>integers</span> () <span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span> {
+    <span style=color:#a6e22e>yield</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>make</span> (<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>);
+    <span style=color:#a6e22e>count</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>;
+    <span style=color:#66d9ef>go</span> <span style=color:#66d9ef>func</span> () {
+        <span style=color:#66d9ef>for</span> {
+            <span style=color:#a6e22e>yield</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>count</span>;
+            <span style=color:#a6e22e>count</span><span style=color:#f92672>++</span>;
+        }
+    } ();
+    <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>yield</span>
+}
+
+<span style=color:#a6e22e>next</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>integers</span>();
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>generateInteger</span> () <span style=color:#66d9ef>int</span> {
+    <span style=color:#66d9ef>return</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>next</span>
+}
+
+<span style=color:#a6e22e>generateInteger</span>()
+<span style=color:#75715e>// 0
+</span><span style=color:#75715e></span><span style=color:#a6e22e>generateInteger</span>()
+<span style=color:#75715e>// 1
+</span><span style=color:#75715e></span><span style=color:#a6e22e>generateInteger</span>()
+<span style=color:#75715e>// 2
+</span></code></pre></div><h2 id=iterators>Iterators</h2><p>go 的 channel 在语法层面就是天然的迭代器。</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>for</span> <span style=color:#a6e22e>x</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>channel</span> {
+    <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>x</span>)
+}
+</code></pre></div><h2 id=futures>Futures</h2><p>先来看一个例子：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>InverseProduct</span> (<span style=color:#a6e22e>a</span> <span style=color:#a6e22e>Matrix</span>, <span style=color:#a6e22e>b</span> <span style=color:#a6e22e>Matrix</span>) {
+    <span style=color:#a6e22e>a_inv</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Inverse</span>(<span style=color:#a6e22e>a</span>);
+    <span style=color:#a6e22e>b_inv</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Inverse</span>(<span style=color:#a6e22e>b</span>);
+    <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>Product</span>(<span style=color:#a6e22e>a_inv</span>, <span style=color:#a6e22e>b_inv</span>);
+}
+</code></pre></div><p>在这个例子中，a 和 b 的求逆矩阵需要先被计算。那么为什么在计算 b 的逆矩阵时，需要等待 a 的逆计算完成呢？显然不必要，这两个求逆运算其实可以并行执行的。如下代码实现了并行计算方式：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>InverseFuture</span> (<span style=color:#a6e22e>a</span> <span style=color:#a6e22e>Matrix</span>) {
+    <span style=color:#a6e22e>future</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>make</span> (<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>Matrix</span>);
+    <span style=color:#66d9ef>go</span> <span style=color:#66d9ef>func</span> () {
+      <span style=color:#a6e22e>future</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>Inverse</span>(<span style=color:#a6e22e>a</span>)
+    }();
+    <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>future</span>;
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>InverseProduct</span> (<span style=color:#a6e22e>a</span> <span style=color:#a6e22e>Matrix</span>, <span style=color:#a6e22e>b</span> <span style=color:#a6e22e>Matrix</span>) {
+    <span style=color:#a6e22e>a_inv_future</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>InverseFuture</span>(<span style=color:#a6e22e>a</span>);
+    <span style=color:#a6e22e>b_inv_future</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>InverseFuture</span>(<span style=color:#a6e22e>b</span>);
+    <span style=color:#a6e22e>a_inv</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>a_inv_future</span>;
+    <span style=color:#a6e22e>b_inv</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>b_inv_future</span>;
+    <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>Product</span>(<span style=color:#a6e22e>a_inv</span>, <span style=color:#a6e22e>b_inv</span>);
+}
+</code></pre></div><p>在这个改进版本中，InverseFuture 函数启动一个 goroutine 来执行求逆矩阵计算，并立即返回一个最终保存 future 值的 Channel，这样就实现了 a 和 b 的并行计算。</p><h2 id=producer-consumer>Producer-Consumer</h2><p>通过使用 goroutine 和 channel 可以很容易地实现生产者-消费者模型的设计：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>var</span> <span style=color:#a6e22e>done</span> = make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>bool</span>)
+<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>msgs</span> = make(<span style=color:#66d9ef>chan</span> <span style=color:#66d9ef>int</span>)
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>produce</span> () {
+    <span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#ae81ff>10</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
+        <span style=color:#a6e22e>msgs</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>i</span>
+    }
+    <span style=color:#a6e22e>done</span> <span style=color:#f92672>&lt;-</span> <span style=color:#66d9ef>true</span>
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>consume</span> () {
+    <span style=color:#66d9ef>for</span> {
+      <span style=color:#a6e22e>msg</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>msgs</span>
+      <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>msg</span>)
+   }
+}
+
+<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span> () {
+   <span style=color:#66d9ef>go</span> <span style=color:#a6e22e>produce</span>()
+   <span style=color:#66d9ef>go</span> <span style=color:#a6e22e>consume</span>()
+   <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>done</span>
+}
+</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://www.vimiix.com/posts/2021-04-07-concurrency-in-go/",this.page.identifier="/posts/2021-04-07-concurrency-in-go/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>
