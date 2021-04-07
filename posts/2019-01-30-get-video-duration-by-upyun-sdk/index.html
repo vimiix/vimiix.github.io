@@ -2,12 +2,13 @@
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
-<a href=/friends><b>友链</b></a>.
-<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>获取存储在又拍云CDN中视频的时长</h1><b><time>2019.01.30 16:22</time></b>
-<a href=/tags/note>note</a>
-<a href=/tags/video>video</a>
-<a href=/tags/cdn>CDN</a>
-<a href=/tags/%E5%8F%88%E6%8B%8D%E4%BA%91>又拍云</a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>pip install upyun
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>获取存储在又拍云CDN中视频的时长</h1><b><time>2019.01.30 16:22</time></b>
+<a href=/%20/tags/note>note</a>
+<a href=/%20/tags/video>video</a>
+<a href=/%20/tags/cdn>CDN</a>
+<a href=/%20/tags/%E5%8F%88%E6%8B%8D%E4%BA%91>又拍云</a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>pip install upyun
 </code></pre></div><p>（官方代码开源地址：<a href=https://github.com/upyun/python-sdk/>https://github.com/upyun/python-sdk/</a> )</p><h3 id=继承官方类编写需求代码>继承官方类，编写需求代码</h3><p>官方的 SDK 中只提供了一些基础的方法，可以在源码的依赖文件中看到，只依赖 <code>requests</code> 一个包，所以，官方库其实是实现了对网络交互的封装，没有实际的业务功能，真正又拍云 CDN 提供的服务，需要自己通过这个 SDK 发起 api 请求来获取。</p><p>既然这样，那就继承官方提供的 SDK，增加自己需要的方法：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> upyun <span style=color:#f92672>import</span> UpYun
 <span style=color:#f92672>from</span> config <span style=color:#f92672>import</span> BUCKET, USER, PASSWORD
 
@@ -101,7 +102,7 @@ __all__ <span style=color:#f92672>=</span> [<span style=color:#e6db74>&#39;worke
 }
 </code></pre></div><h3 id=获取视频时长>获取视频时长</h3><p>OK，经过上面的接口，就拿到了视频的全部元信息，接下来就是不怎么重要的回扣标题一下。</p><p>在上面的示例数据中，可以找到 <code>format.duration</code> 字段，这就是我所要找的视频时长数据。✨🍰✨</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>meta <span style=color:#f92672>=</span> worker<span style=color:#f92672>.</span>get_meta(source)
 duration <span style=color:#f92672>=</span> meta <span style=color:#f92672>and</span> meta[<span style=color:#e6db74>&#39;format&#39;</span>][<span style=color:#e6db74>&#39;dutation&#39;</span>] <span style=color:#f92672>or</span> None
-</code></pre></div><p>这里只记录获取视频元信息这一个 api 接口的使用。回看官方文档，其实有很多很多的服务可以使用，本地封装方法也类似上面这样，就可以自己写一个比官方更富有的 SDK 啦~</p><p>共勉！</p><p>&mdash; EOF &mdash;</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre></div><p>这里只记录获取视频元信息这一个 api 接口的使用。回看官方文档，其实有很多很多的服务可以使用，本地封装方法也类似上面这样，就可以自己写一个比官方更富有的 SDK 啦~</p><p>共勉！</p><p>&mdash; EOF &mdash;</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/",this.page.identifier="/posts/2019-01-30-get-video-duration-by-upyun-sdk/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

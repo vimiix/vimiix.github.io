@@ -2,19 +2,20 @@
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
-<a href=/friends><b>友链</b></a>.
-<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>[Jenkins]Error:403 No valid crumb was included in the request</h1><b><time>2018.01.31 12:27</time></b>
-<a href=/tags/ci>CI</a>
-<a href=/tags/error>ERROR</a>
-<a href=/tags/jenkins>jenkins</a>
-<a href=/tags/csrf>csrf</a><div><h1 id=错误备忘>错误备忘</h1><p>配置 <code>jenkins</code> 的时候，一直报这个错，是因为 <code>jenkins</code> 默认安全设置里面开启了 <code>防止款站点请求伪造</code>。</p><h3 id=方法>方法：</h3><blockquote><p>取消勾选这一项，就可以成功集成了</p></blockquote><p>位置： <code>Jenkins > 全局安全配置 > CSRF Protection</code></p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/VJvLEn.jpg alt></figure></p><p>以前配置的时候都会上来先关掉这个，今天忘记了，一直报标题的错误。特记录下来，防止自己以后再忘记。</p><h1 id=附让-jenkins-以-root-权限执行-shell-命令>附：让 jenkins 以 root 权限执行 shell 命令</h1><ol><li>打开此脚本（使用 VIM 或其他编辑器）：</li></ol><pre><code>vim /etc/sysconfig/jenkins
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>[Jenkins]Error:403 No valid crumb was included in the request</h1><b><time>2018.01.31 12:27</time></b>
+<a href=/%20/tags/ci>CI</a>
+<a href=/%20/tags/error>ERROR</a>
+<a href=/%20/tags/jenkins>jenkins</a>
+<a href=/%20/tags/csrf>csrf</a><div><h1 id=错误备忘>错误备忘</h1><p>配置 <code>jenkins</code> 的时候，一直报这个错，是因为 <code>jenkins</code> 默认安全设置里面开启了 <code>防止款站点请求伪造</code>。</p><h3 id=方法>方法：</h3><blockquote><p>取消勾选这一项，就可以成功集成了</p></blockquote><p>位置： <code>Jenkins > 全局安全配置 > CSRF Protection</code></p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/VJvLEn.jpg alt></figure></p><p>以前配置的时候都会上来先关掉这个，今天忘记了，一直报标题的错误。特记录下来，防止自己以后再忘记。</p><h1 id=附让-jenkins-以-root-权限执行-shell-命令>附：让 jenkins 以 root 权限执行 shell 命令</h1><ol><li>打开此脚本（使用 VIM 或其他编辑器）：</li></ol><pre><code>vim /etc/sysconfig/jenkins
 </code></pre><ol start=2><li>找到 <code>$JENKINS_USER并更改为“root”</code>：</li></ol><pre><code>$JENKINS_USER=&quot;root&quot;
 </code></pre><ol start=3><li>然后更改 Jenkins 主页，webroot 和日志的所有权：</li></ol><pre><code>chown -R root:root /var/lib/jenkins
 chown -R root:root /var/cache/jenkins
 chown -R root:root /var/log/jenkins
 </code></pre><ol start=4><li>重新启动 Jenkins 并检查用户是否已更改：</li></ol><pre><code>service jenkins restart
 ps -ef | grep jenkins
-</code></pre><h5 id=参考链接>参考链接：</h5><ul><li><a href=https://stackoverflow.com/questions/44711696/spinnaker-403-no-valid-crumb-was-included-in-the-request>[stackoverflow]403 No valid crumb was included in the request</a></li><li><a href=https://stackoverflow.com/questions/29926773/run-shell-command-in-jenkins-as-root-user>[stackoverflow]un shell command in jenkins as root user?</a></li></ul></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre><h5 id=参考链接>参考链接：</h5><ul><li><a href=https://stackoverflow.com/questions/44711696/spinnaker-403-no-valid-crumb-was-included-in-the-request>[stackoverflow]403 No valid crumb was included in the request</a></li><li><a href=https://stackoverflow.com/questions/29926773/run-shell-command-in-jenkins-as-root-user>[stackoverflow]un shell command in jenkins as root user?</a></li></ul></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://vimiix.com/posts/2018-01-31-err-403-in-ci/",this.page.identifier="/posts/2018-01-31-err-403-in-ci/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

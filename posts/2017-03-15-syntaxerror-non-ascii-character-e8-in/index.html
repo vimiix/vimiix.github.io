@@ -2,10 +2,11 @@
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
-<a href=/friends><b>友链</b></a>.
-<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Python-SyntaxError:Non-ASCII character '\e8' in....</h1><b><time>2017.03.15 22:53</time></b>
-<a href=/tags/python>Python</a>
-<a href=/tags/syntaxerror>SyntaxError</a><div><h2 id=syntaxerrornon-ascii-character-e8-in-file>SyntaxError:Non-ASCII character &lsquo;\e8&rsquo; in File&mldr;</h2><p>遇到下面这种提示的错误</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/error.png alt></figure></p><p>修正方法：检查文件头部的UTF-8编码语句是否书写正确</p><pre><code>	#coding=utf-8
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Python-SyntaxError:Non-ASCII character '\e8' in....</h1><b><time>2017.03.15 22:53</time></b>
+<a href=/%20/tags/python>Python</a>
+<a href=/%20/tags/syntaxerror>SyntaxError</a><div><h2 id=syntaxerrornon-ascii-character-e8-in-file>SyntaxError:Non-ASCII character &lsquo;\e8&rsquo; in File&mldr;</h2><p>遇到下面这种提示的错误</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/error.png alt></figure></p><p>修正方法：检查文件头部的UTF-8编码语句是否书写正确</p><pre><code>	#coding=utf-8
 </code></pre><p>今天下午同事梦鸽遇到一个问题，想直接把要找的一篇网页源代码中的特定的链接找出来，看到她需要每天手动复制粘贴出来然后一点一点删除，这样来找的话，效率也太低了。刚好我最近也刚开始学习python编程，何不写个脚本练练手？</p><p>所以就花了一个多小时帮梦鸽童鞋写了一个自动抓取链接的脚本，虽然开始一直头疼不会正则表达式该怎么写，但最终用笨办法：通过用</p><ul><li>循环</li><li>条件</li><li>逻辑</li></ul><p>这些基本的运算符，帮她实现了这个功能。</p><p>在这个过程中，遇到了最上面的这个错误，排查了半天以为是哪里的标点符号用成了中文字符，最后一想&rsquo;Non-ASCII&rsquo;意思就是找不到对应的ASCII码，既然找不到，是不是文件的编码格式错了，才想起来回头去看文件头部的</p><pre><code>#coding = utf-8
 </code></pre><p>这句话，我居然写成了</p><pre><code>#condind=utf-8
 </code></pre><p>改正确以后就没问题了。</p><p>很巧的是，同在一起学习python的QQ群同学，晚上也遇到了同样的问题，毫不犹豫的帮他找到了问题所在，顿时感觉半个多小时拍错过程是值得的。</p><p>特记录这篇日记，希望以后不要再出错。</p><h6 id=附python源码抓取网页中csdn博主的文章链接并保存到blogidtxt文件中>附python源码，抓取网页中CSDN博主的文章链接，并保存到blogID.txt文件中</h6><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>
@@ -30,7 +31,7 @@
 	blogID<span style=color:#f92672>.</span>close()
 	fp<span style=color:#f92672>.</span>close()
 
-</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://vimiix.com/posts/2017-03-15-syntaxerror-non-ascii-character-e8-in/",this.page.identifier="/posts/2017-03-15-syntaxerror-non-ascii-character-e8-in/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

@@ -2,11 +2,12 @@
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
-<a href=/friends><b>友链</b></a>.
-<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>[笔记]git push卡主不动问题记录：Git push hangs on POST git-receive-pack</h1><b><time>2018.03.18 18:20</time></b>
-<a href=/tags/git>git</a>
-<a href=/tags/note>note</a>
-<a href=/tags/solution>solution</a><div><h2 id=问题>问题</h2><p>昨天完成了<a href=https://github.com/pythonzhichan/django-beginners-guide/blob/master/ClassBasedViews.md>《一个完整的 Django 入门指南》 - 第 6 部分</a>的翻译工作，本地在翻译的过程中，存储了十几张原文中的 <code>png</code> 格式的插图。</p><p>在 <code>git push</code> 提交 <strong>github</strong> 仓库的时候，终端显示写成功 100%, 但是一直卡在了下面这里没有推送成功：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Counting objects: 21, <span style=color:#66d9ef>done</span>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>[笔记]git push卡主不动问题记录：Git push hangs on POST git-receive-pack</h1><b><time>2018.03.18 18:20</time></b>
+<a href=/%20/tags/git>git</a>
+<a href=/%20/tags/note>note</a>
+<a href=/%20/tags/solution>solution</a><div><h2 id=问题>问题</h2><p>昨天完成了<a href=https://github.com/pythonzhichan/django-beginners-guide/blob/master/ClassBasedViews.md>《一个完整的 Django 入门指南》 - 第 6 部分</a>的翻译工作，本地在翻译的过程中，存储了十几张原文中的 <code>png</code> 格式的插图。</p><p>在 <code>git push</code> 提交 <strong>github</strong> 仓库的时候，终端显示写成功 100%, 但是一直卡在了下面这里没有推送成功：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Counting objects: 21, <span style=color:#66d9ef>done</span>.
 Delta compression using up to <span style=color:#ae81ff>8</span> threads.
 Compressing objects: 100% <span style=color:#f92672>(</span>21/21<span style=color:#f92672>)</span>, <span style=color:#66d9ef>done</span>.
 Writing objects: 100% <span style=color:#f92672>(</span>21/21<span style=color:#f92672>)</span>, 1018.52 KiB | 17.87 MiB/s, <span style=color:#66d9ef>done</span>.
@@ -18,7 +19,7 @@ Total <span style=color:#ae81ff>21</span> <span style=color:#f92672>(</span>delt
 </code></pre></div><p>追加参数：</p><pre><code># ...
 [http]
      postBuffer = 524288000
-</code></pre><h2 id=more>More</h2><p>这两种方法最后实现的效果都是一样的，第一种方法是第二种方法的自动化写入配置参数的方式。</p><p>修改过以后，当再次执行 <strong>git push</strong> 的时候，你会发现，还是会卡在这里，但是不用着急，文件本身就比较大，耐心的等一会就可以成功提交了。</p><p>最后，其实最好的解决方法，我觉得就是不要在 github 上存储代码以外的大文件，大的文件可以上传到 CDN, 通过链接来调用。如果要存图片可以考虑将 <strong>png</strong> 转格式为 <strong>jpg</strong> 格式。</p><h2 id=参考链接>参考链接</h2><ol><li><a href=https://stackoverflow.com/questions/10790232/hanging-at-post-git-receive-pack-chunked>[stackoverflow] Hanging at “POST git-receive-pack (chunked)”</a></li></ol></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre><h2 id=more>More</h2><p>这两种方法最后实现的效果都是一样的，第一种方法是第二种方法的自动化写入配置参数的方式。</p><p>修改过以后，当再次执行 <strong>git push</strong> 的时候，你会发现，还是会卡在这里，但是不用着急，文件本身就比较大，耐心的等一会就可以成功提交了。</p><p>最后，其实最好的解决方法，我觉得就是不要在 github 上存储代码以外的大文件，大的文件可以上传到 CDN, 通过链接来调用。如果要存图片可以考虑将 <strong>png</strong> 转格式为 <strong>jpg</strong> 格式。</p><h2 id=参考链接>参考链接</h2><ol><li><a href=https://stackoverflow.com/questions/10790232/hanging-at-post-git-receive-pack-chunked>[stackoverflow] Hanging at “POST git-receive-pack (chunked)”</a></li></ol></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://vimiix.com/posts/2018-03-18-git-push-hangs-on-chunked/",this.page.identifier="/posts/2018-03-18-git-push-hangs-on-chunked/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

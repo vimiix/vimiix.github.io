@@ -2,10 +2,11 @@
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
-<a href=/friends><b>友链</b></a>.
-<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>Python-关于Python中闭包的一些理解</h1><b><time>2017.04.09 17:07</time></b>
-<a href=/tags/closure>closure</a>
-<a href=/tags/python>Python</a><div><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/rRo70V.jpg alt></figure></p><p><strong>看不懂的定义</strong>：闭包是由函数及其相关的引用环境组合而成的实体(即：闭包=函数+引用环境)。</p><p>既然是看不懂的定义，真看不懂上面定义的话就忽略吧。</p><p>在 python 中，函数可以作为另一个函数的参数或返回值，可以赋给一个变量。函数可以嵌套定义，即在一个函数内部可以定义另一个函数，有了嵌套函数这种结构，便会产生闭包问题。</p><p><strong>好理解一点的定义</strong>：如果在一个内部函数里，对在外部作用域（但不是在全局作用域）的变量进行引用，那么内部函数就被认为是闭包(closure)</p><p>举个栗子：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>outer</span>(x):
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Python-关于Python中闭包的一些理解</h1><b><time>2017.04.09 17:07</time></b>
+<a href=/%20/tags/closure>closure</a>
+<a href=/%20/tags/python>Python</a><div><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/rRo70V.jpg alt></figure></p><p><strong>看不懂的定义</strong>：闭包是由函数及其相关的引用环境组合而成的实体(即：闭包=函数+引用环境)。</p><p>既然是看不懂的定义，真看不懂上面定义的话就忽略吧。</p><p>在 python 中，函数可以作为另一个函数的参数或返回值，可以赋给一个变量。函数可以嵌套定义，即在一个函数内部可以定义另一个函数，有了嵌套函数这种结构，便会产生闭包问题。</p><p><strong>好理解一点的定义</strong>：如果在一个内部函数里，对在外部作用域（但不是在全局作用域）的变量进行引用，那么内部函数就被认为是闭包(closure)</p><p>举个栗子：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>outer</span>(x):
 		<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>inner</span>(y):
 			<span style=color:#66d9ef>return</span> x <span style=color:#f92672>+</span> y
 		<span style=color:#66d9ef>return</span> inner
@@ -45,7 +46,7 @@
 	<span style=color:#ae81ff>1</span>
 	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>2</span>]()
 	<span style=color:#ae81ff>4</span>
-</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://vimiix.com/posts/2017-04-09-about-closure/",this.page.identifier="/posts/2017-04-09-about-closure/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

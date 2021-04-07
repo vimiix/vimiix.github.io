@@ -2,11 +2,12 @@
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
-<a href=/friends><b>友链</b></a>.
-<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>《算法图解》读书笔记7-狄克斯特拉算法</h1><b><time>2018.07.16 22:20</time></b>
-<a href=/tags/algorithm>algorithm</a>
-<a href=/tags/python>Python</a>
-<a href=/tags/dijkstra>Dijkstra</a><div><h2 id=概念>概念</h2><blockquote><p>狄克斯特拉算法是从一个顶点到其余各顶点的最短路径算法，解决的是有向图中最短路径问题 (该算法不能处理包含负边的图)。主要特点是以起始点为中心向外层层扩展，直到扩展到终点为止。</p></blockquote><h2 id=python-实现收藏>Python 实现（收藏）</h2><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e>#coding:utf8</span>
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>《算法图解》读书笔记7-狄克斯特拉算法</h1><b><time>2018.07.16 22:20</time></b>
+<a href=/%20/tags/algorithm>algorithm</a>
+<a href=/%20/tags/python>Python</a>
+<a href=/%20/tags/dijkstra>Dijkstra</a><div><h2 id=概念>概念</h2><blockquote><p>狄克斯特拉算法是从一个顶点到其余各顶点的最短路径算法，解决的是有向图中最短路径问题 (该算法不能处理包含负边的图)。主要特点是以起始点为中心向外层层扩展，直到扩展到终点为止。</p></blockquote><h2 id=python-实现收藏>Python 实现（收藏）</h2><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#75715e>#coding:utf8</span>
 
 graph <span style=color:#f92672>=</span> {
 <span style=color:#e6db74>&#39;N1&#39;</span>: {<span style=color:#e6db74>&#39;N2&#39;</span>: <span style=color:#ae81ff>1</span>},
@@ -183,7 +184,7 @@ graph <span style=color:#f92672>=</span> {
         <span style=color:#66d9ef>if</span> key <span style=color:#f92672>not</span> <span style=color:#f92672>in</span> self:
             self[key] <span style=color:#f92672>=</span> val
         <span style=color:#66d9ef>return</span> self[key]
-</code></pre></div><h2 id=gist-地址>gist 地址：</h2><p><a href=https://gist.github.com/theonewolf/6175427>https://gist.github.com/theonewolf/6175427</a></p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre></div><h2 id=gist-地址>gist 地址：</h2><p><a href=https://gist.github.com/theonewolf/6175427>https://gist.github.com/theonewolf/6175427</a></p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://vimiix.com/posts/2018-06-05-grokking-algorithms-chapter-7/",this.page.identifier="/posts/2018-06-05-grokking-algorithms-chapter-7/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

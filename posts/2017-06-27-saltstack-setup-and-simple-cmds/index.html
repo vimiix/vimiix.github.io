@@ -2,11 +2,12 @@
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
-<a href=/friends><b>友链</b></a>.
-<a href=/about><b>关于</b></a>.</nav></p></header><main><article><h1>DevOps|SaltStack的部署和基本指令</h1><b><time>2017.06.27 20:08</time></b>
-<a href=/tags/python>Python</a>
-<a href=/tags/saltstack>SaltStack</a>
-<a href=/tags/devops>DevOps</a><div><p>SaltStack 是一个服务器基础架构集中化管理平台，具备配置管理、远程执行、监控等功能，。SaltStack 基于 Python 语言实现，结合轻量级消息队列（ZeroMQ）与 python 第三方模块（Pyzmq、PyCrypto、Pyjinjia2、python-msgpack 和 PyYAML 等）构建。</p><p>通过部署 SaltStack 环境，可以在成千上万台服务器上做到批量执行命令，根据不同业务特性进行配置集中化管理、分发文件、采集服务器数据、操作系统基础及软件包管理等，SaltStack 是运维人员提高工作效率、规范业务配置与操作的利器。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/SaltStack.png alt></figure></p><h1 id=部署与基本配置>部署与基本配置</h1><p><strong>我的系统环境</strong>：</p><ul><li>系统：CentOS-7-x64</li><li>yum 源:网易 163yum 源</li><li>python：2.7.13</li><li>masterIP：192.168.1.107</li><li>minionIP：192.168.1.107(我直接在一个虚拟机内安装 minion)</li></ul><h2 id=step-0安装-epel-yum-源>step 0：安装 epel yum 源</h2><pre><code>	yum install -y epel-release
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>DevOps|SaltStack的部署和基本指令</h1><b><time>2017.06.27 20:08</time></b>
+<a href=/%20/tags/python>Python</a>
+<a href=/%20/tags/saltstack>SaltStack</a>
+<a href=/%20/tags/devops>DevOps</a><div><p>SaltStack 是一个服务器基础架构集中化管理平台，具备配置管理、远程执行、监控等功能，。SaltStack 基于 Python 语言实现，结合轻量级消息队列（ZeroMQ）与 python 第三方模块（Pyzmq、PyCrypto、Pyjinjia2、python-msgpack 和 PyYAML 等）构建。</p><p>通过部署 SaltStack 环境，可以在成千上万台服务器上做到批量执行命令，根据不同业务特性进行配置集中化管理、分发文件、采集服务器数据、操作系统基础及软件包管理等，SaltStack 是运维人员提高工作效率、规范业务配置与操作的利器。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/SaltStack.png alt></figure></p><h1 id=部署与基本配置>部署与基本配置</h1><p><strong>我的系统环境</strong>：</p><ul><li>系统：CentOS-7-x64</li><li>yum 源:网易 163yum 源</li><li>python：2.7.13</li><li>masterIP：192.168.1.107</li><li>minionIP：192.168.1.107(我直接在一个虚拟机内安装 minion)</li></ul><h2 id=step-0安装-epel-yum-源>step 0：安装 epel yum 源</h2><pre><code>	yum install -y epel-release
 	yum clean all
 	yum makecache
 </code></pre><h2 id=step-1安装-master-和-minion>step 1：安装 master 和 minion</h2><p><strong>master</strong></p><pre><code>	yum install -y salt-master
@@ -109,7 +110,7 @@
 	client <span style=color:#f92672>=</span> salt<span style=color:#f92672>.</span>client<span style=color:#f92672>.</span>LocalClient()
 	ret <span style=color:#f92672>=</span> client<span style=color:#f92672>.</span>cmd(<span style=color:#e6db74>&#34;*&#34;</span>,<span style=color:#e6db74>&#34;test.ping&#34;</span>)
 	<span style=color:#66d9ef>print</span>(ret)
-</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></li><li><a href=/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></li><li><a href=/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></li><li><a href=/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></li><li><a href=/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://vimiix.com/posts/2017-06-27-saltstack-setup-and-simple-cmds/",this.page.identifier="/posts/2017-06-27-saltstack-setup-and-simple-cmds/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
