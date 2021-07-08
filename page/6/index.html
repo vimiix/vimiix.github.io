@@ -4,7 +4,21 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2017-09-28-problems-when-pymysql-connect-inception/>自动化DDL审核|pymysql链接Inception中踩过的几个坑</a></h1><b><time>2017.09.28 19:12</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2017-10-30-rsync-params/>rsync服务器配置文件参数备忘</a></h1><b><time>2017.10.30 13:12</time></b>
+<a href=/tags/linux>Linux</a>
+<a href=/tags/rsync>rsync</a><div>最近工作中用到了 rsync 服务器，对于 rsync 服务器的配置来说，不是很复杂，网上有很多介绍。rsync 的配置文件是最重要的一部分。有很多参数需要了解一下，所以今天记录整理一下，方便以后自己查看。
+基本介绍 Rsync（remote synchronize）是一个远程数据同步工具，可通过 LAN/WAN 快速同步多台主机间的文件。Rsync 使用所谓的“Rsync 算法”来使本地和远 程两个主机之间的文件达到同步，这个算法只传送两个文件的不同部分，而不是每次都整份传送，因此速度相当快。
+rsync 的配置文件是由一个或多个模块结构组成。一个模块定义是以方括弧中的模块名开始，直到下一个模块定义开始或者文件结束。
+模块中包含格式为name = value的参数定义。每个模块其实就对应需要备份的一个目录树，比方说在实际环境中，有三个目录树需要备份：/www/、/home/web_user1/和/home/web_user2/，那么就需要在配置文件中定义三个模块，分别对应三个目录树。
+配置文件是行为单位的，也就是说每个新行都表示一个新的注释、模块定义或者参数赋值。以#开始的行表示注释，以"&ldquo;结束的行表示下面一行是该行的继续。参数赋值中等号后可能是一个大小写不敏感的字符串、一个以trure/false或者yes/no表示的布尔值。
+全局参数 在文件中[modlue]之前的所有参数都是全局参数，当然也可以在全局参数部分定义模块参数，这时候该参数的值就是所有模块的默认值。
+motd file 指定一个消息文件，当客户连接服务器时该文件的内容显示给客户，默认是没有 motd 文件的。该文件有无都不影响 rsync 的正常使用。
+log file 指定 rsync 的日志文件，而不将日志发送给syslog。
+pid file 指定 rsync 的 pid 文件。
+syslog facility 指定 rsync 发送日志消息给 syslog 时的消息级别，常见的消息级别是：uth, authpriv, cron, daemon, ftp, kern, lpr, mail, news, security, sys-log, user, uucp, local0, local1, local2, local3,local4, local5, local6和local7。
+默认值是daemon。
+模块参数 在全局参数之后就需要定义一个或多个模块了，模块中可以定义以下参数：
+<a href=https://www.vimiix.com/posts/2017-10-30-rsync-params/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-09-28-problems-when-pymysql-connect-inception/>自动化DDL审核|pymysql链接Inception中踩过的几个坑</a></h1><b><time>2017.09.28 19:12</time></b>
 <a href=/tags/pymsql>pymsql</a>
 <a href=/tags/inception>Inception</a>
 <a href=/tags/python>Python</a><div><p>简单整理了一下这几天使用 pymysql 链接 inception 做 sql 审核过程中出现的坑和解决方法。</p><p>这些解决方法一定不是最漂亮的，如果有伙伴遇到同样的问题，并且有好的解决方案，请一定在留言中回一下我哦。</p><p>先行感激！！</p><a href=https://www.vimiix.com/posts/2017-09-28-problems-when-pymysql-connect-inception/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-09-15-find-largest-or-smallest-number/>Python|寻找最大最小的N个元素几种方法</a></h1><b><time>2017.09.15 09:48</time></b>
@@ -26,10 +40,7 @@
 <a href=/tags/python>Python</a>
 <a href=/tags/cmdb>cmdb</a><div><h2 id=系统介绍>系统介绍</h2><p>VMX-Manager 是一个基于 Django 框架开发的一款 CMDB 管理系统，目前处于 beta 版本，功能主要包含: 管理系统管理的客户主机列表， 动态显示客户机状态信息，远程指令操作指定客户机以及主机与客户机之间的文件传输。</p><a href=https://www.vimiix.com/posts/2017-07-18-vmx-manager-a-cmdb-system-base-on-django/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-07-10-introduce-getattr-function/>Python|内建函数getattr()函数详解</a></h1><b><time>2017.07.10 12:08</time></b>
 <a href=/tags/python>Python</a>
-<a href=/tags/getattr>getattr</a><div><h2 id=前言>前言</h2><p>昨天在<a href=https://www.hackerrank.com>Hackerrank</a>上面练习 Python 题目的时候，题目要求从终端输入命令和参数，然后脚本获取到以后执行相应的操作（<a href=https://www.hackerrank.com/challenges/py-set-discard-remove-pop>查看原题</a>），作为初级程序员，我第一思路想到的解法就是枚举（因为题目上面限制了就 3 条命令）。通过<code>if ... elif...elif...</code>的分支语句就解决了。Hackerrank 有一个好处就是，每一个题目都有一个讨论区，在讨论区中往往会有超出本人能力范围的巧妙高级解法发表在里面。有个大牛在讨论区发表了自己的解法，其中就用到了 getattr 这个内建函数，这样代码的扩展性就极强了，不再局限于本题目的三条指令。下面就记录一下这个有趣的函数。</p><blockquote><p><a href=http://t.cn/RKtqwu4>上述代码查看传送门</a></p></blockquote><a href=https://www.vimiix.com/posts/2017-07-10-introduce-getattr-function/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-06-27-saltstack-setup-and-simple-cmds/>DevOps|SaltStack的部署和基本指令</a></h1><b><time>2017.06.27 20:08</time></b>
-<a href=/tags/python>Python</a>
-<a href=/tags/saltstack>SaltStack</a>
-<a href=/tags/devops>DevOps</a><div><p>SaltStack 是一个服务器基础架构集中化管理平台，具备配置管理、远程执行、监控等功能，。SaltStack 基于 Python 语言实现，结合轻量级消息队列（ZeroMQ）与 python 第三方模块（Pyzmq、PyCrypto、Pyjinjia2、python-msgpack 和 PyYAML 等）构建。</p><a href=https://www.vimiix.com/posts/2017-06-27-saltstack-setup-and-simple-cmds/>Read more...</a></div></article><div><a href=/page/5/>上一页</a>
+<a href=/tags/getattr>getattr</a><div><h2 id=前言>前言</h2><p>昨天在<a href=https://www.hackerrank.com>Hackerrank</a>上面练习 Python 题目的时候，题目要求从终端输入命令和参数，然后脚本获取到以后执行相应的操作（<a href=https://www.hackerrank.com/challenges/py-set-discard-remove-pop>查看原题</a>），作为初级程序员，我第一思路想到的解法就是枚举（因为题目上面限制了就 3 条命令）。通过<code>if ... elif...elif...</code>的分支语句就解决了。Hackerrank 有一个好处就是，每一个题目都有一个讨论区，在讨论区中往往会有超出本人能力范围的巧妙高级解法发表在里面。有个大牛在讨论区发表了自己的解法，其中就用到了 getattr 这个内建函数，这样代码的扩展性就极强了，不再局限于本题目的三条指令。下面就记录一下这个有趣的函数。</p><blockquote><p><a href=http://t.cn/RKtqwu4>上述代码查看传送门</a></p></blockquote><a href=https://www.vimiix.com/posts/2017-07-10-introduce-getattr-function/>Read more...</a></div></article><div><a href=/page/5/>上一页</a>
 6 of 8
 <a href=/page/7/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
