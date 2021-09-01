@@ -4,7 +4,18 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></h1><b><time>2021.07.08 23:38</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></h1><b><time>2021.09.01 16:15</time></b>
+<a href=/tags/disk>disk</a>
+<a href=/tags/simulate>simulate</a>
+<a href=/tags/test>test</a><div>假设服务器目前有多个盘，vdb1这块分区盘专门用于数据库程序的数据目录，我们就用 vdb1 这个盘来模拟只读故障场景。
+1. 卸载指定盘 umount /dev/vdb1 想要如期卸载掉，需要确保该盘上没有被正在运行进程依赖，如果有运行中的进程依赖这个盘，会报如下报 target is busy 的错误：
+umount: /opt: target is busy. 遇到该错误时，可以通过lsof [mountpoint] 命令来查看有哪些进程依赖这块盘，kill 掉相应的进程后重新卸载。
+2. 配置伪设备来镜像 /dev/vdb1 的内容 卸载成功后，我们通过 losetup 指令来配置一个loop设备（在类 UNIX 系统里，loop 设备是一种伪设备(pseudo-device)，或者也可以说是仿真设备。它能使我们像块设备一样访问一个文件）。
+losetup /dev/loop0 /dev/vdb1 执行指令后，可以通过 losetup -l 查看当前服务器上的 loop 设备列表：
+3. 挂载 /dev/loop0 我们已经有一个 /dev/loop0 的伪设备镜像到了 /dev/vdb1 上，此时，我们来挂载 /dev/loop0 这个伪设备：
+mount /dev/loop0 /opt -o rw,errors=remount-ro 通过 df -h 可以查看到 /dev/loop0 已经正常挂载上了
+4.
+<a href=https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></h1><b><time>2021.07.08 23:38</time></b>
 <a href=/tags/sqlalchemy>SQLAlchemy</a>
 <a href=/tags/python>Python</a>
 <a href=/tags/opengauss>openGauss</a><div>前置声明 由于 openGauss 数据库本身也开源不久，所以周边基础设施也正处于遍地开花的阶段，所以本文不保证长期的时效性，仅针对现阶段的问题，提出一种解决方案。
@@ -82,12 +93,7 @@ package main type Programmer interface { Code() string } type Human struct {} //
 <a href=/tags/video>video</a>
 <a href=/tags/encrypt>encrypt</a>
 <a href=/tags/ffmpeg>ffmpeg</a>
-<a href=/tags/hls>hls</a><div><blockquote><p>最近在做视频管理后台，主要提供点播服务，涉及到需要对视频进行加密处理以防止视频被随意下载。</p><p>调研了一番之后确定使用 HLS(HTTP Live Streaming) 基于 HTTP 的流媒体网络传输协议技术来处理视频。</p><p>所以本文主要记录关于学习 HLS 视频加密技术的笔记</p></blockquote><h3 id=为什么要加密>为什么要加密？</h3><p>简单的说就是：增加获取被加密资源的代价。对于视频这种资源来说，绝对的加密就是不要上线给人看，但那是不可能的，因为提供的服务就是给人看视频，只要上线，别人就可以通过各种手段解密或者简单的录屏的方式来传播，所以目前俩看，不存在绝对的加密。只要让恶意的人获取源视频的代价很大，就可以阻挡绝大多数的不法分子。这样，加密的目的也就基本达到了。</p><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/>获取存储在又拍云CDN中视频的时长</a></h1><b><time>2019.01.30 16:22</time></b>
-<a href=/tags/note>note</a>
-<a href=/tags/video>video</a>
-<a href=/tags/cdn>CDN</a>
-<a href=/tags/%E5%8F%88%E6%8B%8D%E4%BA%91>又拍云</a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>pip install upyun
-</code></pre></div><p>（官方代码开源地址：<a href=https://github.com/upyun/python-sdk/>https://github.com/upyun/python-sdk/</a> )</p><a href=https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/>Read more...</a></div></article><div>1 of 8
+<a href=/tags/hls>hls</a><div><blockquote><p>最近在做视频管理后台，主要提供点播服务，涉及到需要对视频进行加密处理以防止视频被随意下载。</p><p>调研了一番之后确定使用 HLS(HTTP Live Streaming) 基于 HTTP 的流媒体网络传输协议技术来处理视频。</p><p>所以本文主要记录关于学习 HLS 视频加密技术的笔记</p></blockquote><h3 id=为什么要加密>为什么要加密？</h3><p>简单的说就是：增加获取被加密资源的代价。对于视频这种资源来说，绝对的加密就是不要上线给人看，但那是不可能的，因为提供的服务就是给人看视频，只要上线，别人就可以通过各种手段解密或者简单的录屏的方式来传播，所以目前俩看，不存在绝对的加密。只要让恶意的人获取源视频的代价很大，就可以阻挡绝大多数的不法分子。这样，加密的目的也就基本达到了。</p><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>Read more...</a></div></article><div>1 of 8
 <a href=/page/2/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021
