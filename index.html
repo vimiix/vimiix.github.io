@@ -4,7 +4,17 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></h1><b><time>2021.09.01 16:15</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></h1><b><time>2021.12.21 20:25</time></b>
+<a href=/tags/distributed>distributed</a>
+<a href=/tags/note>note</a><div>基础理论 CAP理论 一个分布式系统最多只能同时满足一致性（Consistency）、可用性（Availability）和分区容错性（Partition tolerance）这三项中的两项。这被称为CAP理论，已经被证实。
+一致性（Consistency） ：在分布式系统中所有的数据备份，在同一时刻都保持一致状态，如无法保证状态一致，直接返回错误。 可用性（Availability）：在集群中一部分节点故障，也能保证客户端访问系统并得到正确响应，允许一定时间内数据状态不一致。 分区容错性（Partition tolerance）：分布式系统在遇到任何网络分区故障时，仍然能保证对外提供满足一致性和可用性的服务，除非整个网络环境都发生故障。 ACID特性（刚性事务，强一致性） 把多条语句作为一个整体进行操作的功能，称为数据库事务。数据库事务可以确保该事务范围内的所有操作全部成功或者全部失败。
+事务具有 4 个属性：原子性、一致性、隔离性、持久性。这四个属性通常称为 ACID 特性。
+原子性（Atomicity）：一个事务（transaction）中的所有操作，或者全部完成，或者全部不完成，不会结束在中间某个环节。事务在执行过程中发生错误，会被回滚（Rollback）到事务开始前的状态，就像这个事务从来没有执行过一样。即，事务不可分割、不可约简。 一致性（Consistency）：在事务开始之前和事务结束以后，数据库的完整性没有被破坏。这表示写入的资料必须完全符合所有的预设约束、触发器、级联回滚等。 事务隔离（Isolation）：数据库允许多个并发事务同时对其数据进行读写和修改的能力，隔离性可以防止多个事务并发执行时由于交叉执行而导致数据的不一致。事务隔离分为不同级别，包括未提交读（Read uncommitted）、提交读（read committed）、可重复读（repeatable read）和串行化（Serializable）。 持久性（Durability）：事务处理结束后，对数据的修改就是永久的，即便系统故障也不会丢失。 BASE理论（柔性事务） BASE是Basically Available（基本可用）、Soft state（软状态）和Eventually consistent（最终一致性）三个短语的简写，BASE是对CAP中一致性和可用性权衡的结果，其来源于对大规模互联网系统分布式实践的结论，是基于CAP定理逐步演化而来的，其核心思想是即使无法做到强一致性（Strong consistency），但每个应用都可以根据自身的业务特点，采用适当的方式来使系统达到最终一致性（Eventual consistency）
+基本可用（Basically Available）：是指分布式系统在出现不可预知故障的时候，允许损失部分可用性——但请注意，这绝不等价于系统不可用。 软状态（Soft state）：和硬状态相对，是指允许系统中的数据存在中间状态，并认为该中间状态的存在不会影响系统的整体可用性，即允许系统在不同节点的数据副本之间进行数据同步的过程存在延时。 最终一致性（Eventually consistent）：强调的是系统中所有的数据副本，在经过一段时间的同步后，最终能够达到一个一致的状态。因此，最终一致性的本质是需要系统保证最终数据能够达到一致，而不需要实时保证系统数据的强一致性。 总的来说，BASE理论面向的是大型高可用可扩展的分布式系统，和传统事务的ACID特性使相反的，它完全不同于ACID的强一致性模型，而是提出通过牺牲强一致性来获得可用性，并允许数据在一段时间内是不一致的，但最终达到一致状态。但同时，在实际的分布式场景中，不同业务单元和组件对数据一致性的要求是不同的，因此在具体的分布式系统架构设计过程中，ACID特性与BASE理论往往又会结合在一起使用。
+分布式方案 XA规范 Open Group组织定义的一套DTP（Distributed Transaction Processing）分布式事务处理模型，主要包含以下四部分：
+AP（应用程序） TM（事务管理器）：中间件，负责多个事物之间的协调 RM（资源管理器）：数据库等资源 CRM（通信资源管理器）：消息中间件 XA规范包括两套函数，分别以 xa_ 和 ax_ 开头，使 TM 可以对 RM 进行的操作：
+xa_open,xa_close：建立和关闭与资源管理器的连接； xa_start,xa_end：开始和结束一个本地事务； xa_prepare,xa_commit,xa_rollback：预提交、提交、回滚一个本地事务； xa_recover：回滚一个已进行预提交的事务； ax_开头的函数使资源管理器可以动态地在事务管理器中进行注册，并可以对XID(TRANSACTION IDS)进行操作； ax_reg,ax_unreg；允许一个资源管理器在一个TMS(TRANSACTION MANAGER SERVER)中动态注册或撤消注册。 基于XA规范衍生出下面的两阶段提交（2PC）、三阶段提交（3PC）。
+<a href=https://www.vimiix.com/posts/2021-12-21-learn-distributed-transaction/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></h1><b><time>2021.09.01 16:15</time></b>
 <a href=/tags/disk>disk</a>
 <a href=/tags/simulate>simulate</a>
 <a href=/tags/test>test</a><div>假设服务器目前有多个盘，vdb1这块分区盘专门用于数据库程序的数据目录，我们就用 vdb1 这个盘来模拟只读故障场景。
@@ -88,12 +98,7 @@ if value, ok := AType.(BInterface) { fmt.Println("ok") } else { fmt.Println("no"
 package main type Programmer interface { Code() string } type Human struct {} func main() {} 这段代码没有做任何操作，可以正常地执行。
 假设我们希望 Human 类型实现了 Programmer 接口，可以在代码中定义一个 _ （下划线表示忽略这个变量）变量来实现检测效果
 package main type Programmer interface { Code() string } type Human struct {} // 利用编译器检查接口实现 var _ Programmer = (*Human)(nil) func main() {} 当再次执行这段代码地时候，就会报出如下编译错误：
-<a href=https://www.vimiix.com/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>HLS视频加密</a></h1><b><time>2019.03.28 16:22</time></b>
-<a href=/tags/note>note</a>
-<a href=/tags/video>video</a>
-<a href=/tags/encrypt>encrypt</a>
-<a href=/tags/ffmpeg>ffmpeg</a>
-<a href=/tags/hls>hls</a><div><blockquote><p>最近在做视频管理后台，主要提供点播服务，涉及到需要对视频进行加密处理以防止视频被随意下载。</p><p>调研了一番之后确定使用 HLS(HTTP Live Streaming) 基于 HTTP 的流媒体网络传输协议技术来处理视频。</p><p>所以本文主要记录关于学习 HLS 视频加密技术的笔记</p></blockquote><h3 id=为什么要加密>为什么要加密？</h3><p>简单的说就是：增加获取被加密资源的代价。对于视频这种资源来说，绝对的加密就是不要上线给人看，但那是不可能的，因为提供的服务就是给人看视频，只要上线，别人就可以通过各种手段解密或者简单的录屏的方式来传播，所以目前俩看，不存在绝对的加密。只要让恶意的人获取源视频的代价很大，就可以阻挡绝大多数的不法分子。这样，加密的目的也就基本达到了。</p><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>Read more...</a></div></article><div>1 of 8
+<a href=https://www.vimiix.com/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Read more...</a></div></article><div>1 of 8
 <a href=/page/2/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2021

@@ -4,7 +4,12 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/>获取存储在又拍云CDN中视频的时长</a></h1><b><time>2019.01.30 16:22</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>HLS视频加密</a></h1><b><time>2019.03.28 16:22</time></b>
+<a href=/tags/note>note</a>
+<a href=/tags/video>video</a>
+<a href=/tags/encrypt>encrypt</a>
+<a href=/tags/ffmpeg>ffmpeg</a>
+<a href=/tags/hls>hls</a><div><blockquote><p>最近在做视频管理后台，主要提供点播服务，涉及到需要对视频进行加密处理以防止视频被随意下载。</p><p>调研了一番之后确定使用 HLS(HTTP Live Streaming) 基于 HTTP 的流媒体网络传输协议技术来处理视频。</p><p>所以本文主要记录关于学习 HLS 视频加密技术的笔记</p></blockquote><h3 id=为什么要加密>为什么要加密？</h3><p>简单的说就是：增加获取被加密资源的代价。对于视频这种资源来说，绝对的加密就是不要上线给人看，但那是不可能的，因为提供的服务就是给人看视频，只要上线，别人就可以通过各种手段解密或者简单的录屏的方式来传播，所以目前俩看，不存在绝对的加密。只要让恶意的人获取源视频的代价很大，就可以阻挡绝大多数的不法分子。这样，加密的目的也就基本达到了。</p><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/>获取存储在又拍云CDN中视频的时长</a></h1><b><time>2019.01.30 16:22</time></b>
 <a href=/tags/note>note</a>
 <a href=/tags/video>video</a>
 <a href=/tags/cdn>CDN</a>
@@ -48,10 +53,7 @@ matplotlib<span style=color:#f92672>.</span>use(<span style=color:#e6db74>&#39;T
 <a href=/tags/ssl>SSL</a>
 <a href=/tags/flask>Flask</a>
 <a href=/tags/translation>translation</a><div><p>我们在开发 Flask 应用程序时，通常通过运行 Flask 自带的 Web 服务器来开发测试，这个服务器提供了基本的但功能完备的 WSGI 服务器。但开发结束以后，在应用程序上线到生成环境时，有很多不得不考虑的事情，其中之一是我们是否应该要求客户端使用加密连接以增加安全性。</p><p>人们总是问我这个问题，特别是如何在 HTTPS 协议上部署 Flask 服务器。在本文中，我将介绍几种为 Flask 应用程序添加加密的方案，从一个非常简单的可以在五秒内实现，到一个强大的就像我的网站一样可以得到一个 A +评级解决方案（<a href="https://www.ssllabs.com/ssltest/analyze.html?d=blog.miguelgrinberg.com">我的网站的 SSL 分析数据</a>）。</p><a href=https://www.vimiix.com/posts/2018-08-27-running-your-flask-application-over-https/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-08-13-git-best-practice/>Git开发记录-合并多条commit最佳实践</a></h1><b><time>2018.08.13 19:22</time></b>
-<a href=/tags/git>git</a><div><h2 id=问题>问题</h2><p>常规的多人基于 GIT 协作开发的时候，都是遵循先 fork 一份主版本代码到自己的账号下面，然后基于本账户的版本，开分支来开发功能或修 Bug，完成以后再讲修改的内容，提交一个完整的 PR 贡献回主版本。</p><p>在本分支上开发的过程中，有时候不得不先提交到自己账号下面的克隆版本中来测试（比如豆瓣的<code>dae pre</code>，无法在本地生成预览，需要提交到远端），我们不能保证一次性提交就做到完美，避免不了会往复的修改后提交，这样的一次次测试用的 commit 属于是冗余的琐碎信息，对于主版本迭代是没有价值的。如果直接在基于该分支提交 PR，甚至被<code>merge</code>到<code>upstream/master</code>主版本中，这些不必要的 commit 信息也会包含进主版本中。这当然不是一个理想的迭代方式。</p><p>现在问题明确以后，就是一个目标：<strong>将这些开发中的所有 commit 都合并为一条有意义的 commit 信息提交给主版本</strong>。</p><a href=https://www.vimiix.com/posts/2018-08-13-git-best-practice/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-07-26-channels2-tutorial/>Django Channels2.0 websocket最佳实践</a></h1><b><time>2018.07.26 02:56</time></b>
-<a href=/tags/django>Django</a>
-<a href=/tags/channels>Channels</a>
-<a href=/tags/websocket>websocket</a><div><p>做 web 后端开发，少不了要和 websocket 打交道。之前写过一篇关于 websocket 的实践文章 &mdash; <a href=https://vimiix.com/post/2018/04/02/python-websocket/>《[python]记录关于 websocket 的原理和使用》</a> ，不过，从 GITHUB 上可以看到，<strong>django-websocket</strong> 这个开源项目俨然已经是一个被放弃了的坑，并且在使用的过程中确实也有很多坑，果断弃之。</p><p>今天想聊的就是目前业界大牛都在推荐的一个框架&ndash;<a href=https://github.com/django/channels>Channels</a>， Channels 是针对 Django 项目的一个增强框架，它可以是的同步的 Django 项目转变为异步的项目。它可以使得 Django 项目不仅支持 HTTP 请求，还可以支持 Websocket, chat 协议，IOT 协议 ，甚至是你自定义的协议，同时也整合了 Django 的 auth 以及 session 系統等等。</p><a href=https://www.vimiix.com/posts/2018-07-26-channels2-tutorial/>Read more...</a></div></article><div><a href=/>上一页</a>
+<a href=/tags/git>git</a><div><h2 id=问题>问题</h2><p>常规的多人基于 GIT 协作开发的时候，都是遵循先 fork 一份主版本代码到自己的账号下面，然后基于本账户的版本，开分支来开发功能或修 Bug，完成以后再讲修改的内容，提交一个完整的 PR 贡献回主版本。</p><p>在本分支上开发的过程中，有时候不得不先提交到自己账号下面的克隆版本中来测试（比如豆瓣的<code>dae pre</code>，无法在本地生成预览，需要提交到远端），我们不能保证一次性提交就做到完美，避免不了会往复的修改后提交，这样的一次次测试用的 commit 属于是冗余的琐碎信息，对于主版本迭代是没有价值的。如果直接在基于该分支提交 PR，甚至被<code>merge</code>到<code>upstream/master</code>主版本中，这些不必要的 commit 信息也会包含进主版本中。这当然不是一个理想的迭代方式。</p><p>现在问题明确以后，就是一个目标：<strong>将这些开发中的所有 commit 都合并为一条有意义的 commit 信息提交给主版本</strong>。</p><a href=https://www.vimiix.com/posts/2018-08-13-git-best-practice/>Read more...</a></div></article><div><a href=/>上一页</a>
 2 of 8
 <a href=/page/3/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.

@@ -4,7 +4,15 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2018-05-21-grokking-algorithms-chapter-1/>《算法图解》读书笔记1-二分和大O</a></h1><b><time>2018.05.23 23:20</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2018-05-27-grokking-algorithms-chapter-3/>《算法图解》读书笔记3-递归</a></h1><b><time>2018.05.25 19:20</time></b>
+<a href=/tags/algorithms>algorithms</a>
+<a href=/tags/linux>Linux</a><div><blockquote><p>如果使用循环 ，程序的性能可能更高；如果使用递归，程序可能更容易理解。如何选择要看什么对你来说更重要。</p></blockquote><h2 id=递归函数>递归函数</h2><p>在一个函数中，可以调用另一个函数，如果调用的另一个函数是函数本身，这样的函数就是递归函数。如下示例：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>foo</span>(x):
+    <span style=color:#66d9ef>if</span> x <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span>:
+        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#39;end&#39;</span>
+    <span style=color:#66d9ef>else</span>:
+        <span style=color:#75715e># 在函数中继续调用自己</span>
+        <span style=color:#66d9ef>return</span> foo(x<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)
+</code></pre></div><a href=https://www.vimiix.com/posts/2018-05-27-grokking-algorithms-chapter-3/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-05-21-grokking-algorithms-chapter-1/>《算法图解》读书笔记1-二分和大O</a></h1><b><time>2018.05.23 23:20</time></b>
 <a href=/tags/algorithms>algorithms</a>
 <a href=/tags/linux>Linux</a><div><blockquote><p>算法是一组完成任务的指令</p></blockquote><h2 id=为什么要学习算法>为什么要学习算法</h2><p>这次是我第二次读《算法图解》，当我第一次看这本书的时候，我更兴奋于书中有什么内容，迫不及待的去过内容，学习那些算法概念。但当我第二次准备开始读这本书的时候，我脑海中出现的了一个问题：“为什么要学习算法？”，这个问题也许会有人和我一样，之前根本没有好好的去思考，只是知道，作为一个程序员我应该学习算法。当然，能够有这个觉悟，说明我们还算是个合格的程序员。</p><p>但是，不妨认真思考一下，为什么要学习算法？算法应该怎么学？</p><a href=https://www.vimiix.com/posts/2018-05-21-grokking-algorithms-chapter-1/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-05-18-tpli-io-extend/>TLPI笔记—深入文件I/O模型</a></h1><b><time>2018.05.18 09:20</time></b>
 <a href=/tags/tlpi>tlpi</a>
@@ -42,11 +50,7 @@ Total <span style=color:#ae81ff>21</span> <span style=color:#f92672>(</span>delt
 <a href=/tags/asyncio>asyncio</a><div><h2 id=uvicorn-简介>uvicorn 简介</h2><p><code>uvicorn</code>是一个基于<code>asyncio</code>开发的一个轻量级高效的 web 服务器框架。</p><blockquote><p>官网：<a href=http://www.uvicorn.org>http://www.uvicorn.org</a></p></blockquote><p><code>uvicorn</code> 设计的初衷是想要实现两个目标：</p><ul><li>使用<a href=https://github.com/MagicStack/uvloop><code>uvloop</code></a>和<a href=https://github.com/MagicStack/httptools><code>httptools</code></a>实现一个极速的<code>asyncio</code>服务器。</li><li>实现一个基于<a href=http://channels.readthedocs.io/en/stable/asgi.html><code>ASGI(异步服务器网关接口)</code></a>的最小的应用程序接口。</li></ul><p>它目前支持<code>http</code>，<code>websockets</code>，<code>Pub/Sub</code> 广播，并且可以扩展到其他协议和消息类型。</p><a href=https://www.vimiix.com/posts/2018-02-26-first-practise-of-uvicorn/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-02-07-dp-note/>[算法笔记]动态规划之最长公共子串和最长公共子序列</a></h1><b><time>2018.02.07 12:27</time></b>
 <a href=/tags/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92>动态规划</a>
 <a href=/tags/algorithms>algorithms</a>
-<a href=/tags/python>Python</a><div><blockquote><p>本文是《算法图解》笔记</p></blockquote><h2 id=应用场景>应用场景</h2><p>一切脱离实际应用场景的算法都是耍流氓！</p><ul><li>生物学家根据最长公共序列来确定 DNA 链的相似性，进而判断两种动物或疾病有多相似。最长公共序列还被用来寻找多发性硬化症治疗方案。</li><li>源代码管理中，<code>git diff</code>指令，可以查找出编辑前后文件的差异，这是基于动态规划实现的。</li><li>编辑距离（<code>levenshtein distance</code>），判断字符串的相似程度，也是基于动态规划计算。可以通过这个技术从拼写检查到判断用户上传的资料是否是盗版。（<em>这样看来，我猜想大学论文查重应该也是基于动态规划算法:P</em>）</li><li>Microsoft Word 等软件中具有断字功能，使用动态规划可以确定什么地方断字以确保行长一致。</li></ul><a href=https://www.vimiix.com/posts/2018-02-07-dp-note/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-01-31-err-403-in-ci/>[Jenkins]Error:403 No valid crumb was included in the request</a></h1><b><time>2018.01.31 12:27</time></b>
-<a href=/tags/ci>CI</a>
-<a href=/tags/error>ERROR</a>
-<a href=/tags/jenkins>jenkins</a>
-<a href=/tags/csrf>csrf</a><div><h1 id=错误备忘>错误备忘</h1><p>配置 <code>jenkins</code> 的时候，一直报这个错，是因为 <code>jenkins</code> 默认安全设置里面开启了 <code>防止款站点请求伪造</code>。</p><a href=https://www.vimiix.com/posts/2018-01-31-err-403-in-ci/>Read more...</a></div></article><div><a href=/page/3/>上一页</a>
+<a href=/tags/python>Python</a><div><blockquote><p>本文是《算法图解》笔记</p></blockquote><h2 id=应用场景>应用场景</h2><p>一切脱离实际应用场景的算法都是耍流氓！</p><ul><li>生物学家根据最长公共序列来确定 DNA 链的相似性，进而判断两种动物或疾病有多相似。最长公共序列还被用来寻找多发性硬化症治疗方案。</li><li>源代码管理中，<code>git diff</code>指令，可以查找出编辑前后文件的差异，这是基于动态规划实现的。</li><li>编辑距离（<code>levenshtein distance</code>），判断字符串的相似程度，也是基于动态规划计算。可以通过这个技术从拼写检查到判断用户上传的资料是否是盗版。（<em>这样看来，我猜想大学论文查重应该也是基于动态规划算法:P</em>）</li><li>Microsoft Word 等软件中具有断字功能，使用动态规划可以确定什么地方断字以确保行长一致。</li></ul><a href=https://www.vimiix.com/posts/2018-02-07-dp-note/>Read more...</a></div></article><div><a href=/page/3/>上一页</a>
 4 of 8
 <a href=/page/5/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
