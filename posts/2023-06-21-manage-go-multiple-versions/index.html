@@ -1,0 +1,57 @@
+<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Shell 函数实现Go语言多版本管理轻量级方案</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Shell 函数实现Go语言多版本管理轻量级方案</h1><b><time>2023.06.21 14:50</time></b>
+<a href=/%20/tags/golang>golang</a>
+<a href=/%20/tags/solution>solution</a>
+<a href=/%20/tags/multi-version>multi-version</a><div><h2 id=现有的工具方案>现有的工具方案</h2><ul><li>gvm: <a href=https://github.com/moovweb/gvm>https://github.com/moovweb/gvm</a></li><li>g: <a href=https://github.com/voidint/g>https://github.com/voidint/g</a></li></ul><h2 id=我的方案>我的方案</h2><p>优点：</p><ul><li>原生：基于 go 语言本身支持多版本的能力实现，可以下载任何官方发布的版本</li><li>简单：shell 函数实现，直接集成到 bashrc 或 zshrc 中即可使用，无需额外配置</li><li>可定制化：代码简单可根据自身需求定制</li></ul><h2 id=代码实现>代码实现</h2><p>gist地址：<a href=https://gist.github.com/vimiix/0927fdfbea926e869a2c631db9eeae8b>https://gist.github.com/vimiix/0927fdfbea926e869a2c631db9eeae8b</a></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=color:#75715e>####### GOLANG VERSION MANAGE FUNCTIONS ######</span>
+<span style=color:#75715e># ref: https://go.dev/doc/manage-install</span>
+<span style=color:#66d9ef>function</span> goinstall<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+ echo <span style=color:#e6db74>&#34;Downloading go</span>$1<span style=color:#e6db74> ...&#34;</span>
+ go install golang.org/dl/go$1@latest <span style=color:#f92672>&amp;&amp;</span> go$1 download
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>function</span> gouse<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+ gopath<span style=color:#f92672>=</span><span style=color:#66d9ef>$(</span>go env GOPATH<span style=color:#66d9ef>)</span>
+ <span style=color:#66d9ef>if</span> test -x <span style=color:#e6db74>${</span>gopath<span style=color:#e6db74>}</span>/bin/go$1; <span style=color:#66d9ef>then</span>
+  rm -f <span style=color:#e6db74>${</span>gopath<span style=color:#e6db74>}</span>/bin/go
+  echo <span style=color:#e6db74>&#34;Relink go with go</span>$1<span style=color:#e6db74> ...&#34;</span>
+  ln -s <span style=color:#e6db74>${</span>gopath<span style=color:#e6db74>}</span>/bin/go$1 <span style=color:#e6db74>${</span>gopath<span style=color:#e6db74>}</span>/bin/go
+  echo <span style=color:#e6db74>&#34;Done&#34;</span>
+ <span style=color:#66d9ef>else</span>
+  echo <span style=color:#e6db74>&#34;Version </span>$1<span style=color:#e6db74> not installed&#34;</span>
+ <span style=color:#66d9ef>fi</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>function</span> golist<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+ current<span style=color:#f92672>=</span><span style=color:#66d9ef>$(</span>go version | awk <span style=color:#e6db74>&#39;{print $3}&#39;</span> | cut -c3-<span style=color:#66d9ef>)</span>
+ <span style=color:#66d9ef>for</span> v in <span style=color:#66d9ef>$(</span>ls <span style=color:#66d9ef>$(</span>go env GOPATH<span style=color:#66d9ef>)</span>/bin | grep -E <span style=color:#e6db74>&#39;go(\d.*)&#39;</span> | cut -c3-<span style=color:#66d9ef>)</span>;
+ <span style=color:#66d9ef>do</span>
+  <span style=color:#66d9ef>if</span> <span style=color:#f92672>[</span> $v <span style=color:#f92672>=</span> $current <span style=color:#f92672>]</span>; <span style=color:#66d9ef>then</span>
+   echo <span style=color:#e6db74>&#34;</span>$v<span style=color:#e6db74> (⇦ current)&#34;</span>
+  <span style=color:#66d9ef>else</span>
+   echo $v
+  <span style=color:#66d9ef>fi</span>
+ <span style=color:#66d9ef>done</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>function</span> gouninstall<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+ current<span style=color:#f92672>=</span><span style=color:#66d9ef>$(</span>go version | awk <span style=color:#e6db74>&#39;{print $3}&#39;</span> | cut -c3-<span style=color:#66d9ef>)</span>
+ <span style=color:#66d9ef>if</span> <span style=color:#f92672>[</span> $1 <span style=color:#f92672>=</span> $current <span style=color:#f92672>]</span>; <span style=color:#66d9ef>then</span>
+  echo <span style=color:#e6db74>&#34;version </span>$1<span style=color:#e6db74> is actived, please change to another version first&#34;</span>
+  <span style=color:#66d9ef>return</span>
+ <span style=color:#66d9ef>fi</span>
+ echo <span style=color:#e6db74>&#34;Removing binary...&#34;</span>
+ rm -f <span style=color:#66d9ef>$(</span>go env GOPATH<span style=color:#66d9ef>)</span>/bin/go$1
+ echo <span style=color:#e6db74>&#34;Removing sdk ...&#34;</span>
+ rm -r ~/sdk/go$1
+ echo <span style=color:#e6db74>&#34;Done&#34;</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><h2 id=使用方式>使用方式</h2><ol><li>将上面的代码粘贴到 <code>~/.bashrc</code> （如果是zsh，则是 <code>~/.zshrc</code>） 末尾，保存退出</li><li><code>source ~/.bashrc</code> 激活即可</li></ol><h2 id=使用演示>使用演示</h2><p><a href=https://asciinema.org/a/592495><figure><img src=https://asciinema.org/a/592495.svg alt=asciicast></figure></a></p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/",this.page.identifier="/posts/2023-06-21-manage-go-multiple-versions/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
+Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

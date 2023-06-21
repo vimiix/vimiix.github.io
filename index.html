@@ -4,7 +4,13 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></h1><b><time>2021.12.21 20:25</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></h1><b><time>2023.06.21 14:50</time></b>
+<a href=/tags/golang>golang</a>
+<a href=/tags/solution>solution</a>
+<a href=/tags/multi-version>multi-version</a><div>现有的工具方案 gvm: https://github.com/moovweb/gvm g: https://github.com/voidint/g 我的方案 优点：
+原生：基于 go 语言本身支持多版本的能力实现，可以下载任何官方发布的版本 简单：shell 函数实现，直接集成到 bashrc 或 zshrc 中即可使用，无需额外配置 可定制化：代码简单可根据自身需求定制 代码实现 gist地址：https://gist.github.com/vimiix/0927fdfbea926e869a2c631db9eeae8b
+####### GOLANG VERSION MANAGE FUNCTIONS ###### # ref: https://go.dev/doc/manage-install function goinstall() { echo "Downloading go$1..." go install golang.org/dl/go$1@latest && go$1 download } function gouse() { gopath=$(go env GOPATH) if test -x ${gopath}/bin/go$1; then rm -f ${gopath}/bin/go echo "Relink go with go$1..." ln -s ${gopath}/bin/go$1 ${gopath}/bin/go echo "Done" else echo "Version $1not installed" fi } function golist() { current=$(go version | awk '{print $3}' | cut -c3-) for v in $(ls $(go env GOPATH)/bin | grep -E 'go(\d.
+<a href=https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></h1><b><time>2021.12.21 20:25</time></b>
 <a href=/tags/distributed>distributed</a>
 <a href=/tags/note>note</a><div>基础理论 CAP理论 一个分布式系统最多只能同时满足一致性（Consistency）、可用性（Availability）和分区容错性（Partition tolerance）这三项中的两项。这被称为CAP理论，已经被证实。
 一致性（Consistency） ：在分布式系统中所有的数据备份，在同一时刻都保持一致状态，如无法保证状态一致，直接返回错误。 可用性（Availability）：在集群中一部分节点故障，也能保证客户端访问系统并得到正确响应，允许一定时间内数据状态不一致。 分区容错性（Partition tolerance）：分布式系统在遇到任何网络分区故障时，仍然能保证对外提供满足一致性和可用性的服务，除非整个网络环境都发生故障。 ACID特性（刚性事务，强一致性） 把多条语句作为一个整体进行操作的功能，称为数据库事务。数据库事务可以确保该事务范围内的所有操作全部成功或者全部失败。
@@ -86,21 +92,9 @@ Source Code package main /* golang 实现 google 的rtb 价格加密方案 https
 ➜ vimiix ~ type vim vim is an alias for mvim -v 我这里使用的 vim 指令是对 mvim 的一个别名。
 使用一条指令可以解决上面的报错问题：
 sudo install_name_tool -change /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/lib/libruby.2.0.0.dylib /System/Library/Frameworks/Ruby.framework/Versions/2.3/usr/lib/libruby.2.3.0.dylib /usr/local/Cellar/macvim/8.0-146/MacVim.app/Contents/bin/../MacOS/Vim 注意点 需要注意的是，指令最后指定的 vim 路径，一定是上面报错中 Referenced from 后面的路径。参考
-相关解答 https://stackoverflow.com/questions/47278449/vim-ruby-mismatch-on-mac-high-sierra</div></article><article><h1><a href=https://www.vimiix.com/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Golang如何确保一个类型实现了某个interface</a></h1><b><time>2019.08.29 16:22</time></b>
-<a href=/tags/note>note</a>
-<a href=/tags/interface>interface</a>
-<a href=/tags/golang>golang</a><div>在 golang 中，接口（interface）代表一种『协议』存在，它是一个声明了多个方法的集合。
-接口是被隐式实现的，也就是说，我们在开发中定义一个类型（type）的时候，不需要声明这个类型实现了哪个接口。在使用的时候往往通过断言来的 ok-idom 来进行类型判断该类型是否实现了目标接口，放置调用方法失败抛出 panic：
-if value, ok := AType.(BInterface) { fmt.Println("ok") } else { fmt.Println("no") } 如果断言失败，那么 ok 的值将会是 false,但是如果断言成功 ok 的值将会是 true,同时 value 将会得到所期待的正确的值。
-但是，在某些情况下，我们可能希望明确地检查接口中哪些方法没有被实现。最好的方法就是借助编译器地检查功能。
-假设定义了一个 Programmer 接口，一个 Human 类型：
-&#187;> 试一下
-package main type Programmer interface { Code() string } type Human struct {} func main() {} 这段代码没有做任何操作，可以正常地执行。
-假设我们希望 Human 类型实现了 Programmer 接口，可以在代码中定义一个 _ （下划线表示忽略这个变量）变量来实现检测效果
-package main type Programmer interface { Code() string } type Human struct {} // 利用编译器检查接口实现 var _ Programmer = (*Human)(nil) func main() {} 当再次执行这段代码地时候，就会报出如下编译错误：
-<a href=https://www.vimiix.com/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Read more...</a></div></article><div>1 of 8
+相关解答 https://stackoverflow.com/questions/47278449/vim-ruby-mismatch-on-mac-high-sierra</div></article><div>1 of 9
 <a href=/page/2/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
-<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2022
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
 <a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

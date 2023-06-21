@@ -4,7 +4,19 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>HLS视频加密</a></h1><b><time>2019.03.28 16:22</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Golang如何确保一个类型实现了某个interface</a></h1><b><time>2019.08.29 16:22</time></b>
+<a href=/tags/note>note</a>
+<a href=/tags/interface>interface</a>
+<a href=/tags/golang>golang</a><div>在 golang 中，接口（interface）代表一种『协议』存在，它是一个声明了多个方法的集合。
+接口是被隐式实现的，也就是说，我们在开发中定义一个类型（type）的时候，不需要声明这个类型实现了哪个接口。在使用的时候往往通过断言来的 ok-idom 来进行类型判断该类型是否实现了目标接口，放置调用方法失败抛出 panic：
+if value, ok := AType.(BInterface) { fmt.Println("ok") } else { fmt.Println("no") } 如果断言失败，那么 ok 的值将会是 false,但是如果断言成功 ok 的值将会是 true,同时 value 将会得到所期待的正确的值。
+但是，在某些情况下，我们可能希望明确地检查接口中哪些方法没有被实现。最好的方法就是借助编译器地检查功能。
+假设定义了一个 Programmer 接口，一个 Human 类型：
+&#187;> 试一下
+package main type Programmer interface { Code() string } type Human struct {} func main() {} 这段代码没有做任何操作，可以正常地执行。
+假设我们希望 Human 类型实现了 Programmer 接口，可以在代码中定义一个 _ （下划线表示忽略这个变量）变量来实现检测效果
+package main type Programmer interface { Code() string } type Human struct {} // 利用编译器检查接口实现 var _ Programmer = (*Human)(nil) func main() {} 当再次执行这段代码地时候，就会报出如下编译错误：
+<a href=https://www.vimiix.com/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/>HLS视频加密</a></h1><b><time>2019.03.28 16:22</time></b>
 <a href=/tags/note>note</a>
 <a href=/tags/video>video</a>
 <a href=/tags/encrypt>encrypt</a>
@@ -52,11 +64,10 @@ matplotlib<span style=color:#f92672>.</span>use(<span style=color:#e6db74>&#39;T
 <a href=/tags/https>HTTPS</a>
 <a href=/tags/ssl>SSL</a>
 <a href=/tags/flask>Flask</a>
-<a href=/tags/translation>translation</a><div><p>我们在开发 Flask 应用程序时，通常通过运行 Flask 自带的 Web 服务器来开发测试，这个服务器提供了基本的但功能完备的 WSGI 服务器。但开发结束以后，在应用程序上线到生成环境时，有很多不得不考虑的事情，其中之一是我们是否应该要求客户端使用加密连接以增加安全性。</p><p>人们总是问我这个问题，特别是如何在 HTTPS 协议上部署 Flask 服务器。在本文中，我将介绍几种为 Flask 应用程序添加加密的方案，从一个非常简单的可以在五秒内实现，到一个强大的就像我的网站一样可以得到一个 A +评级解决方案（<a href="https://www.ssllabs.com/ssltest/analyze.html?d=blog.miguelgrinberg.com">我的网站的 SSL 分析数据</a>）。</p><a href=https://www.vimiix.com/posts/2018-08-27-running-your-flask-application-over-https/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-08-13-git-best-practice/>Git开发记录-合并多条commit最佳实践</a></h1><b><time>2018.08.13 19:22</time></b>
-<a href=/tags/git>git</a><div><h2 id=问题>问题</h2><p>常规的多人基于 GIT 协作开发的时候，都是遵循先 fork 一份主版本代码到自己的账号下面，然后基于本账户的版本，开分支来开发功能或修 Bug，完成以后再讲修改的内容，提交一个完整的 PR 贡献回主版本。</p><p>在本分支上开发的过程中，有时候不得不先提交到自己账号下面的克隆版本中来测试（比如豆瓣的<code>dae pre</code>，无法在本地生成预览，需要提交到远端），我们不能保证一次性提交就做到完美，避免不了会往复的修改后提交，这样的一次次测试用的 commit 属于是冗余的琐碎信息，对于主版本迭代是没有价值的。如果直接在基于该分支提交 PR，甚至被<code>merge</code>到<code>upstream/master</code>主版本中，这些不必要的 commit 信息也会包含进主版本中。这当然不是一个理想的迭代方式。</p><p>现在问题明确以后，就是一个目标：<strong>将这些开发中的所有 commit 都合并为一条有意义的 commit 信息提交给主版本</strong>。</p><a href=https://www.vimiix.com/posts/2018-08-13-git-best-practice/>Read more...</a></div></article><div><a href=/>上一页</a>
-2 of 8
+<a href=/tags/translation>translation</a><div><p>我们在开发 Flask 应用程序时，通常通过运行 Flask 自带的 Web 服务器来开发测试，这个服务器提供了基本的但功能完备的 WSGI 服务器。但开发结束以后，在应用程序上线到生成环境时，有很多不得不考虑的事情，其中之一是我们是否应该要求客户端使用加密连接以增加安全性。</p><p>人们总是问我这个问题，特别是如何在 HTTPS 协议上部署 Flask 服务器。在本文中，我将介绍几种为 Flask 应用程序添加加密的方案，从一个非常简单的可以在五秒内实现，到一个强大的就像我的网站一样可以得到一个 A +评级解决方案（<a href="https://www.ssllabs.com/ssltest/analyze.html?d=blog.miguelgrinberg.com">我的网站的 SSL 分析数据</a>）。</p><a href=https://www.vimiix.com/posts/2018-08-27-running-your-flask-application-over-https/>Read more...</a></div></article><div><a href=/>上一页</a>
+2 of 9
 <a href=/page/3/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
-<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2022
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
 <a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>
