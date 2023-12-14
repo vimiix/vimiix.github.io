@@ -1,212 +1,213 @@
-<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Django Channels2.0 websocket最佳实践</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
-<a href=/posts/><b>文章列表</b></a>.
-<a href=/categories/><b>分类</b></a>.
-<a href=/tags/><b>标签</b></a>.
-<a href=/friends/><b>友链</b></a>.
-<a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Django Channels2.0 websocket最佳实践</h1><b><time>2018.07.26 02:56</time></b>
-<a href=/%20/tags/django>Django</a>
-<a href=/%20/tags/channels>Channels</a>
-<a href=/%20/tags/websocket>websocket</a><div><p>做 web 后端开发，少不了要和 websocket 打交道。之前写过一篇关于 websocket 的实践文章 &mdash; <a href=https://vimiix.com/post/2018/04/02/python-websocket/>《[python]记录关于 websocket 的原理和使用》</a> ，不过，从 GITHUB 上可以看到，<strong>django-websocket</strong> 这个开源项目俨然已经是一个被放弃了的坑，并且在使用的过程中确实也有很多坑，果断弃之。</p><p>今天想聊的就是目前业界大牛都在推荐的一个框架&ndash;<a href=https://github.com/django/channels>Channels</a>， Channels 是针对 Django 项目的一个增强框架，它可以是的同步的 Django 项目转变为异步的项目。它可以使得 Django 项目不仅支持 HTTP 请求，还可以支持 Websocket, chat 协议，IOT 协议 ，甚至是你自定义的协议，同时也整合了 Django 的 auth 以及 session 系統等等。</p><p>如果我理解错误，请参考官方说法：</p><blockquote><p>Channels augments Django to bring WebSocket, long-poll HTTP, task offloading and other async support to your code, using familiar Django design patterns and a flexible underlying framework that lets you not only customize behaviours but also write support for your own protocols and needs.</p></blockquote><p>关于框架的介绍，网上目前基本都是 1.x 版本的教程。但是 Channels 在今年二月份以后就推出了 2.0 版本，我认识这个框架也是在今年三四月份了，所有一上手就搞得 2.0，1.x 版本也就没有怎么关注。</p><p>使用 2.0 的困难就是，没有一份完整的中文文章可以参考，只能一点一点摸索官方的文档。（<em>渣渣英文水平，只能自救，慢慢来吧</em>），官方的文档写的还是蛮实用的，有教程，有示例，有模块名词讲解。基本可以对照着 Django 里面的角色来对照着学习，比如 <code>comsumer</code> 就理解成 Django 里面的 <code>view</code> 等等。</p><p>好了，和我一起去认识一下它吧~~</p><h2 id=asgi>ASGI</h2><p>认识 Channels 之前，需要先了解一下 asgi ，全名：<code>Asynchronous Server Gateway Interface</code>。它是区别于 wsgi 的一种异步服务网关接口，不仅仅只是通过 <code>asyncio</code> 以异步方式运行，还支持多种协议。完整的文档戳<a href=https://github.com/django/asgiref/blob/master/specs/asgi.rst>这里</a></p><p>关联的几个项目：</p><ul><li><a href=https://github.com/django/asgiref>https://github.com/django/asgiref</a> ASGI 内存中的通道层，函数的同步异步之间相互转化需要</li><li><a href=https://github.com/django/daphne>https://github.com/django/daphne</a> 支持 HTTP，HTTP2 和 WebSocket 协议服务器，启动 Channels 的项目需要</li><li><a href=https://github.com/django/channels_redis>https://github.com/django/channels_redis</a> Channels 专属的通道层，使用 Redis 作为其后备存储，并支持单服务器和分片配置以及群组支持。（这个项目是 Channels 的一个附属项目，配置的时候作为可选项使用，该软件包的早期版本被称为 <code>asgi_redis</code>，如果你在使用 Channels 1.x 项目，它仍可在 PyPI 下通过这个名称使用。但 <code>channels_redis</code> 仅适用于 Channels 2 项目。）</li></ul><p><em>备注：之前体验使用过一个<a href=https://vimiix.com/post/2018/02/26/first-practise-of-uvicorn/>基于 asgi 的 web 框架 uvicon</a>，也是同类项目。</em></p><h2 id=流程图>流程图</h2><p>写代码之前先来看一下网络请求流程图：(来自网络)</p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/v0AlNN.jpg alt=channels></figure></p><h2 id=实践>实践</h2><p>还是和官方同步，以一个聊天室的例子说起，Channels 提供从 PYPI 直接 pip 下载安装，：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>pip install -U channels<span style=color:#f92672>==</span>2.0.2 Django<span style=color:#f92672>==</span>2.0.4 channels_redis<span style=color:#f92672>==</span>2.1.1
-</code></pre></div><p>这里，我们不仅安装了 Channels 2.0，还安装了 Django 2.0 作为我们 web 项目框架，安装了 channels_redis 作为 Channels 的后端存储通道层。</p><p>下载好包以后，把 channels 作为 Django 的一个应用（Django 新建项目就不赘述了，假设我们已经建立好另一个项目叫 <strong><code>my_project</code></strong>），添加到配置文件的 <code>INSTALLED_APPS</code>中：</p><ul><li>my_project/settings.py</li></ul><pre><code class=language-pytho data-lang=pytho>INSTALLED_APPS = (
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Django Channels2.0 websocket最佳实践</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/vimiix-blog/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=http://vimiix.com/vimiix-blog/><b>首页</b></a>.
+<a href=/vimiix-blog/posts/><b>文章列表</b></a>.
+<a href=/vimiix-blog/categories/><b>分类</b></a>.
+<a href=/vimiix-blog/tags/><b>标签</b></a>.
+<a href=/vimiix-blog/friends/><b>友链</b></a>.
+<a href=/vimiix-blog/about/><b>关于</b></a>.
+<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Django Channels2.0 websocket最佳实践</h1><b><time>2018.07.26 02:56</time></b>
+<a href=/vimiix-blog/%20/tags/django>Django</a>
+<a href=/vimiix-blog/%20/tags/channels>Channels</a>
+<a href=/vimiix-blog/%20/tags/websocket>websocket</a><div><p>做 web 后端开发，少不了要和 websocket 打交道。之前写过一篇关于 websocket 的实践文章 &mdash; <a href=https://vimiix.com/post/2018/04/02/python-websocket/>《[python]记录关于 websocket 的原理和使用》</a> ，不过，从 GITHUB 上可以看到，<strong>django-websocket</strong> 这个开源项目俨然已经是一个被放弃了的坑，并且在使用的过程中确实也有很多坑，果断弃之。</p><p>今天想聊的就是目前业界大牛都在推荐的一个框架&ndash;<a href=https://github.com/django/channels>Channels</a>， Channels 是针对 Django 项目的一个增强框架，它可以是的同步的 Django 项目转变为异步的项目。它可以使得 Django 项目不仅支持 HTTP 请求，还可以支持 Websocket, chat 协议，IOT 协议 ，甚至是你自定义的协议，同时也整合了 Django 的 auth 以及 session 系統等等。</p><p>如果我理解错误，请参考官方说法：</p><blockquote><p>Channels augments Django to bring WebSocket, long-poll HTTP, task offloading and other async support to your code, using familiar Django design patterns and a flexible underlying framework that lets you not only customize behaviours but also write support for your own protocols and needs.</p></blockquote><p>关于框架的介绍，网上目前基本都是 1.x 版本的教程。但是 Channels 在今年二月份以后就推出了 2.0 版本，我认识这个框架也是在今年三四月份了，所有一上手就搞得 2.0，1.x 版本也就没有怎么关注。</p><p>使用 2.0 的困难就是，没有一份完整的中文文章可以参考，只能一点一点摸索官方的文档。（<em>渣渣英文水平，只能自救，慢慢来吧</em>），官方的文档写的还是蛮实用的，有教程，有示例，有模块名词讲解。基本可以对照着 Django 里面的角色来对照着学习，比如 <code>comsumer</code> 就理解成 Django 里面的 <code>view</code> 等等。</p><p>好了，和我一起去认识一下它吧~~</p><h2 id=asgi>ASGI</h2><p>认识 Channels 之前，需要先了解一下 asgi ，全名：<code>Asynchronous Server Gateway Interface</code>。它是区别于 wsgi 的一种异步服务网关接口，不仅仅只是通过 <code>asyncio</code> 以异步方式运行，还支持多种协议。完整的文档戳<a href=https://github.com/django/asgiref/blob/master/specs/asgi.rst>这里</a></p><p>关联的几个项目：</p><ul><li><a href=https://github.com/django/asgiref>https://github.com/django/asgiref</a> ASGI 内存中的通道层，函数的同步异步之间相互转化需要</li><li><a href=https://github.com/django/daphne>https://github.com/django/daphne</a> 支持 HTTP，HTTP2 和 WebSocket 协议服务器，启动 Channels 的项目需要</li><li><a href=https://github.com/django/channels_redis>https://github.com/django/channels_redis</a> Channels 专属的通道层，使用 Redis 作为其后备存储，并支持单服务器和分片配置以及群组支持。（这个项目是 Channels 的一个附属项目，配置的时候作为可选项使用，该软件包的早期版本被称为 <code>asgi_redis</code>，如果你在使用 Channels 1.x 项目，它仍可在 PyPI 下通过这个名称使用。但 <code>channels_redis</code> 仅适用于 Channels 2 项目。）</li></ul><p><em>备注：之前体验使用过一个<a href=https://vimiix.com/post/2018/02/26/first-practise-of-uvicorn/>基于 asgi 的 web 框架 uvicon</a>，也是同类项目。</em></p><h2 id=流程图>流程图</h2><p>写代码之前先来看一下网络请求流程图：(来自网络)</p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/v0AlNN.jpg alt=channels></figure></p><h2 id=实践>实践</h2><p>还是和官方同步，以一个聊天室的例子说起，Channels 提供从 PYPI 直接 pip 下载安装，：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>pip install -U channels<span style=color:#f92672>==</span>2.0.2 Django<span style=color:#f92672>==</span>2.0.4 channels_redis<span style=color:#f92672>==</span>2.1.1
+</span></span></code></pre></div><p>这里，我们不仅安装了 Channels 2.0，还安装了 Django 2.0 作为我们 web 项目框架，安装了 channels_redis 作为 Channels 的后端存储通道层。</p><p>下载好包以后，把 channels 作为 Django 的一个应用（Django 新建项目就不赘述了，假设我们已经建立好另一个项目叫 <strong><code>my_project</code></strong>），添加到配置文件的 <code>INSTALLED_APPS</code>中：</p><ul><li>my_project/settings.py</li></ul><pre tabindex=0><code class=language-pytho data-lang=pytho>INSTALLED_APPS = (
+    &#39;django.contrib.auth&#39;,
+    &#39;django.contrib.contenttypes&#39;,
+    &#39;django.contrib.sessions&#39;,
+    &#39;django.contrib.sites&#39;,
     ...
-    'channels',
-    'chat'
+    &#39;channels&#39;,
+    &#39;chat&#39;
 )
-</code></pre><p><code>chat</code>是我们准备建立的聊天室应用，接着就建立我们的 asgi 应用，并指定其要使用的路由。在 settings 同级目录下新建一个 <code>routing.py</code> 的文件：</p><ul><li>my_project/routing.py</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> channels.auth <span style=color:#f92672>import</span> AuthMiddlewareStack
-<span style=color:#f92672>from</span> channels.routing <span style=color:#f92672>import</span> ProtocolTypeRouter, URLRouter
-
-<span style=color:#f92672>import</span> chat.routing
-
-application <span style=color:#f92672>=</span> ProtocolTypeRouter({
-    <span style=color:#75715e># (http-&gt;django views is added by default)</span>
-    <span style=color:#75715e># 普通的HTTP请求不需要我们手动在这里添加，框架会自动加载过来</span>
-    <span style=color:#e6db74>&#39;websocket&#39;</span>: AuthMiddlewareStack(
-        URLRouter(
-            chat<span style=color:#f92672>.</span>routing<span style=color:#f92672>.</span>websocket_urlpatterns
-        )
-    ),
-})
-</code></pre></div><p><code>chat.routing</code>  以及  <code>chat.routing.websocket_urlpatterns</code>  是我们后面会自己建立的模块。</p><p>紧接着，我们需要在 Django 的配置文件中继续配置 Channels 的 asgi 应用和通道层的信息：</p><ul><li>my_project/settings.py</li></ul><pre><code>ASGI_APPLICATION = &quot;my_project.routing.application&quot; # 上面新建的 asgi 应用
+</code></pre><p><code>chat</code>是我们准备建立的聊天室应用，接着就建立我们的 asgi 应用，并指定其要使用的路由。在 settings 同级目录下新建一个 <code>routing.py</code> 的文件：</p><ul><li>my_project/routing.py</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>from</span> channels.auth <span style=color:#f92672>import</span> AuthMiddlewareStack
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> channels.routing <span style=color:#f92672>import</span> ProtocolTypeRouter, URLRouter
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> chat.routing
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>application <span style=color:#f92672>=</span> ProtocolTypeRouter({
+</span></span><span style=display:flex><span>    <span style=color:#75715e># (http-&gt;django views is added by default)</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># 普通的HTTP请求不需要我们手动在这里添加，框架会自动加载过来</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#39;websocket&#39;</span>: AuthMiddlewareStack(
+</span></span><span style=display:flex><span>        URLRouter(
+</span></span><span style=display:flex><span>            chat<span style=color:#f92672>.</span>routing<span style=color:#f92672>.</span>websocket_urlpatterns
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>    ),
+</span></span><span style=display:flex><span>})
+</span></span></code></pre></div><p><code>chat.routing</code>  以及  <code>chat.routing.websocket_urlpatterns</code>  是我们后面会自己建立的模块。</p><p>紧接着，我们需要在 Django 的配置文件中继续配置 Channels 的 asgi 应用和通道层的信息：</p><ul><li>my_project/settings.py</li></ul><pre tabindex=0><code>ASGI_APPLICATION = &#34;my_project.routing.application&#34; # 上面新建的 asgi 应用
 CHANNEL_LAYERS = {
-    'default': {
+    &#39;default&#39;: {
     	# 这里用到了 channels_redis
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)], # 配置你自己的 redis 服务信息
+        &#39;BACKEND&#39;: &#39;channels_redis.core.RedisChannelLayer&#39;,
+        &#39;CONFIG&#39;: {
+            &#39;hosts&#39;: [(&#39;127.0.0.1&#39;, 6379)], # 配置你自己的 redis 服务信息
         },
     }
 }
-</code></pre><p>到这里，Channels 的基本配置就差不多了。</p><p>我们说以官方给的聊天室的例子来说明，所以最开始的时候，在 <code>INSTALLED_APPS</code> 中，我们添加了一个 <code>chat</code>的应用。下面就来创建这个应用。</p><p>channels 的应用和 Django 的还是不太一样，所以就不使用 <code>python manage.py startapp</code>命令创建应用了。我们手动创建几个文件。</p><ul><li>chat/routing.py</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> django.urls <span style=color:#f92672>import</span> path
-
-<span style=color:#f92672>from</span> . <span style=color:#f92672>import</span> consumers
-
-websocket_urlpatterns <span style=color:#f92672>=</span> [ <span style=color:#75715e># 路由，指定 websocket 链接对应的 consumer</span>
-    path(<span style=color:#e6db74>&#39;ws/chat/&lt;str:room_name&gt;/&#39;</span>, consumers<span style=color:#f92672>.</span>ChatConsumer),
-]
-</code></pre></div><p>在 routing 文件中，我们定义了一个 <code>websocket_urlpatterns</code> 的路由列表，并设定了 <code>ChatCunsumer</code> 这个消费类（理解成 Django 的<code>view</code>）。这个 routing 文件就是上面 <code>my_project/routing.py</code> 中引用到的路由。</p><p>下面来看看 consumer 的实现：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> json
-
-<span style=color:#f92672>from</span> asgiref.sync <span style=color:#f92672>import</span> async_to_sync
-<span style=color:#f92672>from</span> channels.generic.websocket <span style=color:#f92672>import</span> WebsocketConsumer
-
-
-<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ChatConsumer</span>(WebsocketConsumer):
-    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>connect</span>(self):
-        <span style=color:#75715e># 当 websocket 一链接上以后触发该甘薯</span>
-        self<span style=color:#f92672>.</span>room_name <span style=color:#f92672>=</span> self<span style=color:#f92672>.</span>scope[<span style=color:#e6db74>&#39;url_route&#39;</span>][<span style=color:#e6db74>&#39;kwargs&#39;</span>][<span style=color:#e6db74>&#39;room_name&#39;</span>]
-        self<span style=color:#f92672>.</span>room_group_name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;chat_</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#39;</span> <span style=color:#f92672>%</span> self<span style=color:#f92672>.</span>room_name
-
-        <span style=color:#75715e># 把当前链接添加到聊天室</span>
-        <span style=color:#75715e># 注意 `group_add` 只支持异步调用，所以这里需要使用`async_to_sync`转换为同步调用</span>
-        async_to_sync(self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_add)(
-            self<span style=color:#f92672>.</span>room_group_name,
-            self<span style=color:#f92672>.</span>channel_name
-        )
-
-		<span style=color:#75715e># 接受该链接</span>
-        self<span style=color:#f92672>.</span>accept()
-
-    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>disconnect</span>(self, close_code):
-        <span style=color:#75715e># 断开链接是触发该函数</span>
-        <span style=color:#75715e># 将该链接移出聊天室</span>
-        async_to_sync(self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_discard)(
-            self<span style=color:#f92672>.</span>room_group_name,
-            self<span style=color:#f92672>.</span>channel_name
-        )
-
-    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>receive</span>(self, text_data):
-        <span style=color:#75715e># 前端发送来消息时，通过这个接口传递</span>
-        text_data_json <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>loads(text_data)
-        message <span style=color:#f92672>=</span> text_data_json[<span style=color:#e6db74>&#39;message&#39;</span>]
-
-        <span style=color:#75715e># 发送消息到当前聊天室</span>
-        async_to_sync(self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_send)(
-            self<span style=color:#f92672>.</span>room_group_name,
-            {
-                <span style=color:#75715e># 这里的type要在当前类中实现一个相应的函数，</span>
-                <span style=color:#75715e># 下划线或者&#39;.&#39;的都会被Channels转换为下划线处理，</span>
-                <span style=color:#75715e># 所以这里写 &#39;chat.message&#39;也没问题</span>
-                <span style=color:#e6db74>&#39;type&#39;</span>: <span style=color:#e6db74>&#39;chat_message&#39;</span>,
-                <span style=color:#e6db74>&#39;message&#39;</span>: message
-            }
-        )
-
-    <span style=color:#75715e># 从聊天室拿到消息，后直接将消息返回回去</span>
-    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>chat_message</span>(self, event):
-        message <span style=color:#f92672>=</span> event[<span style=color:#e6db74>&#39;message&#39;</span>]
-
-        <span style=color:#75715e># Send message to WebSocket</span>
-        self<span style=color:#f92672>.</span>send(text_data<span style=color:#f92672>=</span>json<span style=color:#f92672>.</span>dumps({
-            <span style=color:#e6db74>&#39;message&#39;</span>: message
-        }))
-</code></pre></div><p>以上就是以同步的简单的实现了聊天室的收发功能，我们来看看这个互动过程是怎样进行的。</p><h2 id=请求链接>请求链接</h2><p>当前端发起一个 <code>websocket</code> 的请求过来的时候，会自动触发 <code>connect()</code>函数事件。</p><p>前端发起请求的实现方式：</p><ul><li>chat/templates/chat/room.html</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&lt;<span style=color:#f92672>script</span>&gt;
-  <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>roomName</span> <span style=color:#f92672>=</span> {{ <span style=color:#a6e22e>room_name_json</span> }};
-
-  <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>chatSocket</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>WebSocket</span>(
-      <span style=color:#e6db74>&#39;ws://&#39;</span> <span style=color:#f92672>+</span> window.<span style=color:#a6e22e>location</span>.<span style=color:#a6e22e>host</span> <span style=color:#f92672>+</span> <span style=color:#e6db74>&#39;/ws/chat/&#39;</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>roomName</span> <span style=color:#f92672>+</span> <span style=color:#e6db74>&#39;/&#39;</span>);
-  ...
-&lt;/<span style=color:#f92672>script</span>&gt;
-</code></pre></div><p>触发 <code>connect</code>事件以后，进入函数，<code>self.scope</code>可以类比的理解为 django 中的<code>self.request</code>，从 url 中取出<code>room_name</code>字段备用，这里的变量名是在路由中设置的。</p><p>chat/urls.py</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> django.urls <span style=color:#f92672>import</span> path
-
-<span style=color:#f92672>from</span> . <span style=color:#f92672>import</span> views
-
-urlpatterns <span style=color:#f92672>=</span> [
-    path(<span style=color:#e6db74>&#39;&#39;</span>, views<span style=color:#f92672>.</span>index, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;index&#39;</span>),
-    path(<span style=color:#e6db74>&#39;&lt;str:room_name&gt;/&#39;</span>, views<span style=color:#f92672>.</span>room, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;room&#39;</span>),
-]
-</code></pre></div><p><code>self.channel_name</code> 是每一个 websocket 请求过来时候， Channels 自动帮我们生成的一个个性化名称，实现代码就是用随机函数组装：</p><ul><li>channels/layers.py : L243</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python>async <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>new_channel</span>(self, prefix<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;specific.&#34;</span>):
-        <span style=color:#e6db74>&#34;&#34;&#34;
-</span><span style=color:#e6db74>        Returns a new channel name that can be used by something in our
-</span><span style=color:#e6db74>        process as a specific channel.
-</span><span style=color:#e6db74>        &#34;&#34;&#34;</span>
-        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>.inmemory!</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#34;</span> <span style=color:#f92672>%</span> (
-            prefix,
-            <span style=color:#e6db74>&#34;&#34;</span><span style=color:#f92672>.</span>join(random<span style=color:#f92672>.</span>choice(string<span style=color:#f92672>.</span>ascii_letters) <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>12</span>)),
-        )
-</code></pre></div><p>然后我们将新的 <code>channel_name</code> 和 <code>room_name</code> 绑定，也相当于，将当前链接加入到指定聊天室。</p><h2 id=端口链接>端口链接</h2><p>前端实现方式：</p><ul><li>chat/templates/chat/room.html</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&lt;<span style=color:#f92672>script</span>&gt;
-  ....
-  <span style=color:#a6e22e>chatSocket</span>.<span style=color:#a6e22e>onclose</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>function</span>(<span style=color:#a6e22e>e</span>) {
-      <span style=color:#a6e22e>console</span>.<span style=color:#a6e22e>error</span>(<span style=color:#e6db74>&#39;Chat socket closed unexpectedly&#39;</span>);
-  };
-  ....
-&lt;/<span style=color:#f92672>script</span>&gt;
-</code></pre></div><p>当 server 端的 WebSocket 调用 <code>self.close()</code> 关闭时，前端的  <code>chatSocket.onclose</code>  会自动触发。如果前端页面关闭，导致端口链接时，后端的<code>disconnect()</code>函数会自动触发。</p><h2 id=接收信息>接收信息</h2><p>前端实现方式：</p><ul><li>chat/templates/chat/room.html</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&lt;<span style=color:#f92672>script</span>&gt;
-  ....
-  <span style=color:#75715e>// 点击按键，发送信息是很常见的逻辑
-</span><span style=color:#75715e></span>  document.<span style=color:#a6e22e>querySelector</span>(<span style=color:#e6db74>&#39;#chat-message-submit&#39;</span>).<span style=color:#a6e22e>onclick</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>function</span>(<span style=color:#a6e22e>e</span>) {
-      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>messageInputDom</span> <span style=color:#f92672>=</span> document.<span style=color:#a6e22e>querySelector</span>(<span style=color:#e6db74>&#39;#chat-message-input&#39;</span>);
-      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>message</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>messageInputDom</span>.<span style=color:#a6e22e>value</span>;
-      <span style=color:#a6e22e>chatSocket</span>.<span style=color:#a6e22e>send</span>(<span style=color:#a6e22e>JSON</span>.<span style=color:#a6e22e>stringify</span>({
-          <span style=color:#e6db74>&#39;message&#39;</span><span style=color:#f92672>:</span> <span style=color:#a6e22e>message</span>
-      }));
-
-      <span style=color:#a6e22e>messageInputDom</span>.<span style=color:#a6e22e>value</span> <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;&#39;</span>;
-  };
-&lt;/<span style=color:#f92672>script</span>&gt;
-</code></pre></div><p><code>chatSocket.send</code>  会将信息发送到服务端，服务端的<code>receive()</code>  事件将会自动触发，将收到的 <code>message</code> 送到对应的 group 中，</p><p><code>type</code> 字段是一个可以被调用的对象名，Channels 会根据这个名称调度相应的方法来处理逻辑。</p><p>当在相应的函数中处理结束以后，调用<code>send()</code>方法将消息传递回前端。</p><p>前端接收信息的方式：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>&lt;<span style=color:#f92672>script</span>&gt;
-  ....
-  <span style=color:#a6e22e>chatSocket</span>.<span style=color:#a6e22e>onmessage</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>function</span>(<span style=color:#a6e22e>e</span>) {
-      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>data</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>JSON</span>.<span style=color:#a6e22e>parse</span>(<span style=color:#a6e22e>e</span>.<span style=color:#a6e22e>data</span>);
-      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>message</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>data</span>[<span style=color:#e6db74>&#39;message&#39;</span>];
-      document.<span style=color:#a6e22e>querySelector</span>(<span style=color:#e6db74>&#39;#chat-log&#39;</span>).<span style=color:#a6e22e>value</span> <span style=color:#f92672>+=</span> (<span style=color:#a6e22e>message</span> <span style=color:#f92672>+</span> <span style=color:#e6db74>&#39;\n&#39;</span>);
-  };
-  ....
-&lt;/<span style=color:#f92672>script</span>&gt;
-</code></pre></div><p><code>chatSocket.onmessage</code>  会接收到后端发来的信息，前端再将该信息渲染到页面上。</p><h2 id=异步写法>异步写法</h2><p>上面是同步方式的写法，官方还给出了异步的写法，在我们的项目中，也采用了异步的写法，Channels 对于异步的支持是非常好的。</p><p>代码如下：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>import</span> json
-<span style=color:#f92672>from</span> channels.generic.websocket <span style=color:#f92672>import</span> AsyncWebsocketConsumer
-
-
-<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ChatConsumer</span>(AsyncWebsocketConsumer):
-    async <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>connect</span>(self):
-        self<span style=color:#f92672>.</span>room_name <span style=color:#f92672>=</span> self<span style=color:#f92672>.</span>scope[<span style=color:#e6db74>&#39;url_route&#39;</span>][<span style=color:#e6db74>&#39;kwargs&#39;</span>][<span style=color:#e6db74>&#39;room_name&#39;</span>]
-        self<span style=color:#f92672>.</span>room_group_name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;chat_</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#39;</span> <span style=color:#f92672>%</span> self<span style=color:#f92672>.</span>room_name
-
-        await self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_add(
-            self<span style=color:#f92672>.</span>room_group_name,
-            self<span style=color:#f92672>.</span>channel_name
-        )
-
-        await self<span style=color:#f92672>.</span>accept()
-
-    async <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>disconnect</span>(self, close_code):
-        await self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_discard(
-            self<span style=color:#f92672>.</span>room_group_name,
-            self<span style=color:#f92672>.</span>channel_name
-        )
-
-    async <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>receive</span>(self, text_data):
-        text_data_json <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>loads(text_data)
-        message <span style=color:#f92672>=</span> text_data_json[<span style=color:#e6db74>&#39;message&#39;</span>]
-
-        await self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_send(
-            self<span style=color:#f92672>.</span>room_group_name,
-            {
-                <span style=color:#e6db74>&#39;type&#39;</span>: <span style=color:#e6db74>&#39;chat_message&#39;</span>,
-                <span style=color:#e6db74>&#39;message&#39;</span>: message
-            }
-        )
-
-    async <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>chat_message</span>(self, event):
-        message <span style=color:#f92672>=</span> event[<span style=color:#e6db74>&#39;message&#39;</span>]
-
-        await self<span style=color:#f92672>.</span>send(text_data<span style=color:#f92672>=</span>json<span style=color:#f92672>.</span>dumps({
-            <span style=color:#e6db74>&#39;message&#39;</span>: message
-        }))
-</code></pre></div><h2 id=从任意地方推送消息>从任意地方推送消息</h2><p>仅仅只了解单次的收发，可能在项目中不能满足真正的需求。假如我们在项目中，其他的地方也需要向前端推送消息，怎么办？</p><p>这里就体现出了使用 Channel Layers 的好处。Channel Layers 因为是使用 redis 作为消息通道层，这使得一个应用中两个实例之间可以实现通信。如果你不想通过数据库来传递所有消息或事件，那么 Channel Layers 是开发分布式实时应用程序的非常好的实践。</p><p>有了这个，我们就可以项目的任何地方（脱离了 <code>consumer</code> 以外），给通道内广播信息。我们从上面可以知道，要想调用 <code>group_send</code> 需要有 <code>self.channel_layer</code>的实例。但在脱离了 consumer 的情况下， Channels 提供了 <code>get_channel_layer</code> 函数接口来获取它。</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> channels.layers <span style=color:#f92672>import</span> get_channel_layer
-channel_layer <span style=color:#f92672>=</span> get_channel_layer()
-</code></pre></div><p>然后，一旦你获取到了它，你就可以调用它上面的方法。但请记住，<strong>channel layers</strong>仅支持异步方法，因此你可以从自己的异步上下文中调用它：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#66d9ef>for</span> chat_name <span style=color:#f92672>in</span> chats:
-    await channel_layer<span style=color:#f92672>.</span>group_send(
-        chat_name,
-        {<span style=color:#e6db74>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;chat.system_message&#34;</span>, <span style=color:#e6db74>&#34;text&#34;</span>: announcement_text},
-    )
-</code></pre></div><p>或者，如果你的上下文是同步环境，可以使用 <code>async_to_sync</code> 来转换调用：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=color:#f92672>from</span> asgiref.sync <span style=color:#f92672>import</span> async_to_sync
-
-async_to_sync(channel_layer<span style=color:#f92672>.</span>group_send)(<span style=color:#e6db74>&#34;chat&#34;</span>, {<span style=color:#e6db74>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;chat.force_disconnect&#34;</span>}
-</code></pre></div><p>—— EOF ——</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://www.vimiix.com/posts/2018-07-26-channels2-tutorial/",this.page.identifier="/posts/2018-07-26-channels2-tutorial/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre><p>到这里，Channels 的基本配置就差不多了。</p><p>我们说以官方给的聊天室的例子来说明，所以最开始的时候，在 <code>INSTALLED_APPS</code> 中，我们添加了一个 <code>chat</code>的应用。下面就来创建这个应用。</p><p>channels 的应用和 Django 的还是不太一样，所以就不使用 <code>python manage.py startapp</code>命令创建应用了。我们手动创建几个文件。</p><ul><li>chat/routing.py</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>from</span> django.urls <span style=color:#f92672>import</span> path
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> . <span style=color:#f92672>import</span> consumers
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>websocket_urlpatterns <span style=color:#f92672>=</span> [ <span style=color:#75715e># 路由，指定 websocket 链接对应的 consumer</span>
+</span></span><span style=display:flex><span>    path(<span style=color:#e6db74>&#39;ws/chat/&lt;str:room_name&gt;/&#39;</span>, consumers<span style=color:#f92672>.</span>ChatConsumer),
+</span></span><span style=display:flex><span>]
+</span></span></code></pre></div><p>在 routing 文件中，我们定义了一个 <code>websocket_urlpatterns</code> 的路由列表，并设定了 <code>ChatCunsumer</code> 这个消费类（理解成 Django 的<code>view</code>）。这个 routing 文件就是上面 <code>my_project/routing.py</code> 中引用到的路由。</p><p>下面来看看 consumer 的实现：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> json
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> asgiref.sync <span style=color:#f92672>import</span> async_to_sync
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> channels.generic.websocket <span style=color:#f92672>import</span> WebsocketConsumer
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ChatConsumer</span>(WebsocketConsumer):
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>connect</span>(self):
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 当 websocket 一链接上以后触发该甘薯</span>
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>room_name <span style=color:#f92672>=</span> self<span style=color:#f92672>.</span>scope[<span style=color:#e6db74>&#39;url_route&#39;</span>][<span style=color:#e6db74>&#39;kwargs&#39;</span>][<span style=color:#e6db74>&#39;room_name&#39;</span>]
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>room_group_name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;chat_</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#39;</span> <span style=color:#f92672>%</span> self<span style=color:#f92672>.</span>room_name
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 把当前链接添加到聊天室</span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 注意 `group_add` 只支持异步调用，所以这里需要使用`async_to_sync`转换为同步调用</span>
+</span></span><span style=display:flex><span>        async_to_sync(self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_add)(
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>room_group_name,
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>channel_name
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e># 接受该链接</span>
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>accept()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>disconnect</span>(self, close_code):
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 断开链接是触发该函数</span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 将该链接移出聊天室</span>
+</span></span><span style=display:flex><span>        async_to_sync(self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_discard)(
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>room_group_name,
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>channel_name
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>receive</span>(self, text_data):
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 前端发送来消息时，通过这个接口传递</span>
+</span></span><span style=display:flex><span>        text_data_json <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>loads(text_data)
+</span></span><span style=display:flex><span>        message <span style=color:#f92672>=</span> text_data_json[<span style=color:#e6db74>&#39;message&#39;</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 发送消息到当前聊天室</span>
+</span></span><span style=display:flex><span>        async_to_sync(self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_send)(
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>room_group_name,
+</span></span><span style=display:flex><span>            {
+</span></span><span style=display:flex><span>                <span style=color:#75715e># 这里的type要在当前类中实现一个相应的函数，</span>
+</span></span><span style=display:flex><span>                <span style=color:#75715e># 下划线或者&#39;.&#39;的都会被Channels转换为下划线处理，</span>
+</span></span><span style=display:flex><span>                <span style=color:#75715e># 所以这里写 &#39;chat.message&#39;也没问题</span>
+</span></span><span style=display:flex><span>                <span style=color:#e6db74>&#39;type&#39;</span>: <span style=color:#e6db74>&#39;chat_message&#39;</span>,
+</span></span><span style=display:flex><span>                <span style=color:#e6db74>&#39;message&#39;</span>: message
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># 从聊天室拿到消息，后直接将消息返回回去</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>chat_message</span>(self, event):
+</span></span><span style=display:flex><span>        message <span style=color:#f92672>=</span> event[<span style=color:#e6db74>&#39;message&#39;</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e># Send message to WebSocket</span>
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>send(text_data<span style=color:#f92672>=</span>json<span style=color:#f92672>.</span>dumps({
+</span></span><span style=display:flex><span>            <span style=color:#e6db74>&#39;message&#39;</span>: message
+</span></span><span style=display:flex><span>        }))
+</span></span></code></pre></div><p>以上就是以同步的简单的实现了聊天室的收发功能，我们来看看这个互动过程是怎样进行的。</p><h2 id=请求链接>请求链接</h2><p>当前端发起一个 <code>websocket</code> 的请求过来的时候，会自动触发 <code>connect()</code>函数事件。</p><p>前端发起请求的实现方式：</p><ul><li>chat/templates/chat/room.html</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>&lt;<span style=color:#f92672>script</span>&gt;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>roomName</span> <span style=color:#f92672>=</span> {{ <span style=color:#a6e22e>room_name_json</span> }};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>chatSocket</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>WebSocket</span>(
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#39;ws://&#39;</span> <span style=color:#f92672>+</span> window.<span style=color:#a6e22e>location</span>.<span style=color:#a6e22e>host</span> <span style=color:#f92672>+</span> <span style=color:#e6db74>&#39;/ws/chat/&#39;</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>roomName</span> <span style=color:#f92672>+</span> <span style=color:#e6db74>&#39;/&#39;</span>);
+</span></span><span style=display:flex><span>  ...
+</span></span><span style=display:flex><span>&lt;/<span style=color:#f92672>script</span>&gt;
+</span></span></code></pre></div><p>触发 <code>connect</code>事件以后，进入函数，<code>self.scope</code>可以类比的理解为 django 中的<code>self.request</code>，从 url 中取出<code>room_name</code>字段备用，这里的变量名是在路由中设置的。</p><p>chat/urls.py</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>from</span> django.urls <span style=color:#f92672>import</span> path
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> . <span style=color:#f92672>import</span> views
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>urlpatterns <span style=color:#f92672>=</span> [
+</span></span><span style=display:flex><span>    path(<span style=color:#e6db74>&#39;&#39;</span>, views<span style=color:#f92672>.</span>index, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;index&#39;</span>),
+</span></span><span style=display:flex><span>    path(<span style=color:#e6db74>&#39;&lt;str:room_name&gt;/&#39;</span>, views<span style=color:#f92672>.</span>room, name<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;room&#39;</span>),
+</span></span><span style=display:flex><span>]
+</span></span></code></pre></div><p><code>self.channel_name</code> 是每一个 websocket 请求过来时候， Channels 自动帮我们生成的一个个性化名称，实现代码就是用随机函数组装：</p><ul><li>channels/layers.py : L243</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>new_channel</span>(self, prefix<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;specific.&#34;</span>):
+</span></span><span style=display:flex><span>        <span style=color:#e6db74>&#34;&#34;&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        Returns a new channel name that can be used by something in our
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        process as a specific channel.
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>        &#34;&#34;&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>.inmemory!</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#34;</span> <span style=color:#f92672>%</span> (
+</span></span><span style=display:flex><span>            prefix,
+</span></span><span style=display:flex><span>            <span style=color:#e6db74>&#34;&#34;</span><span style=color:#f92672>.</span>join(random<span style=color:#f92672>.</span>choice(string<span style=color:#f92672>.</span>ascii_letters) <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>12</span>)),
+</span></span><span style=display:flex><span>        )
+</span></span></code></pre></div><p>然后我们将新的 <code>channel_name</code> 和 <code>room_name</code> 绑定，也相当于，将当前链接加入到指定聊天室。</p><h2 id=端口链接>端口链接</h2><p>前端实现方式：</p><ul><li>chat/templates/chat/room.html</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>&lt;<span style=color:#f92672>script</span>&gt;
+</span></span><span style=display:flex><span>  ....
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>chatSocket</span>.<span style=color:#a6e22e>onclose</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>function</span>(<span style=color:#a6e22e>e</span>) {
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>console</span>.<span style=color:#a6e22e>error</span>(<span style=color:#e6db74>&#39;Chat socket closed unexpectedly&#39;</span>);
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>  ....
+</span></span><span style=display:flex><span>&lt;/<span style=color:#f92672>script</span>&gt;
+</span></span></code></pre></div><p>当 server 端的 WebSocket 调用 <code>self.close()</code> 关闭时，前端的  <code>chatSocket.onclose</code>  会自动触发。如果前端页面关闭，导致端口链接时，后端的<code>disconnect()</code>函数会自动触发。</p><h2 id=接收信息>接收信息</h2><p>前端实现方式：</p><ul><li>chat/templates/chat/room.html</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>&lt;<span style=color:#f92672>script</span>&gt;
+</span></span><span style=display:flex><span>  ....
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// 点击按键，发送信息是很常见的逻辑
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  document.<span style=color:#a6e22e>querySelector</span>(<span style=color:#e6db74>&#39;#chat-message-submit&#39;</span>).<span style=color:#a6e22e>onclick</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>function</span>(<span style=color:#a6e22e>e</span>) {
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>messageInputDom</span> <span style=color:#f92672>=</span> document.<span style=color:#a6e22e>querySelector</span>(<span style=color:#e6db74>&#39;#chat-message-input&#39;</span>);
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>message</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>messageInputDom</span>.<span style=color:#a6e22e>value</span>;
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>chatSocket</span>.<span style=color:#a6e22e>send</span>(<span style=color:#a6e22e>JSON</span>.<span style=color:#a6e22e>stringify</span>({
+</span></span><span style=display:flex><span>          <span style=color:#e6db74>&#39;message&#39;</span><span style=color:#f92672>:</span> <span style=color:#a6e22e>message</span>
+</span></span><span style=display:flex><span>      }));
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>messageInputDom</span>.<span style=color:#a6e22e>value</span> <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;&#39;</span>;
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>&lt;/<span style=color:#f92672>script</span>&gt;
+</span></span></code></pre></div><p><code>chatSocket.send</code>  会将信息发送到服务端，服务端的<code>receive()</code>  事件将会自动触发，将收到的 <code>message</code> 送到对应的 group 中，</p><p><code>type</code> 字段是一个可以被调用的对象名，Channels 会根据这个名称调度相应的方法来处理逻辑。</p><p>当在相应的函数中处理结束以后，调用<code>send()</code>方法将消息传递回前端。</p><p>前端接收信息的方式：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=display:flex><span>&lt;<span style=color:#f92672>script</span>&gt;
+</span></span><span style=display:flex><span>  ....
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>chatSocket</span>.<span style=color:#a6e22e>onmessage</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>function</span>(<span style=color:#a6e22e>e</span>) {
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>data</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>JSON</span>.<span style=color:#a6e22e>parse</span>(<span style=color:#a6e22e>e</span>.<span style=color:#a6e22e>data</span>);
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>message</span> <span style=color:#f92672>=</span> <span style=color:#a6e22e>data</span>[<span style=color:#e6db74>&#39;message&#39;</span>];
+</span></span><span style=display:flex><span>      document.<span style=color:#a6e22e>querySelector</span>(<span style=color:#e6db74>&#39;#chat-log&#39;</span>).<span style=color:#a6e22e>value</span> <span style=color:#f92672>+=</span> (<span style=color:#a6e22e>message</span> <span style=color:#f92672>+</span> <span style=color:#e6db74>&#39;\n&#39;</span>);
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>  ....
+</span></span><span style=display:flex><span>&lt;/<span style=color:#f92672>script</span>&gt;
+</span></span></code></pre></div><p><code>chatSocket.onmessage</code>  会接收到后端发来的信息，前端再将该信息渲染到页面上。</p><h2 id=异步写法>异步写法</h2><p>上面是同步方式的写法，官方还给出了异步的写法，在我们的项目中，也采用了异步的写法，Channels 对于异步的支持是非常好的。</p><p>代码如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> json
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> channels.generic.websocket <span style=color:#f92672>import</span> AsyncWebsocketConsumer
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ChatConsumer</span>(AsyncWebsocketConsumer):
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>connect</span>(self):
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>room_name <span style=color:#f92672>=</span> self<span style=color:#f92672>.</span>scope[<span style=color:#e6db74>&#39;url_route&#39;</span>][<span style=color:#e6db74>&#39;kwargs&#39;</span>][<span style=color:#e6db74>&#39;room_name&#39;</span>]
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>room_group_name <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;chat_</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#39;</span> <span style=color:#f92672>%</span> self<span style=color:#f92672>.</span>room_name
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_add(
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>room_group_name,
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>channel_name
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>accept()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>disconnect</span>(self, close_code):
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_discard(
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>room_group_name,
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>channel_name
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>receive</span>(self, text_data):
+</span></span><span style=display:flex><span>        text_data_json <span style=color:#f92672>=</span> json<span style=color:#f92672>.</span>loads(text_data)
+</span></span><span style=display:flex><span>        message <span style=color:#f92672>=</span> text_data_json[<span style=color:#e6db74>&#39;message&#39;</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>channel_layer<span style=color:#f92672>.</span>group_send(
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>room_group_name,
+</span></span><span style=display:flex><span>            {
+</span></span><span style=display:flex><span>                <span style=color:#e6db74>&#39;type&#39;</span>: <span style=color:#e6db74>&#39;chat_message&#39;</span>,
+</span></span><span style=display:flex><span>                <span style=color:#e6db74>&#39;message&#39;</span>: message
+</span></span><span style=display:flex><span>            }
+</span></span><span style=display:flex><span>        )
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>chat_message</span>(self, event):
+</span></span><span style=display:flex><span>        message <span style=color:#f92672>=</span> event[<span style=color:#e6db74>&#39;message&#39;</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>send(text_data<span style=color:#f92672>=</span>json<span style=color:#f92672>.</span>dumps({
+</span></span><span style=display:flex><span>            <span style=color:#e6db74>&#39;message&#39;</span>: message
+</span></span><span style=display:flex><span>        }))
+</span></span></code></pre></div><h2 id=从任意地方推送消息>从任意地方推送消息</h2><p>仅仅只了解单次的收发，可能在项目中不能满足真正的需求。假如我们在项目中，其他的地方也需要向前端推送消息，怎么办？</p><p>这里就体现出了使用 Channel Layers 的好处。Channel Layers 因为是使用 redis 作为消息通道层，这使得一个应用中两个实例之间可以实现通信。如果你不想通过数据库来传递所有消息或事件，那么 Channel Layers 是开发分布式实时应用程序的非常好的实践。</p><p>有了这个，我们就可以项目的任何地方（脱离了 <code>consumer</code> 以外），给通道内广播信息。我们从上面可以知道，要想调用 <code>group_send</code> 需要有 <code>self.channel_layer</code>的实例。但在脱离了 consumer 的情况下， Channels 提供了 <code>get_channel_layer</code> 函数接口来获取它。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>from</span> channels.layers <span style=color:#f92672>import</span> get_channel_layer
+</span></span><span style=display:flex><span>channel_layer <span style=color:#f92672>=</span> get_channel_layer()
+</span></span></code></pre></div><p>然后，一旦你获取到了它，你就可以调用它上面的方法。但请记住，<strong>channel layers</strong>仅支持异步方法，因此你可以从自己的异步上下文中调用它：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#66d9ef>for</span> chat_name <span style=color:#f92672>in</span> chats:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>await</span> channel_layer<span style=color:#f92672>.</span>group_send(
+</span></span><span style=display:flex><span>        chat_name,
+</span></span><span style=display:flex><span>        {<span style=color:#e6db74>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;chat.system_message&#34;</span>, <span style=color:#e6db74>&#34;text&#34;</span>: announcement_text},
+</span></span><span style=display:flex><span>    )
+</span></span></code></pre></div><p>或者，如果你的上下文是同步环境，可以使用 <code>async_to_sync</code> 来转换调用：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>from</span> asgiref.sync <span style=color:#f92672>import</span> async_to_sync
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>async_to_sync(channel_layer<span style=color:#f92672>.</span>group_send)(<span style=color:#e6db74>&#34;chat&#34;</span>, {<span style=color:#e6db74>&#34;type&#34;</span>: <span style=color:#e6db74>&#34;chat.force_disconnect&#34;</span>}
+</span></span></code></pre></div><p>—— EOF ——</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/vimiix-blog/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="http://vimiix.com/vimiix-blog/posts/2018-07-26-channels2-tutorial/",this.page.identifier="/vimiix-blog/posts/2018-07-26-channels2-tutorial/"};(function(){var e=document,t=e.createElement("script");t.src="https://vimiix-blog.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

@@ -1,52 +1,53 @@
-<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Python-关于Python中闭包的一些理解</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
-<a href=/posts/><b>文章列表</b></a>.
-<a href=/categories/><b>分类</b></a>.
-<a href=/tags/><b>标签</b></a>.
-<a href=/friends/><b>友链</b></a>.
-<a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Python-关于Python中闭包的一些理解</h1><b><time>2017.04.09 17:07</time></b>
-<a href=/%20/tags/closure>closure</a>
-<a href=/%20/tags/python>Python</a><div><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/rRo70V.jpg alt></figure></p><p><strong>看不懂的定义</strong>：闭包是由函数及其相关的引用环境组合而成的实体(即：闭包=函数+引用环境)。</p><p>既然是看不懂的定义，真看不懂上面定义的话就忽略吧。</p><p>在 python 中，函数可以作为另一个函数的参数或返回值，可以赋给一个变量。函数可以嵌套定义，即在一个函数内部可以定义另一个函数，有了嵌套函数这种结构，便会产生闭包问题。</p><p><strong>好理解一点的定义</strong>：如果在一个内部函数里，对在外部作用域（但不是在全局作用域）的变量进行引用，那么内部函数就被认为是闭包(closure)</p><p>举个栗子：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>outer</span>(x):
-		<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>inner</span>(y):
-			<span style=color:#66d9ef>return</span> x <span style=color:#f92672>+</span> y
-		<span style=color:#66d9ef>return</span> inner
-</code></pre></div><p>结合代码分析定义：</p><p>如果在一个内部函数里 &mdash; inner()就是内部函数。</p><p>对在外部作用域（但不是在全局作用域）的变量进行引用 &mdash; x 就是被引用的变量，x 在外部作用域，但不在全局作用域。</p><p>那么内部函数就被认为是闭包 &mdash;- inner 就是一个闭包。</p><h3 id=关于闭包很难理解的一个问题我尝试用图形化思维来理解>关于闭包很难理解的一个问题，我尝试用图形化思维来理解</h3><p>先看一个简单的循环</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>3</span>):
-		<span style=color:#66d9ef>print</span> i
-</code></pre></div><p>在程序里面经常会出现这类的循环语句，python 的一个现象是，当循环结束以后，循环体中的临时变量 i 不会销毁，而是继续存在于执行环境中。还有一个 python 的现象是，python 的函数只有在执行时，才会去找函数体里的变量的值。</p><blockquote><p>这段话特别需要记住两点：</p><ol><li>当循环结束时，循环体中的临时变量 i 不会销毁</li><li>python 的函数只有在执行时，才会去找函数体里的变量的值</li></ol></blockquote><p>记住上面两点后，下面看经典的难理解的栗子：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>foo</span>():
-		func_list <span style=color:#f92672>=</span> []
-		<span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>3</span>):
-			<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>inner</span>():
-				<span style=color:#66d9ef>return</span> i<span style=color:#f92672>*</span>i
-			func_list<span style=color:#f92672>.</span>append(inner)
-		<span style=color:#66d9ef>return</span> func_list
-
-	f <span style=color:#f92672>=</span> foo()
-</code></pre></div><p>在这个例子中，每次循环都创建一个新的函数，并且将创建的三个函数对象都添加到func_list这个列表中</p><p>f = foo()这里调用 foo()，f 中就保存了一个列表对象，这个列表中保存了 3 个函数对象。</p><p>不妨打印一下看看 <strong>f</strong> 中三个元素的值：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#f92672>&gt;&gt;&gt;</span> <span style=color:#66d9ef>print</span> f[<span style=color:#ae81ff>0</span>],<span style=color:#e6db74>&#39;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#39;</span>,f[<span style=color:#ae81ff>1</span>],<span style=color:#e6db74>&#39;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#39;</span>,f[<span style=color:#ae81ff>2</span>]
-	<span style=color:#f92672>&lt;</span>function inner at <span style=color:#ae81ff>0x000000000263BAC8</span><span style=color:#f92672>&gt;</span>
-	<span style=color:#f92672>&lt;</span>function inner at <span style=color:#ae81ff>0x0000000002E664A8</span><span style=color:#f92672>&gt;</span>
-	<span style=color:#f92672>&lt;</span>function inner at <span style=color:#ae81ff>0x0000000002E66518</span><span style=color:#f92672>&gt;</span>
-</code></pre></div><p>从打印信息可以看出，<strong>f</strong> 中存放了 3 个函数名相同，但内存地址不同，的函数对象。</p><p>此时调用一下三个函数</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>0</span>]()
-	<span style=color:#ae81ff>4</span>
-	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>1</span>]()
-	<span style=color:#ae81ff>4</span>
-	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>2</span>]()
-	<span style=color:#ae81ff>4</span>
-</code></pre></div><p>可能有些人认为这段代码的执行结果应该是 0,1,4.但是实际的结果是 4,4,4。这是因为当把函数对象加入 func_list 列表里时，python 还没有给 i 赋值，只有当执行时，再去找 i 的值是什么，这时在第一个 for 循环结束以后，i 的值是 2，所以以上代码的执行结果是 4,4,4.</p><p>不好理解的话，画个流程图(点击图片查看大图)：</p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/SzLD2R.png alt=流程图></figure></p><p>这里也可以直观的理解文章开始提到的闭包的定义公式（闭包=函数+引用环境）</p><p>结果全部都是 4，原因就在于返回的函数引用了变量 i，但它并非立刻执行。等到 3 个函数被调用时，它们所引用的变量 i 已经变成了 2，因此最终结果为 4。</p><p>返回闭包时牢记的一点就是：返回函数不要引用任何循环变量，或者后续会发生变化的变量。</p><p>如果要正确的输出引用循环变量后的值，只需要将每次循环变量锁定到闭包中，具体实现如下：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>foo</span>():
-	      func_list <span style=color:#f92672>=</span> []
-	      <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>3</span>):
-	            <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>inner</span>( x <span style=color:#f92672>=</span> i):
-	                  <span style=color:#66d9ef>print</span> x<span style=color:#f92672>*</span>x
-	            func_list<span style=color:#f92672>.</span>append(inner)
-	      <span style=color:#66d9ef>return</span> func_list
-
-	f <span style=color:#f92672>=</span> foo()
-</code></pre></div><p>这样的话，打印调用每个闭包后的结果为 0 , 1, 4</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>0</span>]()
-	<span style=color:#ae81ff>0</span>
-	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>1</span>]()
-	<span style=color:#ae81ff>1</span>
-	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>2</span>]()
-	<span style=color:#ae81ff>4</span>
-</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://www.vimiix.com/posts/2017-04-09-about-closure/",this.page.identifier="/posts/2017-04-09-about-closure/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Python-关于Python中闭包的一些理解</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/vimiix-blog/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=http://vimiix.com/vimiix-blog/><b>首页</b></a>.
+<a href=/vimiix-blog/posts/><b>文章列表</b></a>.
+<a href=/vimiix-blog/categories/><b>分类</b></a>.
+<a href=/vimiix-blog/tags/><b>标签</b></a>.
+<a href=/vimiix-blog/friends/><b>友链</b></a>.
+<a href=/vimiix-blog/about/><b>关于</b></a>.
+<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Python-关于Python中闭包的一些理解</h1><b><time>2017.04.09 17:07</time></b>
+<a href=/vimiix-blog/%20/tags/closure>closure</a>
+<a href=/vimiix-blog/%20/tags/python>Python</a><div><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/rRo70V.jpg alt></figure></p><p><strong>看不懂的定义</strong>：闭包是由函数及其相关的引用环境组合而成的实体(即：闭包=函数+引用环境)。</p><p>既然是看不懂的定义，真看不懂上面定义的话就忽略吧。</p><p>在 python 中，函数可以作为另一个函数的参数或返回值，可以赋给一个变量。函数可以嵌套定义，即在一个函数内部可以定义另一个函数，有了嵌套函数这种结构，便会产生闭包问题。</p><p><strong>好理解一点的定义</strong>：如果在一个内部函数里，对在外部作用域（但不是在全局作用域）的变量进行引用，那么内部函数就被认为是闭包(closure)</p><p>举个栗子：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>outer</span>(x):
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>inner</span>(y):
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> x <span style=color:#f92672>+</span> y
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> inner
+</span></span></code></pre></div><p>结合代码分析定义：</p><p>如果在一个内部函数里 &mdash; inner()就是内部函数。</p><p>对在外部作用域（但不是在全局作用域）的变量进行引用 &mdash; x 就是被引用的变量，x 在外部作用域，但不在全局作用域。</p><p>那么内部函数就被认为是闭包 &mdash;- inner 就是一个闭包。</p><h3 id=关于闭包很难理解的一个问题我尝试用图形化思维来理解>关于闭包很难理解的一个问题，我尝试用图形化思维来理解</h3><p>先看一个简单的循环</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>3</span>):
+</span></span><span style=display:flex><span>		print i
+</span></span></code></pre></div><p>在程序里面经常会出现这类的循环语句，python 的一个现象是，当循环结束以后，循环体中的临时变量 i 不会销毁，而是继续存在于执行环境中。还有一个 python 的现象是，python 的函数只有在执行时，才会去找函数体里的变量的值。</p><blockquote><p>这段话特别需要记住两点：</p><ol><li>当循环结束时，循环体中的临时变量 i 不会销毁</li><li>python 的函数只有在执行时，才会去找函数体里的变量的值</li></ol></blockquote><p>记住上面两点后，下面看经典的难理解的栗子：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>foo</span>():
+</span></span><span style=display:flex><span>		func_list <span style=color:#f92672>=</span> []
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>3</span>):
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>inner</span>():
+</span></span><span style=display:flex><span>				<span style=color:#66d9ef>return</span> i<span style=color:#f92672>*</span>i
+</span></span><span style=display:flex><span>			func_list<span style=color:#f92672>.</span>append(inner)
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> func_list
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	f <span style=color:#f92672>=</span> foo()
+</span></span></code></pre></div><p>在这个例子中，每次循环都创建一个新的函数，并且将创建的三个函数对象都添加到func_list这个列表中</p><p>f = foo()这里调用 foo()，f 中就保存了一个列表对象，这个列表中保存了 3 个函数对象。</p><p>不妨打印一下看看 <strong>f</strong> 中三个元素的值：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#f92672>&gt;&gt;&gt;</span> print f[<span style=color:#ae81ff>0</span>],<span style=color:#e6db74>&#39;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#39;</span>,f[<span style=color:#ae81ff>1</span>],<span style=color:#e6db74>&#39;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#39;</span>,f[<span style=color:#ae81ff>2</span>]
+</span></span><span style=display:flex><span>	<span style=color:#f92672>&lt;</span>function inner at <span style=color:#ae81ff>0x000000000263BAC8</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>&lt;</span>function inner at <span style=color:#ae81ff>0x0000000002E664A8</span><span style=color:#f92672>&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>&lt;</span>function inner at <span style=color:#ae81ff>0x0000000002E66518</span><span style=color:#f92672>&gt;</span>
+</span></span></code></pre></div><p>从打印信息可以看出，<strong>f</strong> 中存放了 3 个函数名相同，但内存地址不同，的函数对象。</p><p>此时调用一下三个函数</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>0</span>]()
+</span></span><span style=display:flex><span>	<span style=color:#ae81ff>4</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>1</span>]()
+</span></span><span style=display:flex><span>	<span style=color:#ae81ff>4</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>2</span>]()
+</span></span><span style=display:flex><span>	<span style=color:#ae81ff>4</span>
+</span></span></code></pre></div><p>可能有些人认为这段代码的执行结果应该是 0,1,4.但是实际的结果是 4,4,4。这是因为当把函数对象加入 func_list 列表里时，python 还没有给 i 赋值，只有当执行时，再去找 i 的值是什么，这时在第一个 for 循环结束以后，i 的值是 2，所以以上代码的执行结果是 4,4,4.</p><p>不好理解的话，画个流程图(点击图片查看大图)：</p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/SzLD2R.png alt=流程图></figure></p><p>这里也可以直观的理解文章开始提到的闭包的定义公式（闭包=函数+引用环境）</p><p>结果全部都是 4，原因就在于返回的函数引用了变量 i，但它并非立刻执行。等到 3 个函数被调用时，它们所引用的变量 i 已经变成了 2，因此最终结果为 4。</p><p>返回闭包时牢记的一点就是：返回函数不要引用任何循环变量，或者后续会发生变化的变量。</p><p>如果要正确的输出引用循环变量后的值，只需要将每次循环变量锁定到闭包中，具体实现如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#66d9ef>def</span> <span style=color:#a6e22e>foo</span>():
+</span></span><span style=display:flex><span>	      func_list <span style=color:#f92672>=</span> []
+</span></span><span style=display:flex><span>	      <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(<span style=color:#ae81ff>3</span>):
+</span></span><span style=display:flex><span>	            <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>inner</span>( x <span style=color:#f92672>=</span> i):
+</span></span><span style=display:flex><span>	                  print x<span style=color:#f92672>*</span>x
+</span></span><span style=display:flex><span>	            func_list<span style=color:#f92672>.</span>append(inner)
+</span></span><span style=display:flex><span>	      <span style=color:#66d9ef>return</span> func_list
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	f <span style=color:#f92672>=</span> foo()
+</span></span></code></pre></div><p>这样的话，打印调用每个闭包后的结果为 0 , 1, 4</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>0</span>]()
+</span></span><span style=display:flex><span>	<span style=color:#ae81ff>0</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>1</span>]()
+</span></span><span style=display:flex><span>	<span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>&gt;&gt;&gt;</span> f[<span style=color:#ae81ff>2</span>]()
+</span></span><span style=display:flex><span>	<span style=color:#ae81ff>4</span>
+</span></span></code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/vimiix-blog/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="http://vimiix.com/vimiix-blog/posts/2017-04-09-about-closure/",this.page.identifier="/vimiix-blog/posts/2017-04-09-about-closure/"};(function(){var e=document,t=e.createElement("script");t.src="https://vimiix-blog.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

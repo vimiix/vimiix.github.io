@@ -1,16 +1,17 @@
-<!doctype html><html lang=cn-zh><head><meta name=generator content="Hugo 0.81.0"><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Hi, I'm Vimiix</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=/index.xml title="Hi, I'm Vimiix"></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
-<a href=/posts/><b>文章列表</b></a>.
-<a href=/categories/><b>分类</b></a>.
-<a href=/tags/><b>标签</b></a>.
-<a href=/friends/><b>友链</b></a>.
-<a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></h1><b><time>2023.06.21 14:50</time></b>
+<!doctype html><html lang=cn-zh><head><meta name=generator content="Hugo 0.120.4"><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Hi, I'm Vimiix</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/vimiix-blog/css/style.css><link rel=alternate type=application/rss+xml href=/vimiix-blog/index.xml title="Hi, I'm Vimiix"></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=http://vimiix.com/vimiix-blog/><b>首页</b></a>.
+<a href=/vimiix-blog/posts/><b>文章列表</b></a>.
+<a href=/vimiix-blog/categories/><b>分类</b></a>.
+<a href=/vimiix-blog/tags/><b>标签</b></a>.
+<a href=/vimiix-blog/friends/><b>友链</b></a>.
+<a href=/vimiix-blog/about/><b>关于</b></a>.
+<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></h1><b><time>2023.06.21 14:50</time></b>
 <a href=/tags/golang>golang</a>
 <a href=/tags/solution>solution</a>
 <a href=/tags/multi-version>multi-version</a><div>现有的工具方案 gvm: https://github.com/moovweb/gvm g: https://github.com/voidint/g 我的方案 优点：
 原生：基于 go 语言本身支持多版本的能力实现，可以下载任何官方发布的版本 简单：shell 函数实现，直接集成到 bashrc 或 zshrc 中即可使用，无需额外配置 可定制化：代码简单可根据自身需求定制 代码实现 gist地址：https://gist.github.com/vimiix/0927fdfbea926e869a2c631db9eeae8b
-####### GOLANG VERSION MANAGE FUNCTIONS ###### # ref: https://go.dev/doc/manage-install function goinstall() { echo "Downloading go$1..." go install golang.org/dl/go$1@latest && go$1 download } function gouse() { gopath=$(go env GOPATH) if test -x ${gopath}/bin/go$1; then rm -f ${gopath}/bin/go echo "Relink go with go$1..." ln -s ${gopath}/bin/go$1 ${gopath}/bin/go echo "Done" else echo "Version $1not installed" fi } function golist() { current=$(go version | awk '{print $3}' | cut -c3-) for v in $(ls $(go env GOPATH)/bin | grep -E 'go(\d.
-<a href=https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></h1><b><time>2021.12.21 20:25</time></b>
+####### GOLANG VERSION MANAGE FUNCTIONS ###### # ref: https://go.dev/doc/manage-install function goinstall() { echo "Downloading go$1 ..." go install golang.org/dl/go$1@latest && go$1 download } function gouse() { gopath=$(go env GOPATH) if test -x ${gopath}/bin/go$1; then rm -f ${gopath}/bin/go echo "Relink go with go$1 ..." ln -s ${gopath}/bin/go$1 ${gopath}/bin/go echo "Done" else echo "Version $1 not installed" fi } function golist() { current=$(go version | awk '{print $3}' | cut -c3-) for v in $(ls $(go env GOPATH)/bin | grep -E 'go(\d.
+<a href=http://vimiix.com/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></h1><b><time>2021.12.21 20:25</time></b>
 <a href=/tags/distributed>distributed</a>
 <a href=/tags/note>note</a><div>基础理论 CAP理论 一个分布式系统最多只能同时满足一致性（Consistency）、可用性（Availability）和分区容错性（Partition tolerance）这三项中的两项。这被称为CAP理论，已经被证实。
 一致性（Consistency） ：在分布式系统中所有的数据备份，在同一时刻都保持一致状态，如无法保证状态一致，直接返回错误。 可用性（Availability）：在集群中一部分节点故障，也能保证客户端访问系统并得到正确响应，允许一定时间内数据状态不一致。 分区容错性（Partition tolerance）：分布式系统在遇到任何网络分区故障时，仍然能保证对外提供满足一致性和可用性的服务，除非整个网络环境都发生故障。 ACID特性（刚性事务，强一致性） 把多条语句作为一个整体进行操作的功能，称为数据库事务。数据库事务可以确保该事务范围内的所有操作全部成功或者全部失败。
@@ -20,7 +21,10 @@
 分布式方案 XA规范 Open Group组织定义的一套DTP（Distributed Transaction Processing）分布式事务处理模型，主要包含以下四部分：
 AP（应用程序） TM（事务管理器）：中间件，负责多个事物之间的协调 RM（资源管理器）：数据库等资源 CRM（通信资源管理器）：消息中间件 XA规范包括两套函数，分别以 xa_ 和 ax_ 开头，使 TM 可以对 RM 进行的操作：
 xa_open,xa_close：建立和关闭与资源管理器的连接； xa_start,xa_end：开始和结束一个本地事务； xa_prepare,xa_commit,xa_rollback：预提交、提交、回滚一个本地事务； xa_recover：回滚一个已进行预提交的事务； ax_开头的函数使资源管理器可以动态地在事务管理器中进行注册，并可以对XID(TRANSACTION IDS)进行操作； ax_reg,ax_unreg；允许一个资源管理器在一个TMS(TRANSACTION MANAGER SERVER)中动态注册或撤消注册。 基于XA规范衍生出下面的两阶段提交（2PC）、三阶段提交（3PC）。
-<a href=https://www.vimiix.com/posts/2021-12-21-learn-distributed-transaction/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></h1><b><time>2021.09.01 16:15</time></b>
+2PC（两阶段提交） 2PC就是分布式事务中将事务分为两步进行提交，两阶段提交基于ACID理论。
+提交流程：
+准备阶段：预提交，首先两个事务都会去操作自己的数据库，但是这次操作数据库并不会commit，也就是说不生效，只是试探性的看看这次操作能否成功，无论成功与否，如果成功的话将会记录此次的操作记录，并一直锁定要操作的数据资源，返回结果给事务管理器，如果失败则直接回滚所做的操作，并立即释放锁定的数据资源，也将结果返回给事务管理器； 提交阶段：交易中间件事务管理器收到所有的事务预操作返回结果，并审查所有数据库返回的预提交结果，如所有数据库都可以提交，交易中间件将要求所有数据库做正式提交，这样该全局事务被提交。而如果有任一数据库预提交返回失败，交易中间件将要求所有其它数据库回滚其操作，这样该全局事务被回滚。 二阶段提交的一些问题：
+<a href=http://vimiix.com/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></h1><b><time>2021.09.01 16:15</time></b>
 <a href=/tags/disk>disk</a>
 <a href=/tags/simulate>simulate</a>
 <a href=/tags/test>test</a><div>假设服务器目前有多个盘，vdb1这块分区盘专门用于数据库程序的数据目录，我们就用 vdb1 这个盘来模拟只读故障场景。
@@ -30,8 +34,8 @@ umount: /opt: target is busy. 遇到该错误时，可以通过lsof [mountpoint]
 losetup /dev/loop0 /dev/vdb1 执行指令后，可以通过 losetup -l 查看当前服务器上的 loop 设备列表：
 3. 挂载 /dev/loop0 我们已经有一个 /dev/loop0 的伪设备镜像到了 /dev/vdb1 上，此时，我们来挂载 /dev/loop0 这个伪设备：
 mount /dev/loop0 /opt -o rw,errors=remount-ro 通过 df -h 可以查看到 /dev/loop0 已经正常挂载上了
-4.
-<a href=https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></h1><b><time>2021.07.08 23:38</time></b>
+4. 正常启动应用进程（这里测试用opengauss数据库） gs_ctl start -D /opt/mogdb/data/ 5. 修改磁盘为只读模式（故障注入） blockdev 命令行工具是用于控制区块设备程序
+<a href=http://vimiix.com/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></h1><b><time>2021.07.08 23:38</time></b>
 <a href=/tags/sqlalchemy>SQLAlchemy</a>
 <a href=/tags/python>Python</a>
 <a href=/tags/opengauss>openGauss</a><div>前置声明 由于 openGauss 数据库本身也开源不久，所以周边基础设施也正处于遍地开花的阶段，所以本文不保证长期的时效性，仅针对现阶段的问题，提出一种解决方案。
@@ -42,8 +46,8 @@ openGauss 在2020年6月30日开放源代码，代码托管在 gitee 上。
 该驱动适用于不使用 ORM，以SQL形式交互的 python 程序。
 但是在对接客户的过程中，客户提出了这样的需求：
 程序中用到了 SQLAlchemy 做为ORM来和数据库交互 连接数据库时，需要支持类似 JDBC 多 IP 的方式连接（例如：user:password@host1:port1,host2:port2/db 这种形式），这种需求主要是用于后端数据库部署形态为主备架构，且没有固定的虚拟IP用于连接，所以需要将主备所有机器的IP都传递进去，但只能返回主库的连接。 赶紧去扫了一下 SQLAlchemy 的源码，SQLAlchemy 中目前支持的 pg 驱动有：
-psycopg2 pg8000 asyncpg psycopg2cffi py-postgresql pygresql 其实只要在驱动里面实现了 PEP-249 (DBAPI 2.0 接口规范) 就可以。但是我们都知道，在使用 SQLAlchemy 创建 engine 的时候，需要在 :// 前面使用固定的字符串进行驱动的选择。比如 postgresql+pypostgresql://.
-<a href=https://www.vimiix.com/posts/2021-07-08-opengauss-driver-and-orm/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></h1><b><time>2021.04.07 18:15</time></b>
+psycopg2 pg8000 asyncpg psycopg2cffi py-postgresql pygresql 其实只要在驱动里面实现了 PEP-249 (DBAPI 2.0 接口规范) 就可以。但是我们都知道，在使用 SQLAlchemy 创建 engine 的时候，需要在 :// 前面使用固定的字符串进行驱动的选择。比如 postgresql+pypostgresql://...，内部其实就是把加号 replace 成点，然后去加载对应的驱动模块文件。
+<a href=http://vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></h1><b><time>2021.04.07 18:15</time></b>
 <a href=/tags/concurrency>concurrency</a>
 <a href=/tags/golang>golang</a>
 <a href=/tags/goroutine>goroutine</a><div>Goroutine C#、Lua、Python 的用户可能会发现 Go 的 goroutine 和协程之间有很多相似之处，没错，从命名上也可以看出二者具有相似性。
@@ -52,14 +56,14 @@ goroutine 隐含了并行的特性，一切交给 go 的 runtime 来实现调度
 Generators 在 python 中，要实现一个生成器，需要通过 yield 生成数据，通过 next 获取数据：
 def integers(): i = 1 while True: yield i i+=1 integerGenerator = integers() next(integerGenerator) # 1 next(integerGenerator) # 2 next(integerGenerator) # 3 同样的，生成器也可以在 Go 中实现，只是使用了 channel 来代替 yield:
 func integers () chan int { yield := make (chan int); count := 0; go func () { for { yield &lt;- count; count++; } } (); return yield } next := integers(); func generateInteger () int { return &lt;-next } generateInteger() // 0 generateInteger() // 1 generateInteger() // 2 Iterators go 的 channel 在语法层面就是天然的迭代器。
-<a href=https://www.vimiix.com/posts/2021-04-07-concurrency-in-go/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></h1><b><time>2021.03.22 16:22</time></b>
+<a href=http://vimiix.com/vimiix-blog/posts/2021-04-07-concurrency-in-go/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></h1><b><time>2021.03.22 16:22</time></b>
 <a href=/tags/note>note</a>
 <a href=/tags/windows>windows</a>
 <a href=/tags/golang>golang</a><div>本质上是通过调用 windows 的一个 API —— LogonUserW ，来实现对于用户密码的校验。
 仅适用于在本地校验，不支持远程连接校验
 用一个示例代码来进行说明，下面是目录结构中，main.go 是程序入口文件，auth 包中，我们仅实现 windows 系统的校验代码，其他平台不属于本文介绍内容，就直接返回 nil 即可。
 目录结构 . ├── auth │ ├── auth.go │ └── auth_windows.go ├── go.mod └── main.go 源代码 [src] main.go package main import ( "flag" "fmt" "os" "github.com/vimiix/authDemo/auth" ) func main() { user := flag.String("u", "", "username") password := flag.String("p", "", "password") flag.Parse() if *user == "" || *password == "" { fmt.Println("Both user and password should be specify") fmt.
-<a href=https://www.vimiix.com/posts/2021-03-22-auth-windows-user-in-golang/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></h1><b><time>2020.03.11 16:22</time></b>
+<a href=http://vimiix.com/vimiix-blog/posts/2021-03-22-auth-windows-user-in-golang/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></h1><b><time>2020.03.11 16:22</time></b>
 <a href=/tags/beanstalkd>beanstalkd</a>
 <a href=/tags/note>note</a>
 <a href=/tags/python>Python</a>
@@ -67,7 +71,7 @@ func integers () chan int { yield := make (chan int); count := 0; go func () { f
 Beanstalk 的应用场景主要有：
 消息异步处理（消息队列的基本需求） 消息延迟处理，实现循环队列 beanstalkd 核心组件 job : 任务，队列中的基本单元 tube : 一个有名称的任务队列，用来存储统一类型的 job ,beanstalkd 通过 tube 来实现多任务队列 producer : job 生产者，通过put命令来创建一个job放到一个tube中 comsumer : job 消费者，通过 reserve、release、bury、delete命令来获取或改变 job 的状态 job 的生命周期 在整个生命周期中 job 可能有四种工作状态：READY、RESERVED、DELAYED、BURIED. 只有处于 READY 状态的 job 才能被消费。
 put with delay release with delay -------------> [DELAYED] &lt;---------. | | | (time passes) | | | put v reserve | delete --------------> [READY] -------> [RESERVED] ------> *poof* ^ ^ | | | \ release | | | `-------------' | | | | kick | | | | bury | [BURIED] &lt;---------------' | | delete `--------> *poof* Producer 创建 job 的时候可以选择两种方式：put , put with delay。
-<a href=https://www.vimiix.com/posts/2020-03-11-beanstalkd-note/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></h1><b><time>2020.02.21 16:22</time></b>
+<a href=http://vimiix.com/vimiix-blog/posts/2020-03-11-beanstalkd-note/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></h1><b><time>2020.02.21 16:22</time></b>
 <a href=/tags/translation>translation</a>
 <a href=/tags/richardson>Richardson</a><div>原文链接：https://martinfowler.com/articles/richardsonMaturityModel.html
 迈向 REST 的荣耀之巅 Leonard Richardson 提出的一个模型，将实现 REST 方法的主要元素分解为三个步骤，分别包括：资源（Resources）、HTTP 动词(HTTP Verbs，如GET、POST等)和超媒体控制（Hypermedia Controls）。
@@ -77,14 +81,14 @@ Level 0 该模型的出发点是使用 HTTP 作为远程交互的传输系统，
 例如，我想预约我的医生。预约软件首先需要知道在指定日期内医生什么时间有空位，所以它需要向医院预约系统发送请求以获取该信息。在 Level 0 级场景中，医院会将某个 URI 做为一个公共服务点。然后，我就可以向该服务点发送一个文档请求。
 POST /appointmentService HTTP/1.1 [various other headers] &lt;openSlotRequest date="2010-01-04" doctor="mjones" /> 然后，服务器会返回一个我所需信息的文档：
 HTTP/1.1 200 OK [various headers] &lt;openSlotList> &lt;slot start="1400" end="1450"> &lt;doctor id="mjones" /> &lt;/slot> &lt;slot start="1600" end="1650"> &lt;doctor id="mjones" /> &lt;/slot> &lt;/openSlotList> 在本例中我使用了 XML 做为内容格式，实现可以格式的，如：JSON、YAML、键-值对、或其它自定义格式。
-<a href=https://www.vimiix.com/posts/2020-02-21-richardson-model/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></h1><b><time>2019.11.13 16:22</time></b>
+<a href=http://vimiix.com/vimiix-blog/posts/2020-02-21-richardson-model/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></h1><b><time>2019.11.13 16:22</time></b>
 <a href=/tags/solution>solution</a>
 <a href=/tags/golang>golang</a>
 <a href=/tags/rtb>rtb</a><div>RTB RTB 广告是一种实时竞价广告，就是在针对每个广告位有展示机会的时候，会实时多方竞价，价格最有优势的广告主会竞得这次展示机会，在媒体测在拿到素材的时候，需将本次成交的价格，上报给指定的监控服务器，这时就需要将实时价格按照指定的加密方案加密后，替换 GET 链接中的请求参数中的价格宏来上报。
 官方给出的源代码有 Java 和 C++ 版本, 下载地址： https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source
 本文主要通过 golang 来实现的 google 的价格加密方案。
 Source Code package main /* golang 实现 google 的rtb 价格加密方案 https://developers.google.com/authorized-buyers/rtb/response-guide/decrypt-price#encryption-scheme */ import ( "crypto/hmac" "crypto/md5" "crypto/sha1" "encoding/base64" "encoding/binary" "encoding/hex" "fmt" "hash" "math" "strings" ) const ( PayloadSize = 8 InitVectorSize = 16 SignatureSize = 4 EKey = "" IKey = "" UTF8 = "utf-8" ) func AddBase64Padding(base64Input string) string { var b64 string b64 = base64Input if i := len(b64) % 4; i !
-<a href=https://www.vimiix.com/posts/2019-11-13-google-rtb-price-in-golang/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></h1><b><time>2019.09.05 16:22</time></b>
+<a href=http://vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/>Read more...</a></div></article><article><h1><a href=http://vimiix.com/vimiix-blog/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></h1><b><time>2019.09.05 16:22</time></b>
 <a href=/tags/solution>solution</a>
 <a href=/tags/mac>mac</a>
 <a href=/tags/mvim>mvim</a><div>当昨天把 Mac 升级了 10.12.6 Sierra 以后，mvim 打开文件的时候就开始报错，使用该方法已解决~
@@ -93,7 +97,7 @@ Source Code package main /* golang 实现 google 的rtb 价格加密方案 https
 使用一条指令可以解决上面的报错问题：
 sudo install_name_tool -change /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/lib/libruby.2.0.0.dylib /System/Library/Frameworks/Ruby.framework/Versions/2.3/usr/lib/libruby.2.3.0.dylib /usr/local/Cellar/macvim/8.0-146/MacVim.app/Contents/bin/../MacOS/Vim 注意点 需要注意的是，指令最后指定的 vim 路径，一定是上面报错中 Referenced from 后面的路径。参考
 相关解答 https://stackoverflow.com/questions/47278449/vim-ruby-mismatch-on-mac-high-sierra</div></article><div>1 of 9
-<a href=/page/2/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=/vimiix-blog/page/2/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

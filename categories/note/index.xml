@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>note on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/note/</link><description>Recent content in note on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 28 Mar 2019 16:22:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/note/index.xml" rel="self" type="application/rss+xml"/><item><title>HLS视频加密</title><link>https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</link><pubDate>Thu, 28 Mar 2019 16:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</guid><description>&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>note on Hi, I'm Vimiix</title><link>http://vimiix.com/vimiix-blog/categories/note/</link><description>Recent content in note on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 28 Mar 2019 16:22:48 +0000</lastBuildDate><atom:link href="http://vimiix.com/vimiix-blog/categories/note/index.xml" rel="self" type="application/rss+xml"/><item><title>HLS视频加密</title><link>http://vimiix.com/vimiix-blog/posts/2019-03-28-use-hls-to-encrypt-video/</link><pubDate>Thu, 28 Mar 2019 16:22:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2019-03-28-use-hls-to-encrypt-video/</guid><description>&lt;blockquote>
 &lt;p>最近在做视频管理后台，主要提供点播服务，涉及到需要对视频进行加密处理以防止视频被随意下载。&lt;/p>
 &lt;p>调研了一番之后确定使用 HLS(HTTP Live Streaming) 基于 HTTP 的流媒体网络传输协议技术来处理视频。&lt;/p>
 &lt;p>所以本文主要记录关于学习 HLS 视频加密技术的笔记&lt;/p>
 &lt;/blockquote>
 &lt;h3 id="为什么要加密">为什么要加密？&lt;/h3>
-&lt;p>简单的说就是：增加获取被加密资源的代价。对于视频这种资源来说，绝对的加密就是不要上线给人看，但那是不可能的，因为提供的服务就是给人看视频，只要上线，别人就可以通过各种手段解密或者简单的录屏的方式来传播，所以目前俩看，不存在绝对的加密。只要让恶意的人获取源视频的代价很大，就可以阻挡绝大多数的不法分子。这样，加密的目的也就基本达到了。&lt;/p></description></item><item><title>获取存储在又拍云CDN中视频的时长</title><link>https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/</link><pubDate>Wed, 30 Jan 2019 16:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/</guid><description>&lt;h3 id="前置条件">前置条件&lt;/h3>
+&lt;p>简单的说就是：增加获取被加密资源的代价。对于视频这种资源来说，绝对的加密就是不要上线给人看，但那是不可能的，因为提供的服务就是给人看视频，只要上线，别人就可以通过各种手段解密或者简单的录屏的方式来传播，所以目前俩看，不存在绝对的加密。只要让恶意的人获取源视频的代价很大，就可以阻挡绝大多数的不法分子。这样，加密的目的也就基本达到了。&lt;/p></description></item><item><title>获取存储在又拍云CDN中视频的时长</title><link>http://vimiix.com/vimiix-blog/posts/2019-01-30-get-video-duration-by-upyun-sdk/</link><pubDate>Wed, 30 Jan 2019 16:22:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2019-01-30-get-video-duration-by-upyun-sdk/</guid><description>&lt;h3 id="前置条件">前置条件&lt;/h3>
 &lt;ul>
 &lt;li>
 &lt;p>可用的账户&lt;/p>
@@ -13,23 +13,23 @@
 &lt;p>安装又拍云 Python 版本的 SDK：&lt;/p>
 &lt;/li>
 &lt;/ul>
-&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-shell" data-lang="shell">pip install upyun
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>（官方代码开源地址：&lt;a href="https://github.com/upyun/python-sdk/">https://github.com/upyun/python-sdk/&lt;/a> )&lt;/p></description></item><item><title>《算法图解》读书笔记7-狄克斯特拉算法</title><link>https://www.vimiix.com/posts/2018-06-05-grokking-algorithms-chapter-7/</link><pubDate>Mon, 16 Jul 2018 22:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-06-05-grokking-algorithms-chapter-7/</guid><description>&lt;h2 id="概念">概念&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>pip install upyun
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>（官方代码开源地址：&lt;a href="https://github.com/upyun/python-sdk/">https://github.com/upyun/python-sdk/&lt;/a> )&lt;/p></description></item><item><title>《算法图解》读书笔记7-狄克斯特拉算法</title><link>http://vimiix.com/vimiix-blog/posts/2018-06-05-grokking-algorithms-chapter-7/</link><pubDate>Mon, 16 Jul 2018 22:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-06-05-grokking-algorithms-chapter-7/</guid><description>&lt;h2 id="概念">概念&lt;/h2>
 &lt;blockquote>
 &lt;p>狄克斯特拉算法是从一个顶点到其余各顶点的最短路径算法，解决的是有向图中最短路径问题 (该算法不能处理包含负边的图)。主要特点是以起始点为中心向外层层扩展，直到扩展到终点为止。&lt;/p>
-&lt;/blockquote></description></item><item><title>《算法图解》读书笔记6-图以及广度优先搜索</title><link>https://www.vimiix.com/posts/2018-06-03-grokking-algorithms-chapter-6/</link><pubDate>Sun, 03 Jun 2018 16:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-06-03-grokking-algorithms-chapter-6/</guid><description>&lt;h2 id="什么是图">什么是图&lt;/h2>
+&lt;/blockquote></description></item><item><title>《算法图解》读书笔记6-图以及广度优先搜索</title><link>http://vimiix.com/vimiix-blog/posts/2018-06-03-grokking-algorithms-chapter-6/</link><pubDate>Sun, 03 Jun 2018 16:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-06-03-grokking-algorithms-chapter-6/</guid><description>&lt;h2 id="什么是图">什么是图&lt;/h2>
 &lt;p>图模拟一组链接，图由顶点和边组成。一个顶点可能与众多顶点直接相连，这些顶点被称为&lt;strong>邻居&lt;/strong>。&lt;/p>
 &lt;p>图通常表示为：&lt;code>G(V,E)&lt;/code>，其中，&lt;code>G&lt;/code>表示一个图，&lt;code>V&lt;/code>是图中顶点的集合，&lt;code>E&lt;/code>是图中边的集合。&lt;/p>
 &lt;h4 id="简单图">简单图&lt;/h4>
 &lt;p>在图结构中，若不存在顶点到其自身的边，且同一条边不重复出现，则这样的图称之为简单图。&lt;/p>
 &lt;h4 id="无向图">无向图&lt;/h4>
 &lt;p>如果图中任意两个顶点之间的边都是无向边，则称该图为无向图。&lt;/p>
-&lt;p>无向边：若顶点 M 到顶点 N 的边没有方向，称这条边为无向边，用无序偶对(M,N)或(N,M)表示。&lt;/p></description></item><item><title>《算法图解》读书笔记5-散列函数及扩展</title><link>https://www.vimiix.com/posts/2018-06-02-grokking-algorithms-chapter-5/</link><pubDate>Sat, 02 Jun 2018 16:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-06-02-grokking-algorithms-chapter-5/</guid><description>&lt;h2 id="散列函数">散列函数&lt;/h2>
+&lt;p>无向边：若顶点 M 到顶点 N 的边没有方向，称这条边为无向边，用无序偶对(M,N)或(N,M)表示。&lt;/p></description></item><item><title>《算法图解》读书笔记5-散列函数及扩展</title><link>http://vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/</link><pubDate>Sat, 02 Jun 2018 16:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/</guid><description>&lt;h2 id="散列函数">散列函数&lt;/h2>
 &lt;p>散列函数就是一种&lt;strong>映射&lt;/strong>，是从关键字到存储地址的映射。通常，包含散列函数的算法的算法复杂度都为 O(1)，对应到 Python 中的数据结构就是字典，给一个 key 可以得到一个固定的 value 值。散列函数必须满足一些要求：&lt;/p>
 &lt;ul>
 &lt;li>它必须是一直的。例如，假设输入 apple 时得到的是 4，那么每次输入 apple 时，都必须是 4，不然这个散列函数就是无意义的；&lt;/li>
 &lt;li>散列函数应该将不同的输入值，对应到不同的值上。（虽然不同的 key 对应相同的 value 是允许的，但最理想的情况是不同的 key，对应不同的 value，这种称之为&lt;a href="https://zh.wikipedia.org/wiki/%E5%AE%8C%E7%BE%8E%E6%95%A3%E5%88%97">完美散列&lt;/a>）&lt;/li>
-&lt;/ul></description></item><item><title>《算法图解》读书笔记4-分治思想和快排</title><link>https://www.vimiix.com/posts/2018-05-30-grokking-algorithms-chapter-4/</link><pubDate>Wed, 30 May 2018 16:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-05-30-grokking-algorithms-chapter-4/</guid><description>&lt;h2 id="分而治之divide-and-conquer">分而治之（Divide and Conquer）&lt;/h2>
+&lt;/ul></description></item><item><title>《算法图解》读书笔记4-分治思想和快排</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/</link><pubDate>Wed, 30 May 2018 16:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/</guid><description>&lt;h2 id="分而治之divide-and-conquer">分而治之（Divide and Conquer）&lt;/h2>
 &lt;p>所谓分而治之，分为分解问题，但我们目的是解决大问题，所有还有将分解后得到的结果贡献回大问题，最终使得我们解决大问题。&lt;/p>
 &lt;p>分而治之的思想是采用了递归的思想，将原问题分成几个规模较小但是&lt;strong>类似&lt;/strong>于原问题的子问题， 通过递归的方式来求解这些小问题，最后将子问题的解合并来得到原问题的解。分治思想的本质是我们中学时候学的数学归纳法。&lt;/p>
 &lt;p>书上提到，使用分治思想解决问题的过程包括两个步骤，其实应该是三个步骤：&lt;/p>
@@ -37,27 +37,27 @@
 &lt;li>找出基线条件，这种条件必须尽可能简单。&lt;/li>
 &lt;li>不断将问题分解为子问题（或者说缩小规模），直达符合基线条件。&lt;/li>
 &lt;li>合并子问题的结果，得到最终问题的解（利用系统栈的特性实现过程状态的记录）&lt;/li>
-&lt;/ol></description></item><item><title>《算法图解》读书笔记2-数组链表和选择排序</title><link>https://www.vimiix.com/posts/2018-05-25-grokking-algorithms-chapter-2/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-05-25-grokking-algorithms-chapter-2/</guid><description>&lt;h2 id="理解数组和链表">理解数组和链表&lt;/h2>
+&lt;/ol></description></item><item><title>《算法图解》读书笔记2-数组链表和选择排序</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-25-grokking-algorithms-chapter-2/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-25-grokking-algorithms-chapter-2/</guid><description>&lt;h2 id="理解数组和链表">理解数组和链表&lt;/h2>
 &lt;p>链表和数组是两种基本的数据结构，他们的区别在于数据在内存中的存储方式不同。&lt;/p>
 &lt;h3 id="数组">数组&lt;/h3>
 &lt;p>数组在内存中是用一块连续的内存来存储数据的，数组中的每个数据地址是连续的。数组中的每个元素所占用的内存是相同的，所以，我们可以通过下标索引在常数数量级的时间内，迅速访问数组中的任何一个元素。但是要在数组中任意位置添加一个元素，就需要移动大量的元素，使得内存中空出一个位置来存放新插入的元素。同理，当删除一个元素的时候，也需要移动大量的元素，来使得删除元素以后的数组数据在内存中仍旧是连续的。&lt;/p>
-&lt;p>由此可见：当对于一组数据，读取操作频繁，写操作少的情况，应该使用数组数据结构。&lt;/p></description></item><item><title>《算法图解》读书笔记3-递归</title><link>https://www.vimiix.com/posts/2018-05-27-grokking-algorithms-chapter-3/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-05-27-grokking-algorithms-chapter-3/</guid><description>&lt;blockquote>
+&lt;p>由此可见：当对于一组数据，读取操作频繁，写操作少的情况，应该使用数组数据结构。&lt;/p></description></item><item><title>《算法图解》读书笔记3-递归</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-27-grokking-algorithms-chapter-3/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-27-grokking-algorithms-chapter-3/</guid><description>&lt;blockquote>
 &lt;p>如果使用循环 ，程序的性能可能更高；如果使用递归，程序可能更容易理解。如何选择要看什么对你来说更重要。&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="递归函数">递归函数&lt;/h2>
 &lt;p>在一个函数中，可以调用另一个函数，如果调用的另一个函数是函数本身，这样的函数就是递归函数。如下示例：&lt;/p>
-&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-python" data-lang="python">&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">foo&lt;/span>(x):
-&lt;span style="color:#66d9ef">if&lt;/span> x &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>:
-&lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#e6db74">&amp;#39;end&amp;#39;&lt;/span>
-&lt;span style="color:#66d9ef">else&lt;/span>:
-&lt;span style="color:#75715e"># 在函数中继续调用自己&lt;/span>
-&lt;span style="color:#66d9ef">return&lt;/span> foo(x&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>)
-&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>《算法图解》读书笔记1-二分和大O</title><link>https://www.vimiix.com/posts/2018-05-21-grokking-algorithms-chapter-1/</link><pubDate>Wed, 23 May 2018 23:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-05-21-grokking-algorithms-chapter-1/</guid><description>&lt;blockquote>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">foo&lt;/span>(x):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> x &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#e6db74">&amp;#39;end&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e"># 在函数中继续调用自己&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> foo(x&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>《算法图解》读书笔记1-二分和大O</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-21-grokking-algorithms-chapter-1/</link><pubDate>Wed, 23 May 2018 23:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-21-grokking-algorithms-chapter-1/</guid><description>&lt;blockquote>
 &lt;p>算法是一组完成任务的指令&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="为什么要学习算法">为什么要学习算法&lt;/h2>
 &lt;p>这次是我第二次读《算法图解》，当我第一次看这本书的时候，我更兴奋于书中有什么内容，迫不及待的去过内容，学习那些算法概念。但当我第二次准备开始读这本书的时候，我脑海中出现的了一个问题：“为什么要学习算法？”，这个问题也许会有人和我一样，之前根本没有好好的去思考，只是知道，作为一个程序员我应该学习算法。当然，能够有这个觉悟，说明我们还算是个合格的程序员。&lt;/p>
-&lt;p>但是，不妨认真思考一下，为什么要学习算法？算法应该怎么学？&lt;/p></description></item><item><title>[算法笔记]动态规划之最长公共子串和最长公共子序列</title><link>https://www.vimiix.com/posts/2018-02-07-dp-note/</link><pubDate>Wed, 07 Feb 2018 12:27:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-02-07-dp-note/</guid><description>&lt;blockquote>
+&lt;p>但是，不妨认真思考一下，为什么要学习算法？算法应该怎么学？&lt;/p></description></item><item><title>[算法笔记]动态规划之最长公共子串和最长公共子序列</title><link>http://vimiix.com/vimiix-blog/posts/2018-02-07-dp-note/</link><pubDate>Wed, 07 Feb 2018 12:27:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-02-07-dp-note/</guid><description>&lt;blockquote>
 &lt;p>本文是《算法图解》笔记&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="应用场景">应用场景&lt;/h2>
@@ -67,7 +67,7 @@
 &lt;li>源代码管理中，&lt;code>git diff&lt;/code>指令，可以查找出编辑前后文件的差异，这是基于动态规划实现的。&lt;/li>
 &lt;li>编辑距离（&lt;code>levenshtein distance&lt;/code>），判断字符串的相似程度，也是基于动态规划计算。可以通过这个技术从拼写检查到判断用户上传的资料是否是盗版。（&lt;em>这样看来，我猜想大学论文查重应该也是基于动态规划算法:P&lt;/em>）&lt;/li>
 &lt;li>Microsoft Word 等软件中具有断字功能，使用动态规划可以确定什么地方断字以确保行长一致。&lt;/li>
-&lt;/ul></description></item><item><title>[算法笔记]用递归和迭代的思想分别实现插入排序和选择排序</title><link>https://www.vimiix.com/posts/2017-08-02-insert-sort-and-select-sort/</link><pubDate>Wed, 02 Aug 2017 17:17:25 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-08-02-insert-sort-and-select-sort/</guid><description>&lt;h1 id="思路">思路&lt;/h1>
+&lt;/ul></description></item><item><title>[算法笔记]用递归和迭代的思想分别实现插入排序和选择排序</title><link>http://vimiix.com/vimiix-blog/posts/2017-08-02-insert-sort-and-select-sort/</link><pubDate>Wed, 02 Aug 2017 17:17:25 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-08-02-insert-sort-and-select-sort/</guid><description>&lt;h1 id="思路">思路&lt;/h1>
 &lt;!-- raw HTML omitted -->
 &lt;h3 id="插入排序insert-sort">插入排序（insert sort）&lt;/h3>
 &lt;blockquote>
@@ -76,13 +76,13 @@
 &lt;h3 id="选择排序selection-sort">选择排序（selection sort）&lt;/h3>
 &lt;blockquote>
 &lt;p>先找到整个序列中最大的元素，并将其&lt;!-- raw HTML omitted -->向后放&lt;!-- raw HTML omitted -->在 n（待排序的序列末尾）的位置上，然后继续递归排序剩下的元素。这种方式称之为&lt;strong>选择排序法&lt;/strong>&lt;/p>
-&lt;/blockquote></description></item><item><title>[算法笔记]使用L形砖拼接国际象棋棋盘</title><link>https://www.vimiix.com/posts/2017-08-01-cover-board-game/</link><pubDate>Tue, 01 Aug 2017 19:54:21 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-08-01-cover-board-game/</guid><description>&lt;h2 id="递归解决棋盘拼接问题">递归解决棋盘拼接问题&lt;/h2>
+&lt;/blockquote></description></item><item><title>[算法笔记]使用L形砖拼接国际象棋棋盘</title><link>http://vimiix.com/vimiix-blog/posts/2017-08-01-cover-board-game/</link><pubDate>Tue, 01 Aug 2017 19:54:21 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-08-01-cover-board-game/</guid><description>&lt;h2 id="递归解决棋盘拼接问题">递归解决棋盘拼接问题&lt;/h2>
 &lt;h3 id="题目介绍">题目介绍&lt;/h3>
 &lt;p>如图所示，图中有一块角上缺了一个方格的国际象棋棋盘，现在我们想用 L 形砖拼接出这样一块棋盘。&lt;/p>
 &lt;p>
 &lt;figure>
 &lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/chess-board.jpg" alt="" />
 &lt;/figure>
-&lt;/p></description></item><item><title>[算法笔记]侏儒排序算法实现和复杂度分析</title><link>https://www.vimiix.com/posts/2017-07-31-gnomesort/</link><pubDate>Mon, 31 Jul 2017 15:58:21 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-07-31-gnomesort/</guid><description>&lt;h1 id="侏儒排序">侏儒排序&lt;/h1>
+&lt;/p></description></item><item><title>[算法笔记]侏儒排序算法实现和复杂度分析</title><link>http://vimiix.com/vimiix-blog/posts/2017-07-31-gnomesort/</link><pubDate>Mon, 31 Jul 2017 15:58:21 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-07-31-gnomesort/</guid><description>&lt;h1 id="侏儒排序">侏儒排序&lt;/h1>
 &lt;h3 id="介绍">介绍&lt;/h3>
 &lt;p>侏儒排序是由 Hamid Sarbazi-Azad 在 2000 年提出的，也叫愚人排序法（Stupid sort）。这种排序算法一种简单的复杂度为&lt;code>平方级&lt;/code>的排序算法，一般实际生产中不会用到。&lt;/p></description></item></channel></rss>

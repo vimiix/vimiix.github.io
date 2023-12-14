@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/linux/</link><description>Recent content in Linux on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Wed, 01 Sep 2021 16:15:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/linux/index.xml" rel="self" type="application/rss+xml"/><item><title>磁盘只读（readonly）故障场景模拟</title><link>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</link><pubDate>Wed, 01 Sep 2021 16:15:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</guid><description>假设服务器目前有多个盘，vdb1这块分区盘专门用于数据库程序的数据目录，我们就用 vdb1 这个盘来模拟只读故障场景。
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux on Hi, I'm Vimiix</title><link>http://vimiix.com/vimiix-blog/categories/linux/</link><description>Recent content in Linux on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Wed, 01 Sep 2021 16:15:48 +0000</lastBuildDate><atom:link href="http://vimiix.com/vimiix-blog/categories/linux/index.xml" rel="self" type="application/rss+xml"/><item><title>磁盘只读（readonly）故障场景模拟</title><link>http://vimiix.com/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/</link><pubDate>Wed, 01 Sep 2021 16:15:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/</guid><description>假设服务器目前有多个盘，vdb1这块分区盘专门用于数据库程序的数据目录，我们就用 vdb1 这个盘来模拟只读故障场景。
 1. 卸载指定盘 umount /dev/vdb1 想要如期卸载掉，需要确保该盘上没有被正在运行进程依赖，如果有运行中的进程依赖这个盘，会报如下报 target is busy 的错误：
 umount: /opt: target is busy. 遇到该错误时，可以通过lsof [mountpoint] 命令来查看有哪些进程依赖这块盘，kill 掉相应的进程后重新卸载。
 2. 配置伪设备来镜像 /dev/vdb1 的内容 卸载成功后，我们通过 losetup 指令来配置一个loop设备（在类 UNIX 系统里，loop 设备是一种伪设备(pseudo-device)，或者也可以说是仿真设备。它能使我们像块设备一样访问一个文件）。
 losetup /dev/loop0 /dev/vdb1 执行指令后，可以通过 losetup -l 查看当前服务器上的 loop 设备列表：
 3. 挂载 /dev/loop0 我们已经有一个 /dev/loop0 的伪设备镜像到了 /dev/vdb1 上，此时，我们来挂载 /dev/loop0 这个伪设备：
 mount /dev/loop0 /opt -o rw,errors=remount-ro 通过 df -h 可以查看到 /dev/loop0 已经正常挂载上了
-4.</description></item><item><title>TLPI笔记—深入文件I/O模型</title><link>https://www.vimiix.com/posts/2018-05-18-tpli-io-extend/</link><pubDate>Fri, 18 May 2018 09:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-05-18-tpli-io-extend/</guid><description>&lt;h2 id="原子操作和竞争操作">原子操作和竞争操作&lt;/h2>
-&lt;p>所有的系统调用都是以原子操作方式执行的。之所以这么说，是指内核保证了某系统调用中的所有步骤会作为地理操作而一次性加以执行，期间不会被其他进程或线程中断。原子性规避了&lt;strong>竞争状态（race condition）&lt;/strong>，竞争状态指：操作共享资源的两个进程（或线程）其结果取决于一个无法预期的顺序，即这些进程或线程获得 CPU 使用权的先后相对顺序。&lt;/p></description></item><item><title>TLPI笔记—通用文件I/O模型</title><link>https://www.vimiix.com/posts/2018-05-11-tpli-common-io/</link><pubDate>Fri, 11 May 2018 09:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-05-11-tpli-common-io/</guid><description>&lt;h2 id="文件描述符">文件描述符&lt;/h2>
+4. 正常启动应用进程（这里测试用opengauss数据库） gs_ctl start -D /opt/mogdb/data/ 5. 修改磁盘为只读模式（故障注入） blockdev 命令行工具是用于控制区块设备程序</description></item><item><title>TLPI笔记—深入文件I/O模型</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-18-tpli-io-extend/</link><pubDate>Fri, 18 May 2018 09:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-18-tpli-io-extend/</guid><description>&lt;h2 id="原子操作和竞争操作">原子操作和竞争操作&lt;/h2>
+&lt;p>所有的系统调用都是以原子操作方式执行的。之所以这么说，是指内核保证了某系统调用中的所有步骤会作为地理操作而一次性加以执行，期间不会被其他进程或线程中断。原子性规避了&lt;strong>竞争状态（race condition）&lt;/strong>，竞争状态指：操作共享资源的两个进程（或线程）其结果取决于一个无法预期的顺序，即这些进程或线程获得 CPU 使用权的先后相对顺序。&lt;/p></description></item><item><title>TLPI笔记—通用文件I/O模型</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-11-tpli-common-io/</link><pubDate>Fri, 11 May 2018 09:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-11-tpli-common-io/</guid><description>&lt;h2 id="文件描述符">文件描述符&lt;/h2>
 &lt;p>所有执行 I/O 操作的系统调用都是以文件描述符，一个非负整数来指代打开的文件。文件描述符用以表示所有类型的已打开的文件，包括管道（pipe）、FIFO、socket、终端、设备和普通文件。每个进程都各自独立维护着一张文件描述符表。&lt;/p>
 &lt;h3 id="标准文件描述符">标准文件描述符&lt;/h3>
 &lt;table>
@@ -38,10 +38,10 @@ mount /dev/loop0 /opt -o rw,errors=remount-ro 通过 df -h 可以查看到 /dev/
 &lt;td style="text-align:center">stderr&lt;/td>
 &lt;/tr>
 &lt;/tbody>
-&lt;/table></description></item><item><title>TPLI笔记—linux/unix标准和历史</title><link>https://www.vimiix.com/posts/2018-05-01-linux-history/</link><pubDate>Tue, 01 May 2018 19:20:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-05-01-linux-history/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
+&lt;/table></description></item><item><title>TPLI笔记—linux/unix标准和历史</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-01-linux-history/</link><pubDate>Tue, 01 May 2018 19:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-01-linux-history/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
 &lt;p>最近开始阅读&lt;a href="https://book.douban.com/subject/25809330/">《Linux/Unix 系统编程手册》&lt;/a> 这本书，重新系统的学习一下 linux 系统编程方面的知识。&lt;/p>
 &lt;p>在阅读完第一章《历史和标准》以后，对于很多标准名词都见过，但是对于他们之间的发展历程很是模糊，通读这部分内容后豁然开朗，尤其本章最后总结部分，对于前面的概况的既简练还没有遗漏。不禁在书上用笔写下：&lt;strong>“牛 B 总结，一气呵成”&lt;/strong>。&lt;/p>
-&lt;p>方便以后不去翻书回顾，特花点时间摘录至此。&lt;/p></description></item><item><title>rsync服务器配置文件参数备忘</title><link>https://www.vimiix.com/posts/2017-10-30-rsync-params/</link><pubDate>Mon, 30 Oct 2017 13:12:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-10-30-rsync-params/</guid><description>最近工作中用到了 rsync 服务器，对于 rsync 服务器的配置来说，不是很复杂，网上有很多介绍。rsync 的配置文件是最重要的一部分。有很多参数需要了解一下，所以今天记录整理一下，方便以后自己查看。
+&lt;p>方便以后不去翻书回顾，特花点时间摘录至此。&lt;/p></description></item><item><title>rsync服务器配置文件参数备忘</title><link>http://vimiix.com/vimiix-blog/posts/2017-10-30-rsync-params/</link><pubDate>Mon, 30 Oct 2017 13:12:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-10-30-rsync-params/</guid><description>最近工作中用到了 rsync 服务器，对于 rsync 服务器的配置来说，不是很复杂，网上有很多介绍。rsync 的配置文件是最重要的一部分。有很多参数需要了解一下，所以今天记录整理一下，方便以后自己查看。
 基本介绍 Rsync（remote synchronize）是一个远程数据同步工具，可通过 LAN/WAN 快速同步多台主机间的文件。Rsync 使用所谓的“Rsync 算法”来使本地和远 程两个主机之间的文件达到同步，这个算法只传送两个文件的不同部分，而不是每次都整份传送，因此速度相当快。
 rsync 的配置文件是由一个或多个模块结构组成。一个模块定义是以方括弧中的模块名开始，直到下一个模块定义开始或者文件结束。
 模块中包含格式为name = value的参数定义。每个模块其实就对应需要备份的一个目录树，比方说在实际环境中，有三个目录树需要备份：/www/、/home/web_user1/和/home/web_user2/，那么就需要在配置文件中定义三个模块，分别对应三个目录树。
@@ -52,8 +52,9 @@ log file 指定 rsync 的日志文件，而不将日志发送给syslog。
 pid file 指定 rsync 的 pid 文件。
 syslog facility 指定 rsync 发送日志消息给 syslog 时的消息级别，常见的消息级别是：uth, authpriv, cron, daemon, ftp, kern, lpr, mail, news, security, sys-log, user, uucp, local0, local1, local2, local3,local4, local5, local6和local7。
 默认值是daemon。
-模块参数 在全局参数之后就需要定义一个或多个模块了，模块中可以定义以下参数：</description></item><item><title>Linux|CentOS系统yum安装pip及遇到的问题解决方法</title><link>https://www.vimiix.com/posts/2017-08-27-pip-setup-and-solve-problems/</link><pubDate>Sun, 27 Aug 2017 14:16:25 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-08-27-pip-setup-and-solve-problems/</guid><description>&lt;p>&lt;strong>pip 是一个以 Python 计算机程序语言写成的软件包管理系统，他可以安装和管理软件包，另外不少的软件包也可以在“Python 软件包索引”（英语：Python Package Index，简称 PyPI）中找到。&lt;/strong>&lt;/p></description></item><item><title>Linux-软件包管理</title><link>https://www.vimiix.com/posts/2017-03-13-rpm-and-yum/</link><pubDate>Mon, 13 Mar 2017 22:41:08 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-03-13-rpm-and-yum/</guid><description>&lt;h6 id="来一首歌当背景音乐">来一首歌当背景音乐&lt;/h6>
-&lt;!-- raw HTML omitted --></description></item><item><title>Linux-rhel7.2操作系统安装</title><link>https://www.vimiix.com/posts/2017-03-08-rhel7-2-os-setup/</link><pubDate>Wed, 08 Mar 2017 23:00:31 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-03-08-rhel7-2-os-setup/</guid><description>RHEL7 红帽公司发布的企业 Linux7 版本。
+模块参数 在全局参数之后就需要定义一个或多个模块了，模块中可以定义以下参数：
+comment 给模块指定一个描述，该描述连同模块名在客户连接得到模块列表时显示给客户。默认没有描述定义。</description></item><item><title>Linux|CentOS系统yum安装pip及遇到的问题解决方法</title><link>http://vimiix.com/vimiix-blog/posts/2017-08-27-pip-setup-and-solve-problems/</link><pubDate>Sun, 27 Aug 2017 14:16:25 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-08-27-pip-setup-and-solve-problems/</guid><description>&lt;p>&lt;strong>pip 是一个以 Python 计算机程序语言写成的软件包管理系统，他可以安装和管理软件包，另外不少的软件包也可以在“Python 软件包索引”（英语：Python Package Index，简称 PyPI）中找到。&lt;/strong>&lt;/p></description></item><item><title>Linux-软件包管理</title><link>http://vimiix.com/vimiix-blog/posts/2017-03-13-rpm-and-yum/</link><pubDate>Mon, 13 Mar 2017 22:41:08 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-03-13-rpm-and-yum/</guid><description>&lt;h6 id="来一首歌当背景音乐">来一首歌当背景音乐&lt;/h6>
+&lt;!-- raw HTML omitted --></description></item><item><title>Linux-rhel7.2操作系统安装</title><link>http://vimiix.com/vimiix-blog/posts/2017-03-08-rhel7-2-os-setup/</link><pubDate>Wed, 08 Mar 2017 23:00:31 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-03-08-rhel7-2-os-setup/</guid><description>RHEL7 红帽公司发布的企业 Linux7 版本。
 RHEL6 与 RHEL7 的关键区别： 显著提升 Docker 的兼容性 （Docker 容器级虚拟化技术）
 默认文件系统从 EXT4 改为 XFS
 系统管理的进一步简化
@@ -64,7 +65,10 @@ RHEL7 的安装 启动画面
 ** Test this media &amp;amp; install Red Hat Enterprise Linux 7.2** #测试安装文件并安装 RHEL 7.2
 ** Troubleshooting** #修复故障
 一般选择第一项就可以了
-注：在 Trobleshooting 模式下，界面如下：</description></item><item><title>Linux-git branch用法(查看、新建、删除、重命名)</title><link>https://www.vimiix.com/posts/2017-03-08-git-branch-usage/</link><pubDate>Wed, 08 Mar 2017 10:41:08 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-03-08-git-branch-usage/</guid><description>&lt;p>
+注：在 Trobleshooting 模式下，界面如下：
+界面说明：
+Install Red Hat Enterprise Linux 7.2 in basic graphics mod #基本图形化安装
+Rescue a Red Hat Enterprise Linux system #修复系统</description></item><item><title>Linux-git branch用法(查看、新建、删除、重命名)</title><link>http://vimiix.com/vimiix-blog/posts/2017-03-08-git-branch-usage/</link><pubDate>Wed, 08 Mar 2017 10:41:08 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-03-08-git-branch-usage/</guid><description>&lt;p>
 &lt;figure>
 &lt;img src="https://static.vimiix.com/uPic/2021-04-06/KQLlUb.jpg" alt="" />
 &lt;/figure>

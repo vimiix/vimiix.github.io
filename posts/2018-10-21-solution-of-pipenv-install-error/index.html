@@ -1,61 +1,62 @@
-<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>pipenv错误解决:TypeError: "module" object is not callable</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
-<a href=/posts/><b>文章列表</b></a>.
-<a href=/categories/><b>分类</b></a>.
-<a href=/tags/><b>标签</b></a>.
-<a href=/friends/><b>友链</b></a>.
-<a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>pipenv错误解决:TypeError: "module" object is not callable</h1><b><time>2018.10.21 11:22</time></b>
-<a href=/%20/tags/python>Python</a>
-<a href=/%20/tags/note>note</a>
-<a href=/%20/tags/pipenv>pipenv</a>
-<a href=/%20/tags/solution>solution</a><div><h3 id=软件版本>软件版本</h3><p>今天在折腾一台新的云主机，所以我在安装环境的时候<code>pip</code>和<code>pipenv</code>都选择安装了最新版本</p><p>（<em>注：正是这两个版本配合才会出现下面的报错，旧版本或以后的新版本的 Pipenv 不会出现</em>）。</p><p>具体如下：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>// pipenv 的版本 2018.7.1
-$ pipenv --version
-pipenv, version 2018.7.1
-
-// pip 的版本 18.1
-$ pip --version
-pip 18.1 from /usr/bin/python3.6/lib/python3.6/site-packages/pip <span style=color:#f92672>(</span>python 3.6<span style=color:#f92672>)</span>
-</code></pre></div><h3 id=报错日志>报错日志</h3><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>$ pipenv install
-Installing dependencies from Pipfile.lock <span style=color:#f92672>(</span>2a98a1<span style=color:#f92672>)</span>...
-Traceback <span style=color:#f92672>(</span>most recent call last<span style=color:#f92672>)</span>:▉▉▉▉ 0/19 — 00:00:00
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/bin/pipenv&#34;</span>, line 11, in &lt;module&gt;
-    sys.exit<span style=color:#f92672>(</span>cli<span style=color:#f92672>())</span>
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 722, in __call__
-    <span style=color:#66d9ef>return</span> self.main<span style=color:#f92672>(</span>*args, **kwargs<span style=color:#f92672>)</span>
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 697, in main
-    rv <span style=color:#f92672>=</span> self.invoke<span style=color:#f92672>(</span>ctx<span style=color:#f92672>)</span>
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 1066, in invoke
-    <span style=color:#66d9ef>return</span> _process_result<span style=color:#f92672>(</span>sub_ctx.command.invoke<span style=color:#f92672>(</span>sub_ctx<span style=color:#f92672>))</span>
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 895, in invoke
-    <span style=color:#66d9ef>return</span> ctx.invoke<span style=color:#f92672>(</span>self.callback, **ctx.params<span style=color:#f92672>)</span>
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 535, in invoke
-    <span style=color:#66d9ef>return</span> callback<span style=color:#f92672>(</span>*args, **kwargs<span style=color:#f92672>)</span>
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/cli.py&#34;</span>, line 435, in install
-    selective_upgrade<span style=color:#f92672>=</span>selective_upgrade,
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 1943, in do_install
-    pypi_mirror<span style=color:#f92672>=</span>pypi_mirror,
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 1322, in do_init
-    pypi_mirror<span style=color:#f92672>=</span>pypi_mirror,
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 807, in do_install_dependencies
-    pypi_mirror<span style=color:#f92672>=</span>pypi_mirror,
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 1375, in pip_install
-    package_name.split<span style=color:#f92672>(</span><span style=color:#e6db74>&#39;--hash&#39;</span><span style=color:#f92672>)[</span>0<span style=color:#f92672>]</span>.split<span style=color:#f92672>(</span><span style=color:#e6db74>&#39;--trusted-host&#39;</span><span style=color:#f92672>)[</span>0<span style=color:#f92672>]</span>
-  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/requirementslib/models/requirements.py&#34;</span>, line 704, in from_line
-    line, extras <span style=color:#f92672>=</span> _strip_extras<span style=color:#f92672>(</span>line<span style=color:#f92672>)</span>
-TypeError: <span style=color:#e6db74>&#39;module&#39;</span> object is not callable
-  🐍   ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉ 0/19 —
-</code></pre></div><h3 id=解决方案-1---降-pip-版本>解决方案 1 - 降 pip 版本</h3><p>这个错误是由于<code>pipenv</code>和最新版本的<strong>pip（18.1）<strong>一起配合使用导致的 pipenv 中的一个错误，所以解决方法就是将 pip 的版本降到</strong>18.0</strong>即可。（问题讨论见<a href=https://github.com/pypa/pipenv/issues/2924>issue 2924</a>）</p><p>执行下面的命令：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>sudo pip install pip<span style=color:#f92672>==</span>18.0
-</code></pre></div><h3 id=解决方案-2---升-pipenv-版本>解决方案 2 - 升 pipenv 版本</h3><p>上面的做法是自行解决的方案，还有一种方案就是更新到最新版的<strong>pipenv 2018.10.9</strong> （新版本中该问题被得到解决 <a href=https://github.com/pypa/pipenv/pull/2935>#2935</a>）</p><p>具体的解决方案，参考官方的<a href=https://github.com/pypa/pipenv/issues/2924#issuecomment-429573525>comment</a>：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-markdown data-lang=markdown>Also you can upgrade pipenv to the latest version.
-If you have further problems please open a new issue.
-I’m going to lock this thread for now to prevent
-continued discussion as this is resolved.
-
-To summarize for people on earlier releases than <span style=color:#e6db74>`2018.10.9`</span>:
-you can pin pip inside the virtualenv using
-<span style=color:#e6db74>`pipenv run python -m pip install pip==18.0`</span>
-or you can set the environment variable
-<span style=color:#e6db74>`PIP_SHIMS_BASE_MODULE=pipenv.patched.notpip`</span>
-</code></pre></div><p>不过可能是我使用的 pip 源是清华的镜像站，截止到发文，该镜像站还未同步到官方指出的<code>2018.10.9</code>版本，懒得折腾了，所以采用了<strong>降 pip 版本</strong>的方案。</p><p>&mdash; EOF &mdash;</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/",this.page.identifier="/posts/2018-10-21-solution-of-pipenv-install-error/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>pipenv错误解决:TypeError: "module" object is not callable</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/vimiix-blog/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=http://vimiix.com/vimiix-blog/><b>首页</b></a>.
+<a href=/vimiix-blog/posts/><b>文章列表</b></a>.
+<a href=/vimiix-blog/categories/><b>分类</b></a>.
+<a href=/vimiix-blog/tags/><b>标签</b></a>.
+<a href=/vimiix-blog/friends/><b>友链</b></a>.
+<a href=/vimiix-blog/about/><b>关于</b></a>.
+<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>pipenv错误解决:TypeError: "module" object is not callable</h1><b><time>2018.10.21 11:22</time></b>
+<a href=/vimiix-blog/%20/tags/python>Python</a>
+<a href=/vimiix-blog/%20/tags/note>note</a>
+<a href=/vimiix-blog/%20/tags/pipenv>pipenv</a>
+<a href=/vimiix-blog/%20/tags/solution>solution</a><div><h3 id=软件版本>软件版本</h3><p>今天在折腾一台新的云主机，所以我在安装环境的时候<code>pip</code>和<code>pipenv</code>都选择安装了最新版本</p><p>（<em>注：正是这两个版本配合才会出现下面的报错，旧版本或以后的新版本的 Pipenv 不会出现</em>）。</p><p>具体如下：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>// pipenv 的版本 2018.7.1
+</span></span><span style=display:flex><span>$ pipenv --version
+</span></span><span style=display:flex><span>pipenv, version 2018.7.1
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>// pip 的版本 18.1
+</span></span><span style=display:flex><span>$ pip --version
+</span></span><span style=display:flex><span>pip 18.1 from /usr/bin/python3.6/lib/python3.6/site-packages/pip <span style=color:#f92672>(</span>python 3.6<span style=color:#f92672>)</span>
+</span></span></code></pre></div><h3 id=报错日志>报错日志</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>$ pipenv install
+</span></span><span style=display:flex><span>Installing dependencies from Pipfile.lock <span style=color:#f92672>(</span>2a98a1<span style=color:#f92672>)</span>...
+</span></span><span style=display:flex><span>Traceback <span style=color:#f92672>(</span>most recent call last<span style=color:#f92672>)</span>:▉▉▉▉ 0/19 — 00:00:00
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/bin/pipenv&#34;</span>, line 11, in &lt;module&gt;
+</span></span><span style=display:flex><span>    sys.exit<span style=color:#f92672>(</span>cli<span style=color:#f92672>())</span>
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 722, in __call__
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> self.main<span style=color:#f92672>(</span>*args, **kwargs<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 697, in main
+</span></span><span style=display:flex><span>    rv <span style=color:#f92672>=</span> self.invoke<span style=color:#f92672>(</span>ctx<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 1066, in invoke
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> _process_result<span style=color:#f92672>(</span>sub_ctx.command.invoke<span style=color:#f92672>(</span>sub_ctx<span style=color:#f92672>))</span>
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 895, in invoke
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> ctx.invoke<span style=color:#f92672>(</span>self.callback, **ctx.params<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/click/core.py&#34;</span>, line 535, in invoke
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> callback<span style=color:#f92672>(</span>*args, **kwargs<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/cli.py&#34;</span>, line 435, in install
+</span></span><span style=display:flex><span>    selective_upgrade<span style=color:#f92672>=</span>selective_upgrade,
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 1943, in do_install
+</span></span><span style=display:flex><span>    pypi_mirror<span style=color:#f92672>=</span>pypi_mirror,
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 1322, in do_init
+</span></span><span style=display:flex><span>    pypi_mirror<span style=color:#f92672>=</span>pypi_mirror,
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 807, in do_install_dependencies
+</span></span><span style=display:flex><span>    pypi_mirror<span style=color:#f92672>=</span>pypi_mirror,
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/core.py&#34;</span>, line 1375, in pip_install
+</span></span><span style=display:flex><span>    package_name.split<span style=color:#f92672>(</span><span style=color:#e6db74>&#39;--hash&#39;</span><span style=color:#f92672>)[</span>0<span style=color:#f92672>]</span>.split<span style=color:#f92672>(</span><span style=color:#e6db74>&#39;--trusted-host&#39;</span><span style=color:#f92672>)[</span>0<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>  File <span style=color:#e6db74>&#34;/usr/bin/python3.6/lib/python3.6/site-packages/pipenv/vendor/requirementslib/models/requirements.py&#34;</span>, line 704, in from_line
+</span></span><span style=display:flex><span>    line, extras <span style=color:#f92672>=</span> _strip_extras<span style=color:#f92672>(</span>line<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>TypeError: <span style=color:#e6db74>&#39;module&#39;</span> object is not callable
+</span></span><span style=display:flex><span>  🐍   ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉ 0/19 —
+</span></span></code></pre></div><h3 id=解决方案-1---降-pip-版本>解决方案 1 - 降 pip 版本</h3><p>这个错误是由于<code>pipenv</code>和最新版本的<strong>pip（18.1）<strong>一起配合使用导致的 pipenv 中的一个错误，所以解决方法就是将 pip 的版本降到</strong>18.0</strong>即可。（问题讨论见<a href=https://github.com/pypa/pipenv/issues/2924>issue 2924</a>）</p><p>执行下面的命令：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>sudo pip install pip<span style=color:#f92672>==</span>18.0
+</span></span></code></pre></div><h3 id=解决方案-2---升-pipenv-版本>解决方案 2 - 升 pipenv 版本</h3><p>上面的做法是自行解决的方案，还有一种方案就是更新到最新版的<strong>pipenv 2018.10.9</strong> （新版本中该问题被得到解决 <a href=https://github.com/pypa/pipenv/pull/2935>#2935</a>）</p><p>具体的解决方案，参考官方的<a href=https://github.com/pypa/pipenv/issues/2924#issuecomment-429573525>comment</a>：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-markdown data-lang=markdown><span style=display:flex><span>Also you can upgrade pipenv to the latest version.
+</span></span><span style=display:flex><span>If you have further problems please open a new issue.
+</span></span><span style=display:flex><span>I’m going to lock this thread for now to prevent
+</span></span><span style=display:flex><span>continued discussion as this is resolved.
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>To summarize for people on earlier releases than <span style=color:#e6db74>`2018.10.9`</span>:
+</span></span><span style=display:flex><span>you can pin pip inside the virtualenv using
+</span></span><span style=display:flex><span><span style=color:#e6db74>`pipenv run python -m pip install pip==18.0`</span>
+</span></span><span style=display:flex><span>or you can set the environment variable
+</span></span><span style=display:flex><span><span style=color:#e6db74>`PIP_SHIMS_BASE_MODULE=pipenv.patched.notpip`</span>
+</span></span></code></pre></div><p>不过可能是我使用的 pip 源是清华的镜像站，截止到发文，该镜像站还未同步到官方指出的<code>2018.10.9</code>版本，懒得折腾了，所以采用了<strong>降 pip 版本</strong>的方案。</p><p>&mdash; EOF &mdash;</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/vimiix-blog/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="http://vimiix.com/vimiix-blog/posts/2018-10-21-solution-of-pipenv-install-error/",this.page.identifier="/vimiix-blog/posts/2018-10-21-solution-of-pipenv-install-error/"};(function(){var e=document,t=e.createElement("script");t.src="https://vimiix-blog.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.

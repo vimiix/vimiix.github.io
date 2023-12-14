@@ -1,30 +1,30 @@
-<!doctype html><html lang=cn-zh><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=x-ua-compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>DevOps|SaltStack的部署和基本指令</title><meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
-<a href=/posts/><b>文章列表</b></a>.
-<a href=/categories/><b>分类</b></a>.
-<a href=/tags/><b>标签</b></a>.
-<a href=/friends/><b>友链</b></a>.
-<a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>DevOps|SaltStack的部署和基本指令</h1><b><time>2017.06.27 20:08</time></b>
-<a href=/%20/tags/python>Python</a>
-<a href=/%20/tags/saltstack>SaltStack</a>
-<a href=/%20/tags/devops>DevOps</a><div><p>SaltStack 是一个服务器基础架构集中化管理平台，具备配置管理、远程执行、监控等功能，。SaltStack 基于 Python 语言实现，结合轻量级消息队列（ZeroMQ）与 python 第三方模块（Pyzmq、PyCrypto、Pyjinjia2、python-msgpack 和 PyYAML 等）构建。</p><p>通过部署 SaltStack 环境，可以在成千上万台服务器上做到批量执行命令，根据不同业务特性进行配置集中化管理、分发文件、采集服务器数据、操作系统基础及软件包管理等，SaltStack 是运维人员提高工作效率、规范业务配置与操作的利器。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/SaltStack.png alt></figure></p><h1 id=部署与基本配置>部署与基本配置</h1><p><strong>我的系统环境</strong>：</p><ul><li>系统：CentOS-7-x64</li><li>yum 源:网易 163yum 源</li><li>python：2.7.13</li><li>masterIP：192.168.1.107</li><li>minionIP：192.168.1.107(我直接在一个虚拟机内安装 minion)</li></ul><h2 id=step-0安装-epel-yum-源>step 0：安装 epel yum 源</h2><pre><code>	yum install -y epel-release
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>DevOps|SaltStack的部署和基本指令</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/vimiix-blog/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=http://vimiix.com/vimiix-blog/><b>首页</b></a>.
+<a href=/vimiix-blog/posts/><b>文章列表</b></a>.
+<a href=/vimiix-blog/categories/><b>分类</b></a>.
+<a href=/vimiix-blog/tags/><b>标签</b></a>.
+<a href=/vimiix-blog/friends/><b>友链</b></a>.
+<a href=/vimiix-blog/about/><b>关于</b></a>.
+<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>DevOps|SaltStack的部署和基本指令</h1><b><time>2017.06.27 20:08</time></b>
+<a href=/vimiix-blog/%20/tags/python>Python</a>
+<a href=/vimiix-blog/%20/tags/saltstack>SaltStack</a>
+<a href=/vimiix-blog/%20/tags/devops>DevOps</a><div><p>SaltStack 是一个服务器基础架构集中化管理平台，具备配置管理、远程执行、监控等功能，。SaltStack 基于 Python 语言实现，结合轻量级消息队列（ZeroMQ）与 python 第三方模块（Pyzmq、PyCrypto、Pyjinjia2、python-msgpack 和 PyYAML 等）构建。</p><p>通过部署 SaltStack 环境，可以在成千上万台服务器上做到批量执行命令，根据不同业务特性进行配置集中化管理、分发文件、采集服务器数据、操作系统基础及软件包管理等，SaltStack 是运维人员提高工作效率、规范业务配置与操作的利器。</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/SaltStack.png alt></figure></p><h1 id=部署与基本配置>部署与基本配置</h1><p><strong>我的系统环境</strong>：</p><ul><li>系统：CentOS-7-x64</li><li>yum 源:网易 163yum 源</li><li>python：2.7.13</li><li>masterIP：192.168.1.107</li><li>minionIP：192.168.1.107(我直接在一个虚拟机内安装 minion)</li></ul><h2 id=step-0安装-epel-yum-源>step 0：安装 epel yum 源</h2><pre tabindex=0><code>	yum install -y epel-release
 	yum clean all
 	yum makecache
-</code></pre><h2 id=step-1安装-master-和-minion>step 1：安装 master 和 minion</h2><p><strong>master</strong></p><pre><code>	yum install -y salt-master
-</code></pre><p><strong>minion</strong></p><pre><code>	yum install -y salt-minion
+</code></pre><h2 id=step-1安装-master-和-minion>step 1：安装 master 和 minion</h2><p><strong>master</strong></p><pre tabindex=0><code>	yum install -y salt-master
+</code></pre><p><strong>minion</strong></p><pre tabindex=0><code>	yum install -y salt-minion
 </code></pre><blockquote><p>安装的同时:
 1、关闭防火墙
 <code>service iptables stop</code>
 2、关闭 SELinux
-<code>setenforce 0</code></p></blockquote><h2 id=step-2基本配置>step 2：基本配置</h2><blockquote><p>注意：下面的配置文件均严格遵循 yaml 文件格式，冒号后面必须有空格</p></blockquote><p><strong>master</strong></p><p><code>vim</code>打开<code>/etc/salt</code>目录下面的<code>mater</code>文件</p><p>1、在命令模式下搜索关键词<code>interface</code>，找到下面段落，复制一行在下面打开注释并指定 master 的主机 IP 地址</p><pre><code>	# The address of the interface to bind to:
+<code>setenforce 0</code></p></blockquote><h2 id=step-2基本配置>step 2：基本配置</h2><blockquote><p>注意：下面的配置文件均严格遵循 yaml 文件格式，冒号后面必须有空格</p></blockquote><p><strong>master</strong></p><p><code>vim</code>打开<code>/etc/salt</code>目录下面的<code>mater</code>文件</p><p>1、在命令模式下搜索关键词<code>interface</code>，找到下面段落，复制一行在下面打开注释并指定 master 的主机 IP 地址</p><pre tabindex=0><code>	# The address of the interface to bind to:
 	#interface: 0.0.0.0
 	interface: 192.168.1.107
-</code></pre><p>2、同样，搜索关键词<code>auto_accept</code>，指定是否自动接收 minion 端，这里设置为<code>true</code></p><pre><code>	# Enable auto_accept, this setting will automatically accept all incoming
+</code></pre><p>2、同样，搜索关键词<code>auto_accept</code>，指定是否自动接收 minion 端，这里设置为<code>true</code></p><pre tabindex=0><code>	# Enable auto_accept, this setting will automatically accept all incoming
 	# public keys from the minions. Note that this is insecure.
 	#auto_accept: False
 	auto_accept: True
-
-</code></pre><p>3、最后搜索关键词<code>file_root</code>,设置配置文件的根目录，只需打开下面段落的最后三行注释即可</p><pre><code>	# The file server works on environments passed to the master, each environment
+</code></pre><p>3、最后搜索关键词<code>file_root</code>,设置配置文件的根目录，只需打开下面段落的最后三行注释即可</p><pre tabindex=0><code>	# The file server works on environments passed to the master, each environment
 	# can have multiple root directories, the subdirectories in the multiple file
 	# roots cannot match, otherwise the downloaded files will not be able to be
 	# reliably ensured. A base environment is required to house the top file.
@@ -42,19 +42,19 @@
 	file_roots:
 	  base:
 	    - /srv/salt
-</code></pre><p><strong>minion</strong></p><p><code>vim</code>打开<code>/etc/salt/</code>目录下面的<code>minion</code>文件</p><p>1、搜索<code>master:</code>关键词,配置所有连接的服务器 IP(<em>没有修改过的话在第 16 行</em>)</p><pre><code>	# Set the location of the salt master server. If the master server cannot be
+</code></pre><p><strong>minion</strong></p><p><code>vim</code>打开<code>/etc/salt/</code>目录下面的<code>minion</code>文件</p><p>1、搜索<code>master:</code>关键词,配置所有连接的服务器 IP(<em>没有修改过的话在第 16 行</em>)</p><pre tabindex=0><code>	# Set the location of the salt master server. If the master server cannot be
 	# resolved, then the minion will fail to start.
 	#master: salt
 	master: 192.168.1.107
-</code></pre><p>2、搜索<code>id:</code>关键词，设置 minion 在 master 端的名称</p><pre><code>	# Explicitly declare the id for this minion to use, if left commented the id
+</code></pre><p>2、搜索<code>id:</code>关键词，设置 minion 在 master 端的名称</p><pre tabindex=0><code>	# Explicitly declare the id for this minion to use, if left commented the id
 	# will be the hostname as returned by the python call: socket.getfqdn()
 	# Since salt uses detached ids it is possible to run multiple minions on the
 	# same machine but with different ids, this can be useful for salt compute
 	# clusters.
 	#id:
 	id: local-minion
-</code></pre><h2 id=step-3重启-master-和-minion>step 3：重启 master 和 minion</h2><p><strong>重启 master</strong></p><pre><code>	systemctl restart salt-master.service
-</code></pre><p>重启以后可以查看一下 master 服务当前状态,显示<code>active</code>即启动成功</p><pre><code>	[root@localhost vimiix]# systemctl status salt-master.service
+</code></pre><h2 id=step-3重启-master-和-minion>step 3：重启 master 和 minion</h2><p><strong>重启 master</strong></p><pre tabindex=0><code>	systemctl restart salt-master.service
+</code></pre><p>重启以后可以查看一下 master 服务当前状态,显示<code>active</code>即启动成功</p><pre tabindex=0><code>	[root@localhost vimiix]# systemctl status salt-master.service
 	● salt-master.service - The Salt Master Server
 	   Loaded: loaded (/usr/lib/systemd/system/salt-master.service; disabled; vendor preset: disabled)
 	   Active: **active** (running) since Tue 2017-06-27 19:19:28 CST; 1min 22s ago
@@ -75,42 +75,41 @@
 	Jun 27 19:19:26 localhost.localdomain systemd[1]: Starting The Salt Master Se...
 	Jun 27 19:19:28 localhost.localdomain systemd[1]: Started The Salt Master Ser...
 	Hint: Some lines were ellipsized, use -l to show in full.
-</code></pre><p><strong>重启 minion</strong></p><pre><code>	systemctl restart salt-minion.service
-</code></pre><p><em>补充：</em></p><p>centOS-7 以前的版本重启服务的命令是<code>service restart xxxxxx(服务名)</code></p><h2 id=step-4master-同步所有主机>step 4：master 同步所有主机</h2><p>可以在同步前，先查看当前 salt-key 信息</p><pre><code>	[root@localhost vimiix]# salt-key -L
+</code></pre><p><strong>重启 minion</strong></p><pre tabindex=0><code>	systemctl restart salt-minion.service
+</code></pre><p><em>补充：</em></p><p>centOS-7 以前的版本重启服务的命令是<code>service restart xxxxxx(服务名)</code></p><h2 id=step-4master-同步所有主机>step 4：master 同步所有主机</h2><p>可以在同步前，先查看当前 salt-key 信息</p><pre tabindex=0><code>	[root@localhost vimiix]# salt-key -L
 	Accepted Keys:
 	  local-minion
 	Denied Keys:
 	Unaccepted Keys:
 	Rejected Keys:
-</code></pre><p>同步所有主机</p><pre><code>	salt-key -A
-</code></pre><h2 id=step-5-测试>step 5： 测试</h2><p><strong>测试被控主机是否连通</strong></p><pre><code>	[root@localhost vimiix]# salt &quot;*&quot; test.ping
+</code></pre><p>同步所有主机</p><pre tabindex=0><code>	salt-key -A
+</code></pre><h2 id=step-5-测试>step 5： 测试</h2><p><strong>测试被控主机是否连通</strong></p><pre tabindex=0><code>	[root@localhost vimiix]# salt &#34;*&#34; test.ping
 	local-minion:
 	    True
-</code></pre><p><code>local-minon</code> 就是刚刚我设置的客户端主机在服务器端的名称，连接正确，配置完成。</p><p><strong>远程命令测试</strong></p><pre><code>	[root@localhost vimiix]# salt &quot;*&quot; cmd.run &quot;uptime&quot;
+</code></pre><p><code>local-minon</code> 就是刚刚我设置的客户端主机在服务器端的名称，连接正确，配置完成。</p><p><strong>远程命令测试</strong></p><pre tabindex=0><code>	[root@localhost vimiix]# salt &#34;*&#34; cmd.run &#34;uptime&#34;
     local-minion:
      19:51:04 up  4:23,  2 users,  load average: 0.08, 0.06, 0.41
-</code></pre><h1 id=saltstack-执行命令的格式和-python-api>SaltStack 执行命令的格式和 Python API</h1><h2 id=命令格式>命令格式</h2><blockquote><p>salt [argv] object command [argument]</p></blockquote><p>分为以下几个部分：</p><ul><li><code>salt</code> saltstack 的“发动机”</li><li><code>argv</code> 命令参数</li><li><code>object</code> 要执行命令的对象</li><li><code>command</code> 要执行的命令</li><li><code>argument</code> 要执行的命令的参数</li></ul><p><strong>argv:</strong></p><p><code>-E</code> 指定选择要执行命令的对象时用正则来匹配对象</p><pre><code>	[root@localhost vimiix]# salt -E &quot;^local+&quot; test.ping
+</code></pre><h1 id=saltstack-执行命令的格式和-python-api>SaltStack 执行命令的格式和 Python API</h1><h2 id=命令格式>命令格式</h2><blockquote><p>salt [argv] object command [argument]</p></blockquote><p>分为以下几个部分：</p><ul><li><code>salt</code> saltstack 的“发动机”</li><li><code>argv</code> 命令参数</li><li><code>object</code> 要执行命令的对象</li><li><code>command</code> 要执行的命令</li><li><code>argument</code> 要执行的命令的参数</li></ul><p><strong>argv:</strong></p><p><code>-E</code> 指定选择要执行命令的对象时用正则来匹配对象</p><pre tabindex=0><code>	[root@localhost vimiix]# salt -E &#34;^local+&#34; test.ping
 	local-minion:
 	    True
-</code></pre><p><code>-L</code> 指定选择要执行命令的对象时采用列表的方式</p><pre><code>	#我本机只连接了创建了一个主机，下面的‘*’可以替换为每个主机名，以“，”分隔每个主机名
-	[root@localhost vimiix]# salt -L &quot;local-minion,*&quot; test.ping
+</code></pre><p><code>-L</code> 指定选择要执行命令的对象时采用列表的方式</p><pre tabindex=0><code>	#我本机只连接了创建了一个主机，下面的‘*’可以替换为每个主机名，以“，”分隔每个主机名
+	[root@localhost vimiix]# salt -L &#34;local-minion,*&#34; test.ping
 	local-minion:
 	    True
-</code></pre><p><strong>command:</strong></p><p><code>test.ping</code> 测试客户端是否连通</p><p><code>cmd.run</code> 执行 linux 命令</p><pre><code>	[root@localhost vimiix]# salt '*' cmd.run 'free -m'
+</code></pre><p><strong>command:</strong></p><p><code>test.ping</code> 测试客户端是否连通</p><p><code>cmd.run</code> 执行 linux 命令</p><pre tabindex=0><code>	[root@localhost vimiix]# salt &#39;*&#39; cmd.run &#39;free -m&#39;
 	local-minion:
 	                total      used       free      shared  buff/cache   available
 	    Mem:          976       660        102           4         214         106
 	    Swap:        2047        78       1969
-
-</code></pre><h2 id=python-api>python API</h2><p>在部署 saltstack 的同时本地 python 会具有一个 salt 的模块</p><p>示例：</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python>	<span style=color:#75715e>#!/usr/bin/python</span>
-	<span style=color:#75715e>#coding:utf-8</span>
-
-	<span style=color:#f92672>import</span> salt.client
-
-	client <span style=color:#f92672>=</span> salt<span style=color:#f92672>.</span>client<span style=color:#f92672>.</span>LocalClient()
-	ret <span style=color:#f92672>=</span> client<span style=color:#f92672>.</span>cmd(<span style=color:#e6db74>&#34;*&#34;</span>,<span style=color:#e6db74>&#34;test.ping&#34;</span>)
-	<span style=color:#66d9ef>print</span>(ret)
-</code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://www.vimiix.com/posts/2017-06-27-saltstack-setup-and-simple-cmds/",this.page.identifier="/posts/2017-06-27-saltstack-setup-and-simple-cmds/"};(function(){var a=document,b=a.createElement('script');b.src='https://vimiix-blog.disqus.com/embed.js',b.setAttribute('data-timestamp',+new Date),(a.head||a.body).appendChild(b)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</code></pre><h2 id=python-api>python API</h2><p>在部署 saltstack 的同时本地 python 会具有一个 salt 的模块</p><p>示例：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#75715e>#!/usr/bin/python</span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>#coding:utf-8</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#f92672>import</span> salt.client
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	client <span style=color:#f92672>=</span> salt<span style=color:#f92672>.</span>client<span style=color:#f92672>.</span>LocalClient()
+</span></span><span style=display:flex><span>	ret <span style=color:#f92672>=</span> client<span style=color:#f92672>.</span>cmd(<span style=color:#e6db74>&#34;*&#34;</span>,<span style=color:#e6db74>&#34;test.ping&#34;</span>)
+</span></span><span style=display:flex><span>	print(ret)
+</span></span></code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li><li><a href=/vimiix-blog/posts/2021-04-07-concurrency-in-go/>Golang的并行模式实践</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="http://vimiix.com/vimiix-blog/posts/2017-06-27-saltstack-setup-and-simple-cmds/",this.page.identifier="/vimiix-blog/posts/2017-06-27-saltstack-setup-and-simple-cmds/"};(function(){var e=document,t=e.createElement("script");t.src="https://vimiix-blog.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
