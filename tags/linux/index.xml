@@ -1,16 +1,16 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux on Hi, I'm Vimiix</title><link>http://vimiix.com/vimiix-blog/tags/linux/</link><description>Recent content in Linux on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Sun, 03 Jun 2018 16:20:48 +0000</lastBuildDate><atom:link href="http://vimiix.com/vimiix-blog/tags/linux/index.xml" rel="self" type="application/rss+xml"/><item><title>《算法图解》读书笔记6-图以及广度优先搜索</title><link>http://vimiix.com/vimiix-blog/posts/2018-06-03-grokking-algorithms-chapter-6/</link><pubDate>Sun, 03 Jun 2018 16:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-06-03-grokking-algorithms-chapter-6/</guid><description>&lt;h2 id="什么是图">什么是图&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux on Hi, I'm Vimiix</title><link>http://www.vimiix.com/vimiix-blog/tags/linux/</link><description>Recent content in Linux on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Sun, 03 Jun 2018 16:20:48 +0000</lastBuildDate><atom:link href="http://www.vimiix.com/vimiix-blog/tags/linux/index.xml" rel="self" type="application/rss+xml"/><item><title>《算法图解》读书笔记6-图以及广度优先搜索</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-06-03-grokking-algorithms-chapter-6/</link><pubDate>Sun, 03 Jun 2018 16:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-06-03-grokking-algorithms-chapter-6/</guid><description>&lt;h2 id="什么是图">什么是图&lt;/h2>
 &lt;p>图模拟一组链接，图由顶点和边组成。一个顶点可能与众多顶点直接相连，这些顶点被称为&lt;strong>邻居&lt;/strong>。&lt;/p>
 &lt;p>图通常表示为：&lt;code>G(V,E)&lt;/code>，其中，&lt;code>G&lt;/code>表示一个图，&lt;code>V&lt;/code>是图中顶点的集合，&lt;code>E&lt;/code>是图中边的集合。&lt;/p>
 &lt;h4 id="简单图">简单图&lt;/h4>
 &lt;p>在图结构中，若不存在顶点到其自身的边，且同一条边不重复出现，则这样的图称之为简单图。&lt;/p>
 &lt;h4 id="无向图">无向图&lt;/h4>
 &lt;p>如果图中任意两个顶点之间的边都是无向边，则称该图为无向图。&lt;/p>
-&lt;p>无向边：若顶点 M 到顶点 N 的边没有方向，称这条边为无向边，用无序偶对(M,N)或(N,M)表示。&lt;/p></description></item><item><title>《算法图解》读书笔记5-散列函数及扩展</title><link>http://vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/</link><pubDate>Sat, 02 Jun 2018 16:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/</guid><description>&lt;h2 id="散列函数">散列函数&lt;/h2>
+&lt;p>无向边：若顶点 M 到顶点 N 的边没有方向，称这条边为无向边，用无序偶对(M,N)或(N,M)表示。&lt;/p></description></item><item><title>《算法图解》读书笔记5-散列函数及扩展</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/</link><pubDate>Sat, 02 Jun 2018 16:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/</guid><description>&lt;h2 id="散列函数">散列函数&lt;/h2>
 &lt;p>散列函数就是一种&lt;strong>映射&lt;/strong>，是从关键字到存储地址的映射。通常，包含散列函数的算法的算法复杂度都为 O(1)，对应到 Python 中的数据结构就是字典，给一个 key 可以得到一个固定的 value 值。散列函数必须满足一些要求：&lt;/p>
 &lt;ul>
 &lt;li>它必须是一直的。例如，假设输入 apple 时得到的是 4，那么每次输入 apple 时，都必须是 4，不然这个散列函数就是无意义的；&lt;/li>
 &lt;li>散列函数应该将不同的输入值，对应到不同的值上。（虽然不同的 key 对应相同的 value 是允许的，但最理想的情况是不同的 key，对应不同的 value，这种称之为&lt;a href="https://zh.wikipedia.org/wiki/%E5%AE%8C%E7%BE%8E%E6%95%A3%E5%88%97">完美散列&lt;/a>）&lt;/li>
-&lt;/ul></description></item><item><title>《算法图解》读书笔记4-分治思想和快排</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/</link><pubDate>Wed, 30 May 2018 16:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/</guid><description>&lt;h2 id="分而治之divide-and-conquer">分而治之（Divide and Conquer）&lt;/h2>
+&lt;/ul></description></item><item><title>《算法图解》读书笔记4-分治思想和快排</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/</link><pubDate>Wed, 30 May 2018 16:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/</guid><description>&lt;h2 id="分而治之divide-and-conquer">分而治之（Divide and Conquer）&lt;/h2>
 &lt;p>所谓分而治之，分为分解问题，但我们目的是解决大问题，所有还有将分解后得到的结果贡献回大问题，最终使得我们解决大问题。&lt;/p>
 &lt;p>分而治之的思想是采用了递归的思想，将原问题分成几个规模较小但是&lt;strong>类似&lt;/strong>于原问题的子问题， 通过递归的方式来求解这些小问题，最后将子问题的解合并来得到原问题的解。分治思想的本质是我们中学时候学的数学归纳法。&lt;/p>
 &lt;p>书上提到，使用分治思想解决问题的过程包括两个步骤，其实应该是三个步骤：&lt;/p>
@@ -18,11 +18,11 @@
 &lt;li>找出基线条件，这种条件必须尽可能简单。&lt;/li>
 &lt;li>不断将问题分解为子问题（或者说缩小规模），直达符合基线条件。&lt;/li>
 &lt;li>合并子问题的结果，得到最终问题的解（利用系统栈的特性实现过程状态的记录）&lt;/li>
-&lt;/ol></description></item><item><title>《算法图解》读书笔记2-数组链表和选择排序</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-25-grokking-algorithms-chapter-2/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-25-grokking-algorithms-chapter-2/</guid><description>&lt;h2 id="理解数组和链表">理解数组和链表&lt;/h2>
+&lt;/ol></description></item><item><title>《算法图解》读书笔记2-数组链表和选择排序</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-05-25-grokking-algorithms-chapter-2/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-05-25-grokking-algorithms-chapter-2/</guid><description>&lt;h2 id="理解数组和链表">理解数组和链表&lt;/h2>
 &lt;p>链表和数组是两种基本的数据结构，他们的区别在于数据在内存中的存储方式不同。&lt;/p>
 &lt;h3 id="数组">数组&lt;/h3>
 &lt;p>数组在内存中是用一块连续的内存来存储数据的，数组中的每个数据地址是连续的。数组中的每个元素所占用的内存是相同的，所以，我们可以通过下标索引在常数数量级的时间内，迅速访问数组中的任何一个元素。但是要在数组中任意位置添加一个元素，就需要移动大量的元素，使得内存中空出一个位置来存放新插入的元素。同理，当删除一个元素的时候，也需要移动大量的元素，来使得删除元素以后的数组数据在内存中仍旧是连续的。&lt;/p>
-&lt;p>由此可见：当对于一组数据，读取操作频繁，写操作少的情况，应该使用数组数据结构。&lt;/p></description></item><item><title>《算法图解》读书笔记3-递归</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-27-grokking-algorithms-chapter-3/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-27-grokking-algorithms-chapter-3/</guid><description>&lt;blockquote>
+&lt;p>由此可见：当对于一组数据，读取操作频繁，写操作少的情况，应该使用数组数据结构。&lt;/p></description></item><item><title>《算法图解》读书笔记3-递归</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-05-27-grokking-algorithms-chapter-3/</link><pubDate>Fri, 25 May 2018 19:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-05-27-grokking-algorithms-chapter-3/</guid><description>&lt;blockquote>
 &lt;p>如果使用循环 ，程序的性能可能更高；如果使用递归，程序可能更容易理解。如何选择要看什么对你来说更重要。&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="递归函数">递归函数&lt;/h2>
@@ -33,13 +33,13 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e"># 在函数中继续调用自己&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> foo(x&lt;span style="color:#f92672">-&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>《算法图解》读书笔记1-二分和大O</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-21-grokking-algorithms-chapter-1/</link><pubDate>Wed, 23 May 2018 23:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-21-grokking-algorithms-chapter-1/</guid><description>&lt;blockquote>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>《算法图解》读书笔记1-二分和大O</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-05-21-grokking-algorithms-chapter-1/</link><pubDate>Wed, 23 May 2018 23:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-05-21-grokking-algorithms-chapter-1/</guid><description>&lt;blockquote>
 &lt;p>算法是一组完成任务的指令&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="为什么要学习算法">为什么要学习算法&lt;/h2>
 &lt;p>这次是我第二次读《算法图解》，当我第一次看这本书的时候，我更兴奋于书中有什么内容，迫不及待的去过内容，学习那些算法概念。但当我第二次准备开始读这本书的时候，我脑海中出现的了一个问题：“为什么要学习算法？”，这个问题也许会有人和我一样，之前根本没有好好的去思考，只是知道，作为一个程序员我应该学习算法。当然，能够有这个觉悟，说明我们还算是个合格的程序员。&lt;/p>
-&lt;p>但是，不妨认真思考一下，为什么要学习算法？算法应该怎么学？&lt;/p></description></item><item><title>TLPI笔记—深入文件I/O模型</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-18-tpli-io-extend/</link><pubDate>Fri, 18 May 2018 09:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-18-tpli-io-extend/</guid><description>&lt;h2 id="原子操作和竞争操作">原子操作和竞争操作&lt;/h2>
-&lt;p>所有的系统调用都是以原子操作方式执行的。之所以这么说，是指内核保证了某系统调用中的所有步骤会作为地理操作而一次性加以执行，期间不会被其他进程或线程中断。原子性规避了&lt;strong>竞争状态（race condition）&lt;/strong>，竞争状态指：操作共享资源的两个进程（或线程）其结果取决于一个无法预期的顺序，即这些进程或线程获得 CPU 使用权的先后相对顺序。&lt;/p></description></item><item><title>TLPI笔记—通用文件I/O模型</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-11-tpli-common-io/</link><pubDate>Fri, 11 May 2018 09:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-11-tpli-common-io/</guid><description>&lt;h2 id="文件描述符">文件描述符&lt;/h2>
+&lt;p>但是，不妨认真思考一下，为什么要学习算法？算法应该怎么学？&lt;/p></description></item><item><title>TLPI笔记—深入文件I/O模型</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-05-18-tpli-io-extend/</link><pubDate>Fri, 18 May 2018 09:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-05-18-tpli-io-extend/</guid><description>&lt;h2 id="原子操作和竞争操作">原子操作和竞争操作&lt;/h2>
+&lt;p>所有的系统调用都是以原子操作方式执行的。之所以这么说，是指内核保证了某系统调用中的所有步骤会作为地理操作而一次性加以执行，期间不会被其他进程或线程中断。原子性规避了&lt;strong>竞争状态（race condition）&lt;/strong>，竞争状态指：操作共享资源的两个进程（或线程）其结果取决于一个无法预期的顺序，即这些进程或线程获得 CPU 使用权的先后相对顺序。&lt;/p></description></item><item><title>TLPI笔记—通用文件I/O模型</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-05-11-tpli-common-io/</link><pubDate>Fri, 11 May 2018 09:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-05-11-tpli-common-io/</guid><description>&lt;h2 id="文件描述符">文件描述符&lt;/h2>
 &lt;p>所有执行 I/O 操作的系统调用都是以文件描述符，一个非负整数来指代打开的文件。文件描述符用以表示所有类型的已打开的文件，包括管道（pipe）、FIFO、socket、终端、设备和普通文件。每个进程都各自独立维护着一张文件描述符表。&lt;/p>
 &lt;h3 id="标准文件描述符">标准文件描述符&lt;/h3>
 &lt;table>
@@ -71,10 +71,10 @@
 &lt;td style="text-align:center">stderr&lt;/td>
 &lt;/tr>
 &lt;/tbody>
-&lt;/table></description></item><item><title>TPLI笔记—linux/unix标准和历史</title><link>http://vimiix.com/vimiix-blog/posts/2018-05-01-linux-history/</link><pubDate>Tue, 01 May 2018 19:20:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2018-05-01-linux-history/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
+&lt;/table></description></item><item><title>TPLI笔记—linux/unix标准和历史</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-05-01-linux-history/</link><pubDate>Tue, 01 May 2018 19:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-05-01-linux-history/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
 &lt;p>最近开始阅读&lt;a href="https://book.douban.com/subject/25809330/">《Linux/Unix 系统编程手册》&lt;/a> 这本书，重新系统的学习一下 linux 系统编程方面的知识。&lt;/p>
 &lt;p>在阅读完第一章《历史和标准》以后，对于很多标准名词都见过，但是对于他们之间的发展历程很是模糊，通读这部分内容后豁然开朗，尤其本章最后总结部分，对于前面的概况的既简练还没有遗漏。不禁在书上用笔写下：&lt;strong>“牛 B 总结，一气呵成”&lt;/strong>。&lt;/p>
-&lt;p>方便以后不去翻书回顾，特花点时间摘录至此。&lt;/p></description></item><item><title>rsync服务器配置文件参数备忘</title><link>http://vimiix.com/vimiix-blog/posts/2017-10-30-rsync-params/</link><pubDate>Mon, 30 Oct 2017 13:12:48 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-10-30-rsync-params/</guid><description>最近工作中用到了 rsync 服务器，对于 rsync 服务器的配置来说，不是很复杂，网上有很多介绍。rsync 的配置文件是最重要的一部分。有很多参数需要了解一下，所以今天记录整理一下，方便以后自己查看。
+&lt;p>方便以后不去翻书回顾，特花点时间摘录至此。&lt;/p></description></item><item><title>rsync服务器配置文件参数备忘</title><link>http://www.vimiix.com/vimiix-blog/posts/2017-10-30-rsync-params/</link><pubDate>Mon, 30 Oct 2017 13:12:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2017-10-30-rsync-params/</guid><description>最近工作中用到了 rsync 服务器，对于 rsync 服务器的配置来说，不是很复杂，网上有很多介绍。rsync 的配置文件是最重要的一部分。有很多参数需要了解一下，所以今天记录整理一下，方便以后自己查看。
 基本介绍 Rsync（remote synchronize）是一个远程数据同步工具，可通过 LAN/WAN 快速同步多台主机间的文件。Rsync 使用所谓的“Rsync 算法”来使本地和远 程两个主机之间的文件达到同步，这个算法只传送两个文件的不同部分，而不是每次都整份传送，因此速度相当快。
 rsync 的配置文件是由一个或多个模块结构组成。一个模块定义是以方括弧中的模块名开始，直到下一个模块定义开始或者文件结束。
 模块中包含格式为name = value的参数定义。每个模块其实就对应需要备份的一个目录树，比方说在实际环境中，有三个目录树需要备份：/www/、/home/web_user1/和/home/web_user2/，那么就需要在配置文件中定义三个模块，分别对应三个目录树。
@@ -86,8 +86,8 @@ pid file 指定 rsync 的 pid 文件。
 syslog facility 指定 rsync 发送日志消息给 syslog 时的消息级别，常见的消息级别是：uth, authpriv, cron, daemon, ftp, kern, lpr, mail, news, security, sys-log, user, uucp, local0, local1, local2, local3,local4, local5, local6和local7。
 默认值是daemon。
 模块参数 在全局参数之后就需要定义一个或多个模块了，模块中可以定义以下参数：
-comment 给模块指定一个描述，该描述连同模块名在客户连接得到模块列表时显示给客户。默认没有描述定义。</description></item><item><title>Linux-软件包管理</title><link>http://vimiix.com/vimiix-blog/posts/2017-03-13-rpm-and-yum/</link><pubDate>Mon, 13 Mar 2017 22:41:08 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-03-13-rpm-and-yum/</guid><description>&lt;h6 id="来一首歌当背景音乐">来一首歌当背景音乐&lt;/h6>
-&lt;!-- raw HTML omitted --></description></item><item><title>Linux-rhel7.2操作系统安装</title><link>http://vimiix.com/vimiix-blog/posts/2017-03-08-rhel7-2-os-setup/</link><pubDate>Wed, 08 Mar 2017 23:00:31 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-03-08-rhel7-2-os-setup/</guid><description>RHEL7 红帽公司发布的企业 Linux7 版本。
+comment 给模块指定一个描述，该描述连同模块名在客户连接得到模块列表时显示给客户。默认没有描述定义。</description></item><item><title>Linux-软件包管理</title><link>http://www.vimiix.com/vimiix-blog/posts/2017-03-13-rpm-and-yum/</link><pubDate>Mon, 13 Mar 2017 22:41:08 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2017-03-13-rpm-and-yum/</guid><description>&lt;h6 id="来一首歌当背景音乐">来一首歌当背景音乐&lt;/h6>
+&lt;!-- raw HTML omitted --></description></item><item><title>Linux-rhel7.2操作系统安装</title><link>http://www.vimiix.com/vimiix-blog/posts/2017-03-08-rhel7-2-os-setup/</link><pubDate>Wed, 08 Mar 2017 23:00:31 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2017-03-08-rhel7-2-os-setup/</guid><description>RHEL7 红帽公司发布的企业 Linux7 版本。
 RHEL6 与 RHEL7 的关键区别： 显著提升 Docker 的兼容性 （Docker 容器级虚拟化技术）
 默认文件系统从 EXT4 改为 XFS
 系统管理的进一步简化
@@ -101,7 +101,7 @@ RHEL7 的安装 启动画面
 注：在 Trobleshooting 模式下，界面如下：
 界面说明：
 Install Red Hat Enterprise Linux 7.2 in basic graphics mod #基本图形化安装
-Rescue a Red Hat Enterprise Linux system #修复系统</description></item><item><title>Linux-git branch用法(查看、新建、删除、重命名)</title><link>http://vimiix.com/vimiix-blog/posts/2017-03-08-git-branch-usage/</link><pubDate>Wed, 08 Mar 2017 10:41:08 +0000</pubDate><guid>http://vimiix.com/vimiix-blog/posts/2017-03-08-git-branch-usage/</guid><description>&lt;p>
+Rescue a Red Hat Enterprise Linux system #修复系统</description></item><item><title>Linux-git branch用法(查看、新建、删除、重命名)</title><link>http://www.vimiix.com/vimiix-blog/posts/2017-03-08-git-branch-usage/</link><pubDate>Wed, 08 Mar 2017 10:41:08 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2017-03-08-git-branch-usage/</guid><description>&lt;p>
 &lt;figure>
 &lt;img src="https://static.vimiix.com/uPic/2021-04-06/KQLlUb.jpg" alt="" />
 &lt;/figure>
