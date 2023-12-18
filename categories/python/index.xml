@@ -13,18 +13,13 @@
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>ImportError: Python is not installed as a framework. balabala....
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="解决方案">解决方案&lt;/h3>
 &lt;p>当然这个问题很好解决，网上有一搜就会找到如下两种解决方案：&lt;/p>
-&lt;h4 id="第一种方案是在系统中设置">第一种方案是在系统中设置：&lt;/h4>
+&lt;h4 id="第一种方案是在系统中设置">第一种方案是在系统中设置&lt;/h4>
 &lt;ul>
 &lt;li>假设你已经通过&lt;code>pip install matplotlib&lt;/code>安装了 matplotlib，那么在你的根目录中会有一个名为&lt;code>〜/ .matplotlib&lt;/code>的目录。&lt;/li>
 &lt;li>在这个目录中创建一个&lt;code>matplotlibrc&lt;/code>的文件 ,在里面添加一行代码：&lt;code>backend: TkAgg&lt;/code>，保存退出即可。&lt;/li>
 &lt;/ul>
 &lt;p>总结为一行 shell 命令就是：&lt;code>echo &amp;quot;backend: TkAgg&amp;quot; &amp;gt;&amp;gt; ~/.matplotlib/matplotlibrc&lt;/code>&lt;/p>
-&lt;p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。&lt;/p>
-&lt;h4 id="第二种方案是在代码中设置">第二种方案是在代码中设置：&lt;/h4>
-&lt;p>在引用&lt;code>matplotlib&lt;/code>库的代码之前，添加如下两行代码（确认安装 TkInter）：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> matplotlib
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>matplotlib&lt;span style="color:#f92672">.&lt;/span>use(&lt;span style="color:#e6db74">&amp;#39;TkAgg&amp;#39;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这样也可以临时的修改前面提到的 &lt;code>backend&lt;/code>变量。&lt;/p></description></item><item><title>Django Channels2.0 websocket最佳实践</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-07-26-channels2-tutorial/</link><pubDate>Thu, 26 Jul 2018 02:56:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-07-26-channels2-tutorial/</guid><description>&lt;p>做 web 后端开发，少不了要和 websocket 打交道。之前写过一篇关于 websocket 的实践文章 &amp;mdash; &lt;a href="https://vimiix.com/post/2018/04/02/python-websocket/">《[python]记录关于 websocket 的原理和使用》&lt;/a> ，不过，从 GITHUB 上可以看到，&lt;strong>django-websocket&lt;/strong> 这个开源项目俨然已经是一个被放弃了的坑，并且在使用的过程中确实也有很多坑，果断弃之。&lt;/p>
+&lt;p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。&lt;/p></description></item><item><title>Django Channels2.0 websocket最佳实践</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-07-26-channels2-tutorial/</link><pubDate>Thu, 26 Jul 2018 02:56:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-07-26-channels2-tutorial/</guid><description>&lt;p>做 web 后端开发，少不了要和 websocket 打交道。之前写过一篇关于 websocket 的实践文章 &amp;mdash; &lt;a href="https://vimiix.com/post/2018/04/02/python-websocket/">《[python]记录关于 websocket 的原理和使用》&lt;/a> ，不过，从 GITHUB 上可以看到，&lt;strong>django-websocket&lt;/strong> 这个开源项目俨然已经是一个被放弃了的坑，并且在使用的过程中确实也有很多坑，果断弃之。&lt;/p>
 &lt;p>今天想聊的就是目前业界大牛都在推荐的一个框架&amp;ndash;&lt;a href="https://github.com/django/channels">Channels&lt;/a>， Channels 是针对 Django 项目的一个增强框架，它可以是的同步的 Django 项目转变为异步的项目。它可以使得 Django 项目不仅支持 HTTP 请求，还可以支持 Websocket, chat 协议，IOT 协议 ，甚至是你自定义的协议，同时也整合了 Django 的 auth 以及 session 系統等等。&lt;/p></description></item><item><title>浅谈Python中的上下文管理</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-07-17-learn-contextlib/</link><pubDate>Wed, 18 Jul 2018 00:56:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-07-17-learn-contextlib/</guid><description>&lt;h2 id="with-语法">with 语法&lt;/h2>
 &lt;p>平常在写 Python 代码的时候，经常会用到&lt;code>with&lt;/code> 来处理一个上下文环境，比如文件的打开关闭，数据库的连接关闭等等。&lt;/p>
 &lt;p>&lt;code>with&lt;/code>语法的使用，需要我们处理的对象实现&lt;code>__enter__&lt;/code>和&lt;code>__exit__&lt;/code>两个魔术方法来支持。&lt;code>__enter__&lt;/code>函数处理逻辑函数之前需要做的事情，并返回操作对象作为&lt;code>as&lt;/code>后面的变量，&lt;code>__exit__&lt;/code>函数处理当代码离开&lt;code>with&lt;/code>代码块以后的事情。&lt;/p>

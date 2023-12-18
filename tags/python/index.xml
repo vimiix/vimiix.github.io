@@ -1,15 +1,16 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on Hi, I'm Vimiix</title><link>http://www.vimiix.com/vimiix-blog/tags/python/</link><description>Recent content in Python on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 08 Jul 2021 23:38:48 +0000</lastBuildDate><atom:link href="http://www.vimiix.com/vimiix-blog/tags/python/index.xml" rel="self" type="application/rss+xml"/><item><title>使用SQLAlchemy以多IP方式连接openGauss数据库</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</link><pubDate>Thu, 08 Jul 2021 23:38:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</guid><description>前置声明 由于 openGauss 数据库本身也开源不久，所以周边基础设施也正处于遍地开花的阶段，所以本文不保证长期的时效性，仅针对现阶段的问题，提出一种解决方案。
-openGauss 介绍 按照官网的介绍，openGauss 是一款高性能，高安全，高可靠的开源关系型数据库管理系统，采用木兰宽松许可证v2发行。openGauss内核早期源自开源数据库PostgreSQL，融合了华为在数据库领域多年的内核经验，在架构、事务、存储引擎、优化器及ARM架构上进行了适配与优化。
-openGauss 在2020年6月30日开放源代码，代码托管在 gitee 上。
-目前我所在公司也主要是做数据库方面的事情，且也基于 openGauss 内核研发了一款商业版的数据库 MogDB，感兴趣的也可以去了解一下。
-背景 针对 openGauss 的基础设施不完善，我之前基于 py-postgresql 1.3.0 版本，开发了 openGauss 的 python 驱动，并提交到了 openGauss 官方仓库：https://gitee.com/opengauss/openGauss-connector-python-pyog
-该驱动适用于不使用 ORM，以SQL形式交互的 python 程序。
-但是在对接客户的过程中，客户提出了这样的需求：
-程序中用到了 SQLAlchemy 做为ORM来和数据库交互 连接数据库时，需要支持类似 JDBC 多 IP 的方式连接（例如：user:password@host1:port1,host2:port2/db 这种形式），这种需求主要是用于后端数据库部署形态为主备架构，且没有固定的虚拟IP用于连接，所以需要将主备所有机器的IP都传递进去，但只能返回主库的连接。 赶紧去扫了一下 SQLAlchemy 的源码，SQLAlchemy 中目前支持的 pg 驱动有：
-psycopg2 pg8000 asyncpg psycopg2cffi py-postgresql pygresql 其实只要在驱动里面实现了 PEP-249 (DBAPI 2.0 接口规范) 就可以。但是我们都知道，在使用 SQLAlchemy 创建 engine 的时候，需要在 :// 前面使用固定的字符串进行驱动的选择。比如 postgresql+pypostgresql://...，内部其实就是把加号 replace 成点，然后去加载对应的驱动模块文件。</description></item><item><title>beanstalkd消息队列</title><link>http://www.vimiix.com/vimiix-blog/posts/2020-03-11-beanstalkd-note/</link><pubDate>Wed, 11 Mar 2020 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2020-03-11-beanstalkd-note/</guid><description>beanstalkd 是一个简单快速的分布式工作队列系统，协议基于 ASCII 编码运行在 tcp 上。其最初设计目的是通过后台异步执行耗时任务方式降低高容量 Web 应用的页面延时。而其简单、轻量、易用等特点，和对任务优先级、延时/超时重发等控制，以及众多语言版本的客户端的良好支持，使其可以很好的在各种需要队列系统的场景中应用。
-Beanstalk 的应用场景主要有：
-消息异步处理（消息队列的基本需求） 消息延迟处理，实现循环队列 beanstalkd 核心组件 job : 任务，队列中的基本单元 tube : 一个有名称的任务队列，用来存储统一类型的 job ,beanstalkd 通过 tube 来实现多任务队列 producer : job 生产者，通过put命令来创建一个job放到一个tube中 comsumer : job 消费者，通过 reserve、release、bury、delete命令来获取或改变 job 的状态 job 的生命周期 在整个生命周期中 job 可能有四种工作状态：READY、RESERVED、DELAYED、BURIED. 只有处于 READY 状态的 job 才能被消费。
-put with delay release with delay -------------&amp;gt; [DELAYED] &amp;lt;---------. | | | (time passes) | | | put v reserve | delete --------------&amp;gt; [READY] -------&amp;gt; [RESERVED] ------&amp;gt; *poof* ^ ^ | | | \ release | | | `-------------&amp;#39; | | | | kick | | | | bury | [BURIED] &amp;lt;---------------&amp;#39; | | delete `--------&amp;gt; *poof* Producer 创建 job 的时候可以选择两种方式：put , put with delay。</description></item><item><title>从七牛云到阿里云的自动化迁移代码说明</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/</link><pubDate>Mon, 29 Oct 2018 23:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/</guid><description>&lt;p>前几天叙事性的写了&lt;a href="https://vimiix.com/post/2018/10/24/move-qiniuyun-to-alioss/">一篇&lt;/a>，有点像日记，这篇分析一下代码逻辑，便于以后回顾。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on Hi, I'm Vimiix</title><link>http://www.vimiix.com/vimiix-blog/tags/python/</link><description>Recent content in Python on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 08 Jul 2021 23:38:48 +0000</lastBuildDate><atom:link href="http://www.vimiix.com/vimiix-blog/tags/python/index.xml" rel="self" type="application/rss+xml"/><item><title>使用SQLAlchemy以多IP方式连接openGauss数据库</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</link><pubDate>Thu, 08 Jul 2021 23:38:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</guid><description>&lt;h3 id="前置声明">前置声明&lt;/h3>
+&lt;blockquote>
+&lt;p>由于 &lt;a href="https://opengauss.org/zh/">openGauss&lt;/a> 数据库本身也开源不久，所以周边基础设施也正处于遍地开花的阶段，所以本文不保证长期的时效性，仅针对现阶段的问题，提出一种解决方案。&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="opengauss-介绍">openGauss 介绍&lt;/h2>
+&lt;p>按照官网的介绍，openGauss 是一款高性能，高安全，高可靠的开源关系型数据库管理系统，采用木兰宽松许可证v2发行。openGauss内核早期源自开源数据库PostgreSQL，融合了华为在数据库领域多年的内核经验，在架构、事务、存储引擎、优化器及ARM架构上进行了适配与优化。&lt;/p>
+&lt;p>openGauss 在2020年6月30日开放源代码，代码托管在 gitee 上。&lt;/p>
+&lt;p>目前我所在公司也主要是做数据库方面的事情，且也基于 openGauss 内核研发了一款商业版的数据库 &lt;a href="https://enmotech.com/products/MogDB">MogDB&lt;/a>，感兴趣的也可以去了解一下。&lt;/p></description></item><item><title>beanstalkd消息队列</title><link>http://www.vimiix.com/vimiix-blog/posts/2020-03-11-beanstalkd-note/</link><pubDate>Wed, 11 Mar 2020 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2020-03-11-beanstalkd-note/</guid><description>&lt;p>beanstalkd 是一个简单快速的分布式工作队列系统，协议基于 ASCII 编码运行在 tcp 上。其最初设计目的是通过后台异步执行耗时任务方式降低高容量 Web 应用的页面延时。而其简单、轻量、易用等特点，和对任务优先级、延时/超时重发等控制，以及&lt;a href="https://github.com/beanstalkd/beanstalkd/wiki/Client-Libraries">众多语言版本的客户端&lt;/a>的良好支持，使其可以很好的在各种需要队列系统的场景中应用。&lt;/p>
+&lt;p>Beanstalk 的应用场景主要有：&lt;/p>
+&lt;ul>
+&lt;li>消息异步处理（消息队列的基本需求）&lt;/li>
+&lt;li>消息延迟处理，实现循环队列&lt;/li>
+&lt;/ul></description></item><item><title>从七牛云到阿里云的自动化迁移代码说明</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/</link><pubDate>Mon, 29 Oct 2018 23:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/</guid><description>&lt;p>前几天叙事性的写了&lt;a href="https://vimiix.com/post/2018/10/24/move-qiniuyun-to-alioss/">一篇&lt;/a>，有点像日记，这篇分析一下代码逻辑，便于以后回顾。&lt;/p>
 &lt;h3 id="工具">工具&lt;/h3>
 &lt;ul>
 &lt;li>python3.5&lt;/li>
@@ -39,18 +40,13 @@ put with delay release with delay -------------&amp;gt; [DELAYED] &amp;lt;------
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>ImportError: Python is not installed as a framework. balabala....
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="解决方案">解决方案&lt;/h3>
 &lt;p>当然这个问题很好解决，网上有一搜就会找到如下两种解决方案：&lt;/p>
-&lt;h4 id="第一种方案是在系统中设置">第一种方案是在系统中设置：&lt;/h4>
+&lt;h4 id="第一种方案是在系统中设置">第一种方案是在系统中设置&lt;/h4>
 &lt;ul>
 &lt;li>假设你已经通过&lt;code>pip install matplotlib&lt;/code>安装了 matplotlib，那么在你的根目录中会有一个名为&lt;code>〜/ .matplotlib&lt;/code>的目录。&lt;/li>
 &lt;li>在这个目录中创建一个&lt;code>matplotlibrc&lt;/code>的文件 ,在里面添加一行代码：&lt;code>backend: TkAgg&lt;/code>，保存退出即可。&lt;/li>
 &lt;/ul>
 &lt;p>总结为一行 shell 命令就是：&lt;code>echo &amp;quot;backend: TkAgg&amp;quot; &amp;gt;&amp;gt; ~/.matplotlib/matplotlibrc&lt;/code>&lt;/p>
-&lt;p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。&lt;/p>
-&lt;h4 id="第二种方案是在代码中设置">第二种方案是在代码中设置：&lt;/h4>
-&lt;p>在引用&lt;code>matplotlib&lt;/code>库的代码之前，添加如下两行代码（确认安装 TkInter）：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> matplotlib
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>matplotlib&lt;span style="color:#f92672">.&lt;/span>use(&lt;span style="color:#e6db74">&amp;#39;TkAgg&amp;#39;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这样也可以临时的修改前面提到的 &lt;code>backend&lt;/code>变量。&lt;/p></description></item><item><title>浅谈Python中的上下文管理</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-07-17-learn-contextlib/</link><pubDate>Wed, 18 Jul 2018 00:56:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-07-17-learn-contextlib/</guid><description>&lt;h2 id="with-语法">with 语法&lt;/h2>
+&lt;p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。&lt;/p></description></item><item><title>浅谈Python中的上下文管理</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-07-17-learn-contextlib/</link><pubDate>Wed, 18 Jul 2018 00:56:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-07-17-learn-contextlib/</guid><description>&lt;h2 id="with-语法">with 语法&lt;/h2>
 &lt;p>平常在写 Python 代码的时候，经常会用到&lt;code>with&lt;/code> 来处理一个上下文环境，比如文件的打开关闭，数据库的连接关闭等等。&lt;/p>
 &lt;p>&lt;code>with&lt;/code>语法的使用，需要我们处理的对象实现&lt;code>__enter__&lt;/code>和&lt;code>__exit__&lt;/code>两个魔术方法来支持。&lt;code>__enter__&lt;/code>函数处理逻辑函数之前需要做的事情，并返回操作对象作为&lt;code>as&lt;/code>后面的变量，&lt;code>__exit__&lt;/code>函数处理当代码离开&lt;code>with&lt;/code>代码块以后的事情。&lt;/p>
 &lt;p>&lt;code>with&lt;/code>语法非常方便的让我使用资源并且不用操心忘记后续操作所带来的隐患。&lt;/p></description></item><item><title>《算法图解》读书笔记7-狄克斯特拉算法</title><link>http://www.vimiix.com/vimiix-blog/posts/2018-06-05-grokking-algorithms-chapter-7/</link><pubDate>Mon, 16 Jul 2018 22:20:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2018-06-05-grokking-algorithms-chapter-7/</guid><description>&lt;h2 id="概念">概念&lt;/h2>

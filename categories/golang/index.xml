@@ -1,38 +1,48 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>golang on Hi, I'm Vimiix</title><link>http://www.vimiix.com/vimiix-blog/categories/golang/</link><description>Recent content in golang on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 15 Dec 2023 00:50:48 +0000</lastBuildDate><atom:link href="http://www.vimiix.com/vimiix-blog/categories/golang/index.xml" rel="self" type="application/rss+xml"/><item><title>SSX，一个有记忆的 ssh 客户端</title><link>http://www.vimiix.com/vimiix-blog/posts/2023-12-15-ssx/</link><pubDate>Fri, 15 Dec 2023 00:50:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2023-12-15-ssx/</guid><description>需求来源 对于一个后端程序员来说，在工作中免不了要和繁杂的服务器打交道，ssh 是不可或缺的开发工具。但每次登录都需要输入密码的行为，对于认为一切皆可自动化的程序员来说，肯定是有点繁琐的（如果您是使用图形化界面的用户可忽略）。
-所以我在前段时间考虑，我应该自己实现一个 ssh 客户端，它不需要拥有许多复杂的功能，只需要满足我以下这几个需求即可满足日常使用：
-和 ssh 保持差不多的使用习惯 仅在第一次登录时询问我密码，后续使用无需再提供密码 可以给服务器它任意的标签，这样我就可以自由地通过IP 或者标签来登录 于是乎，近期我在业余时间就设计并编写了 ssx 这个轻量级的具有记忆的 ssh 客户端。它完美的实现了上面我所需要的功能，也已经被我愉快的应用到了日常的开发中。
-使用方式 下面就简单介绍一下 ssx 的使用方式。
-ssx 是通过 golang 开发的一个独立的二进制文件，安装方式就是从 release 页面下载对应平台的软件包，解压后把 ssx 二进制放到系统的任意目录下，这里我习惯放到 /usr/local/bin 目录下，如果你选择其他目录下，需要确保存放的目录添加到 $PATH 环境变量中，这样后续使用我们就不用再添加路径前缀，直接通过 ssx 命令就可以运行了。
-登录服务器 使用 ssx 登录服务器的时候，基本和 ssh 使用习惯一致，下面是基本命令模式：
-ssx [-s] [USER@]HOST[:PORT] [-k IDENTITY_FILE] 在这个命令中，USER 是可以省略的，如果省略则是系统当前用户名；PORT 是可以省略的，默认是 22，-k IDENTITY_FILE 代表如果是使用私钥登录，则通过 -k 来指定私钥的路径，也是可以省略的，默认是 ~/.ssh/id_rsa，当然了，前提是这个文件存在。所以最精简的登录命令就是：ssx &amp;lt;ip&amp;gt;
-当首次登录，不存在可用私钥时，会通过交互方式来让用户输入密码，一旦登录成功，这个密码就会被 ssx 保存到本地的数据文件中 (默认为 ~/.ssx/db， 可通过环境变量 SSX_DB_PATH 进行自定义)，下次登录时，仍然执行 ssx &amp;lt;ip&amp;gt; 即可自动登录。
-注意，登录过的服务器，再次登录时，我嫌输入全部 IP 比较麻烦，所以 ssx 支持输入 IP 中的部分字符，自动搜索匹配进行登录。</description></item><item><title>Shell 函数实现Go语言多版本管理轻量级方案</title><link>http://www.vimiix.com/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/</link><pubDate>Wed, 21 Jun 2023 14:50:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/</guid><description>现有的工具方案 gvm: https://github.com/moovweb/gvm g: https://github.com/voidint/g 我的方案 优点：
-原生：基于 go 语言本身支持多版本的能力实现，可以下载任何官方发布的版本 简单：shell 函数实现，直接集成到 bashrc 或 zshrc 中即可使用，无需额外配置 可定制化：代码简单可根据自身需求定制 代码实现 gist地址：https://gist.github.com/vimiix/0927fdfbea926e869a2c631db9eeae8b
-####### GOLANG VERSION MANAGE FUNCTIONS ###### # ref: https://go.dev/doc/manage-install function goinstall() { echo &amp;#34;Downloading go$1 ...&amp;#34; go install golang.org/dl/go$1@latest &amp;amp;&amp;amp; go$1 download } function gouse() { gopath=$(go env GOPATH) if test -x ${gopath}/bin/go$1; then rm -f ${gopath}/bin/go echo &amp;#34;Relink go with go$1 ...&amp;#34; ln -s ${gopath}/bin/go$1 ${gopath}/bin/go echo &amp;#34;Done&amp;#34; else echo &amp;#34;Version $1 not installed&amp;#34; fi } function golist() { current=$(go version | awk &amp;#39;{print $3}&amp;#39; | cut -c3-) for v in $(ls $(go env GOPATH)/bin | grep -E &amp;#39;go(\d.</description></item><item><title>使用SQLAlchemy以多IP方式连接openGauss数据库</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</link><pubDate>Thu, 08 Jul 2021 23:38:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</guid><description>前置声明 由于 openGauss 数据库本身也开源不久，所以周边基础设施也正处于遍地开花的阶段，所以本文不保证长期的时效性，仅针对现阶段的问题，提出一种解决方案。
-openGauss 介绍 按照官网的介绍，openGauss 是一款高性能，高安全，高可靠的开源关系型数据库管理系统，采用木兰宽松许可证v2发行。openGauss内核早期源自开源数据库PostgreSQL，融合了华为在数据库领域多年的内核经验，在架构、事务、存储引擎、优化器及ARM架构上进行了适配与优化。
-openGauss 在2020年6月30日开放源代码，代码托管在 gitee 上。
-目前我所在公司也主要是做数据库方面的事情，且也基于 openGauss 内核研发了一款商业版的数据库 MogDB，感兴趣的也可以去了解一下。
-背景 针对 openGauss 的基础设施不完善，我之前基于 py-postgresql 1.3.0 版本，开发了 openGauss 的 python 驱动，并提交到了 openGauss 官方仓库：https://gitee.com/opengauss/openGauss-connector-python-pyog
-该驱动适用于不使用 ORM，以SQL形式交互的 python 程序。
-但是在对接客户的过程中，客户提出了这样的需求：
-程序中用到了 SQLAlchemy 做为ORM来和数据库交互 连接数据库时，需要支持类似 JDBC 多 IP 的方式连接（例如：user:password@host1:port1,host2:port2/db 这种形式），这种需求主要是用于后端数据库部署形态为主备架构，且没有固定的虚拟IP用于连接，所以需要将主备所有机器的IP都传递进去，但只能返回主库的连接。 赶紧去扫了一下 SQLAlchemy 的源码，SQLAlchemy 中目前支持的 pg 驱动有：
-psycopg2 pg8000 asyncpg psycopg2cffi py-postgresql pygresql 其实只要在驱动里面实现了 PEP-249 (DBAPI 2.0 接口规范) 就可以。但是我们都知道，在使用 SQLAlchemy 创建 engine 的时候，需要在 :// 前面使用固定的字符串进行驱动的选择。比如 postgresql+pypostgresql://...，内部其实就是把加号 replace 成点，然后去加载对应的驱动模块文件。</description></item><item><title>Golang的并行模式实践</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-04-07-concurrency-in-go/</link><pubDate>Wed, 07 Apr 2021 18:15:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-04-07-concurrency-in-go/</guid><description>Goroutine C#、Lua、Python 的用户可能会发现 Go 的 goroutine 和协程之间有很多相似之处，没错，从命名上也可以看出二者具有相似性。
-但二者之间也有些区别：
-goroutine 隐含了并行的特性，一切交给 go 的 runtime 来实现调度，而协程需要应用自己来编写并行代码 goroutine 通过信道（Channel）进行通信；协程通过 yield 和 next操作进行通信 一般来说，goroutine 比协程更强大。而且，我们可以很容易地将协程的逻辑移植到 goroutine 来获得更好的并行效果。
-Generators 在 python 中，要实现一个生成器，需要通过 yield 生成数据，通过 next 获取数据：
-def integers(): i = 1 while True: yield i i+=1 integerGenerator = integers() next(integerGenerator) # 1 next(integerGenerator) # 2 next(integerGenerator) # 3 同样的，生成器也可以在 Go 中实现，只是使用了 channel 来代替 yield:
-func integers () chan int { yield := make (chan int); count := 0; go func () { for { yield &amp;lt;- count; count++; } } (); return yield } next := integers(); func generateInteger () int { return &amp;lt;-next } generateInteger() // 0 generateInteger() // 1 generateInteger() // 2 Iterators go 的 channel 在语法层面就是天然的迭代器。</description></item><item><title>Golang实现Windows系统用户和密码校验</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-03-22-auth-windows-user-in-golang/</link><pubDate>Mon, 22 Mar 2021 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-03-22-auth-windows-user-in-golang/</guid><description>本质上是通过调用 windows 的一个 API —— LogonUserW ，来实现对于用户密码的校验。
-仅适用于在本地校验，不支持远程连接校验
-用一个示例代码来进行说明，下面是目录结构中，main.go 是程序入口文件，auth 包中，我们仅实现 windows 系统的校验代码，其他平台不属于本文介绍内容，就直接返回 nil 即可。
-目录结构 . ├── auth │ ├── auth.go │ └── auth_windows.go ├── go.mod └── main.go 源代码 [src] main.go package main import ( &amp;#34;flag&amp;#34; &amp;#34;fmt&amp;#34; &amp;#34;os&amp;#34; &amp;#34;github.com/vimiix/authDemo/auth&amp;#34; ) func main() { user := flag.String(&amp;#34;u&amp;#34;, &amp;#34;&amp;#34;, &amp;#34;username&amp;#34;) password := flag.String(&amp;#34;p&amp;#34;, &amp;#34;&amp;#34;, &amp;#34;password&amp;#34;) flag.Parse() if *user == &amp;#34;&amp;#34; || *password == &amp;#34;&amp;#34; { fmt.Println(&amp;#34;Both user and password should be specify&amp;#34;) fmt.</description></item><item><title>Golang实现Google在RTB广告中价格加密方案</title><link>http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/</link><pubDate>Wed, 13 Nov 2019 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/</guid><description>RTB RTB 广告是一种实时竞价广告，就是在针对每个广告位有展示机会的时候，会实时多方竞价，价格最有优势的广告主会竞得这次展示机会，在媒体测在拿到素材的时候，需将本次成交的价格，上报给指定的监控服务器，这时就需要将实时价格按照指定的加密方案加密后，替换 GET 链接中的请求参数中的价格宏来上报。
-官方给出的源代码有 Java 和 C++ 版本, 下载地址： https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source
-本文主要通过 golang 来实现的 google 的价格加密方案。
-Source Code package main /* golang 实现 google 的rtb 价格加密方案 https://developers.google.com/authorized-buyers/rtb/response-guide/decrypt-price#encryption-scheme */ import ( &amp;#34;crypto/hmac&amp;#34; &amp;#34;crypto/md5&amp;#34; &amp;#34;crypto/sha1&amp;#34; &amp;#34;encoding/base64&amp;#34; &amp;#34;encoding/binary&amp;#34; &amp;#34;encoding/hex&amp;#34; &amp;#34;fmt&amp;#34; &amp;#34;hash&amp;#34; &amp;#34;math&amp;#34; &amp;#34;strings&amp;#34; ) const ( PayloadSize = 8 InitVectorSize = 16 SignatureSize = 4 EKey = &amp;#34;&amp;#34; IKey = &amp;#34;&amp;#34; UTF8 = &amp;#34;utf-8&amp;#34; ) func AddBase64Padding(base64Input string) string { var b64 string b64 = base64Input if i := len(b64) % 4; i !</description></item><item><title>Golang如何确保一个类型实现了某个interface</title><link>http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/</link><pubDate>Thu, 29 Aug 2019 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/</guid><description>在 golang 中，接口（interface）代表一种『协议』存在，它是一个声明了多个方法的集合。
-接口是被隐式实现的，也就是说，我们在开发中定义一个类型（type）的时候，不需要声明这个类型实现了哪个接口。在使用的时候往往通过断言来的 ok-idom 来进行类型判断该类型是否实现了目标接口，放置调用方法失败抛出 panic：
-if value, ok := AType.(BInterface) { fmt.Println(&amp;#34;ok&amp;#34;) } else { fmt.Println(&amp;#34;no&amp;#34;) } 如果断言失败，那么 ok 的值将会是 false,但是如果断言成功 ok 的值将会是 true,同时 value 将会得到所期待的正确的值。
-但是，在某些情况下，我们可能希望明确地检查接口中哪些方法没有被实现。最好的方法就是借助编译器地检查功能。
-假设定义了一个 Programmer 接口，一个 Human 类型：
-&amp;raquo;&amp;gt; 试一下
-package main type Programmer interface { Code() string } type Human struct {} func main() {} 这段代码没有做任何操作，可以正常地执行。
-假设我们希望 Human 类型实现了 Programmer 接口，可以在代码中定义一个 _ （下划线表示忽略这个变量）变量来实现检测效果
-package main type Programmer interface { Code() string } type Human struct {} // 利用编译器检查接口实现 var _ Programmer = (*Human)(nil) func main() {} 当再次执行这段代码地时候，就会报出如下编译错误：</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>golang on Hi, I'm Vimiix</title><link>http://www.vimiix.com/vimiix-blog/categories/golang/</link><description>Recent content in golang on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Copyright (c) 2017-2021, Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 15 Dec 2023 00:50:48 +0000</lastBuildDate><atom:link href="http://www.vimiix.com/vimiix-blog/categories/golang/index.xml" rel="self" type="application/rss+xml"/><item><title>SSX，一个有记忆的 ssh 客户端</title><link>http://www.vimiix.com/vimiix-blog/posts/2023-12-15-ssx/</link><pubDate>Fri, 15 Dec 2023 00:50:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2023-12-15-ssx/</guid><description>&lt;h2 id="需求来源">需求来源&lt;/h2>
+&lt;p>对于一个后端程序员来说，在工作中免不了要和繁杂的服务器打交道，ssh 是不可或缺的开发工具。但每次登录都需要输入密码的行为，对于认为一切皆可自动化的程序员来说，肯定是有点繁琐的（如果您是使用图形化界面的用户可忽略）。&lt;/p>
+&lt;p>所以我在前段时间考虑，我应该自己实现一个 ssh 客户端，它不需要拥有许多复杂的功能，只需要满足我以下这几个需求即可满足日常使用：&lt;/p>
+&lt;ul>
+&lt;li>和 ssh 保持差不多的使用习惯&lt;/li>
+&lt;li>仅在第一次登录时询问我密码，后续使用无需再提供密码&lt;/li>
+&lt;li>可以给服务器它任意的标签，这样我就可以自由地通过IP 或者标签来登录&lt;/li>
+&lt;/ul>
+&lt;p>于是乎，近期我在业余时间就设计并编写了 &lt;a href="https://github.com/vimiix/ssx">ssx&lt;/a> 这个轻量级的具有记忆的 ssh 客户端。它完美的实现了上面我所需要的功能，也已经被我愉快的应用到了日常的开发中。&lt;/p></description></item><item><title>Shell 函数实现Go语言多版本管理轻量级方案</title><link>http://www.vimiix.com/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/</link><pubDate>Wed, 21 Jun 2023 14:50:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/</guid><description>&lt;h2 id="现有的工具方案">现有的工具方案&lt;/h2>
+&lt;ul>
+&lt;li>gvm: &lt;a href="https://github.com/moovweb/gvm">https://github.com/moovweb/gvm&lt;/a>&lt;/li>
+&lt;li>g: &lt;a href="https://github.com/voidint/g">https://github.com/voidint/g&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;h2 id="我的方案">我的方案&lt;/h2>
+&lt;p>优点：&lt;/p>
+&lt;ul>
+&lt;li>原生：基于 go 语言本身支持多版本的能力实现，可以下载任何官方发布的版本&lt;/li>
+&lt;li>简单：shell 函数实现，直接集成到 bashrc 或 zshrc 中即可使用，无需额外配置&lt;/li>
+&lt;li>可定制化：代码简单可根据自身需求定制&lt;/li>
+&lt;/ul></description></item><item><title>使用SQLAlchemy以多IP方式连接openGauss数据库</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</link><pubDate>Thu, 08 Jul 2021 23:38:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/</guid><description>&lt;h3 id="前置声明">前置声明&lt;/h3>
+&lt;blockquote>
+&lt;p>由于 &lt;a href="https://opengauss.org/zh/">openGauss&lt;/a> 数据库本身也开源不久，所以周边基础设施也正处于遍地开花的阶段，所以本文不保证长期的时效性，仅针对现阶段的问题，提出一种解决方案。&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="opengauss-介绍">openGauss 介绍&lt;/h2>
+&lt;p>按照官网的介绍，openGauss 是一款高性能，高安全，高可靠的开源关系型数据库管理系统，采用木兰宽松许可证v2发行。openGauss内核早期源自开源数据库PostgreSQL，融合了华为在数据库领域多年的内核经验，在架构、事务、存储引擎、优化器及ARM架构上进行了适配与优化。&lt;/p>
+&lt;p>openGauss 在2020年6月30日开放源代码，代码托管在 gitee 上。&lt;/p>
+&lt;p>目前我所在公司也主要是做数据库方面的事情，且也基于 openGauss 内核研发了一款商业版的数据库 &lt;a href="https://enmotech.com/products/MogDB">MogDB&lt;/a>，感兴趣的也可以去了解一下。&lt;/p></description></item><item><title>Golang的并行模式实践</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-04-07-concurrency-in-go/</link><pubDate>Wed, 07 Apr 2021 18:15:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-04-07-concurrency-in-go/</guid><description>&lt;h2 id="goroutine">Goroutine&lt;/h2>
+&lt;p>C#、Lua、Python 的用户可能会发现 Go 的 goroutine 和协程之间有很多相似之处，没错，从命名上也可以看出二者具有相似性。&lt;/p>
+&lt;p>但二者之间也有些区别：&lt;/p>
+&lt;ul>
+&lt;li>goroutine 隐含了并行的特性，一切交给 go 的 runtime 来实现调度，而协程需要应用自己来编写并行代码&lt;/li>
+&lt;li>goroutine 通过信道（&lt;code>Channel&lt;/code>）进行通信；协程通过 &lt;code>yield&lt;/code> 和 &lt;code>next&lt;/code>操作进行通信&lt;/li>
+&lt;/ul>
+&lt;p>一般来说，goroutine 比协程更强大。而且，我们可以很容易地将协程的逻辑移植到 goroutine 来获得更好的并行效果。&lt;/p></description></item><item><title>Golang实现Windows系统用户和密码校验</title><link>http://www.vimiix.com/vimiix-blog/posts/2021-03-22-auth-windows-user-in-golang/</link><pubDate>Mon, 22 Mar 2021 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2021-03-22-auth-windows-user-in-golang/</guid><description>&lt;p>本质上是通过调用 windows 的一个 API —— &lt;a href="https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-logonuserw">&lt;code>LogonUserW&lt;/code>&lt;/a> ，来实现对于用户密码的校验。&lt;/p>
+&lt;blockquote>
+&lt;p>仅适用于在本地校验，不支持远程连接校验&lt;/p>
+&lt;/blockquote>
+&lt;p>用一个示例代码来进行说明，下面是目录结构中，&lt;code>main.go&lt;/code> 是程序入口文件，auth 包中，我们仅实现 windows 系统的校验代码，其他平台不属于本文介绍内容，就直接返回 nil 即可。&lt;/p></description></item><item><title>Golang实现Google在RTB广告中价格加密方案</title><link>http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/</link><pubDate>Wed, 13 Nov 2019 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/</guid><description>&lt;h2 id="rtb">RTB&lt;/h2>
+&lt;p>RTB 广告是一种实时竞价广告，就是在针对每个广告位有展示机会的时候，会实时多方竞价，价格最有优势的广告主会竞得这次展示机会，在媒体测在拿到素材的时候，需将本次成交的价格，上报给指定的监控服务器，这时就需要将实时价格按照指定的加密方案加密后，替换 GET 链接中的请求参数中的价格宏来上报。&lt;/p>
+&lt;p>官方给出的源代码有 Java 和 C++ 版本, 下载地址： &lt;a href="https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source">https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source&lt;/a>&lt;/p>
+&lt;p>本文主要通过 golang 来实现的 google 的价格&lt;a href="https://developers.google.com/authorized-buyers/rtb/response-guide/decrypt-price#encryption-scheme">加密方案&lt;/a>。&lt;/p></description></item><item><title>Golang如何确保一个类型实现了某个interface</title><link>http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/</link><pubDate>Thu, 29 Aug 2019 16:22:48 +0000</pubDate><guid>http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/</guid><description>&lt;p>在 golang 中，接口（interface）代表一种『协议』存在，它是一个声明了多个方法的集合。&lt;/p>
+&lt;p>接口是被隐式实现的，也就是说，我们在开发中定义一个类型（type）的时候，不需要声明这个类型实现了哪个接口。在使用的时候往往通过断言来的 ok-idom 来进行类型判断该类型是否实现了目标接口，放置调用方法失败抛出 panic：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">value&lt;/span>, &lt;span style="color:#a6e22e">ok&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">AType&lt;/span>.(&lt;span style="color:#a6e22e">BInterface&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">fmt&lt;/span>.&lt;span style="color:#a6e22e">Println&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;ok&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>} &lt;span style="color:#66d9ef">else&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">fmt&lt;/span>.&lt;span style="color:#a6e22e">Println&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;no&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>如果断言失败，那么 ok 的值将会是 false,但是如果断言成功 ok 的值将会是 true,同时 value 将会得到所期待的正确的值。&lt;/p></description></item></channel></rss>

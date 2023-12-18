@@ -8,24 +8,19 @@
 <a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2019-09-05-mac-sierra-mvim-error/>Mac 升级10.12.6 mvim 打开文件报错</a></h1><b><time>2019.09.05 16:22</time></b>
 <a href=/tags/solution>solution</a>
 <a href=/tags/mac>mac</a>
-<a href=/tags/mvim>mvim</a><div>当昨天把 Mac 升级了 10.12.6 Sierra 以后，mvim 打开文件的时候就开始报错，使用该方法已解决~
-报错信息 dyld: Library not loaded: /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/lib/libruby.2.0.0.dylib Referenced from: /usr/local/Cellar/macvim/8.0-146/MacVim.app/Contents/bin/../MacOS/Vim Reason: image not found [1] 33114 abort mvim -v 解决方法 这个错误是 macvim 报的错，并非 vim.
-➜ vimiix ~ type vim vim is an alias for mvim -v 我这里使用的 vim 指令是对 mvim 的一个别名。
-使用一条指令可以解决上面的报错问题：
-sudo install_name_tool -change /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/lib/libruby.2.0.0.dylib /System/Library/Frameworks/Ruby.framework/Versions/2.3/usr/lib/libruby.2.3.0.dylib /usr/local/Cellar/macvim/8.0-146/MacVim.app/Contents/bin/../MacOS/Vim 注意点 需要注意的是，指令最后指定的 vim 路径，一定是上面报错中 Referenced from 后面的路径。参考
-相关解答 https://stackoverflow.com/questions/47278449/vim-ruby-mismatch-on-mac-high-sierra</div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Golang如何确保一个类型实现了某个interface</a></h1><b><time>2019.08.29 16:22</time></b>
+<a href=/tags/mvim>mvim</a><div><blockquote><p>当昨天把 Mac 升级了 10.12.6 Sierra 以后，mvim 打开文件的时候就开始报错，使用该方法已解决~</p></blockquote><h3 id=报错信息>报错信息</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>dyld: Library not loaded: /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/lib/libruby.2.0.0.dylib
+</span></span><span style=display:flex><span>  Referenced from: /usr/local/Cellar/macvim/8.0-146/MacVim.app/Contents/bin/../MacOS/Vim
+</span></span><span style=display:flex><span>  Reason: image not found
+</span></span><span style=display:flex><span><span style=color:#f92672>[</span>1<span style=color:#f92672>]</span>    <span style=color:#ae81ff>33114</span> abort      mvim -v
+</span></span></code></pre></div><a href=http://www.vimiix.com/vimiix-blog/posts/2019-09-05-mac-sierra-mvim-error/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Golang如何确保一个类型实现了某个interface</a></h1><b><time>2019.08.29 16:22</time></b>
 <a href=/tags/note>note</a>
 <a href=/tags/interface>interface</a>
-<a href=/tags/golang>golang</a><div>在 golang 中，接口（interface）代表一种『协议』存在，它是一个声明了多个方法的集合。
-接口是被隐式实现的，也就是说，我们在开发中定义一个类型（type）的时候，不需要声明这个类型实现了哪个接口。在使用的时候往往通过断言来的 ok-idom 来进行类型判断该类型是否实现了目标接口，放置调用方法失败抛出 panic：
-if value, ok := AType.(BInterface) { fmt.Println("ok") } else { fmt.Println("no") } 如果断言失败，那么 ok 的值将会是 false,但是如果断言成功 ok 的值将会是 true,同时 value 将会得到所期待的正确的值。
-但是，在某些情况下，我们可能希望明确地检查接口中哪些方法没有被实现。最好的方法就是借助编译器地检查功能。
-假设定义了一个 Programmer 接口，一个 Human 类型：
-&#187;> 试一下
-package main type Programmer interface { Code() string } type Human struct {} func main() {} 这段代码没有做任何操作，可以正常地执行。
-假设我们希望 Human 类型实现了 Programmer 接口，可以在代码中定义一个 _ （下划线表示忽略这个变量）变量来实现检测效果
-package main type Programmer interface { Code() string } type Human struct {} // 利用编译器检查接口实现 var _ Programmer = (*Human)(nil) func main() {} 当再次执行这段代码地时候，就会报出如下编译错误：
-<a href=http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2019-03-28-use-hls-to-encrypt-video/>HLS视频加密</a></h1><b><time>2019.03.28 16:22</time></b>
+<a href=/tags/golang>golang</a><div><p>在 golang 中，接口（interface）代表一种『协议』存在，它是一个声明了多个方法的集合。</p><p>接口是被隐式实现的，也就是说，我们在开发中定义一个类型（type）的时候，不需要声明这个类型实现了哪个接口。在使用的时候往往通过断言来的 ok-idom 来进行类型判断该类型是否实现了目标接口，放置调用方法失败抛出 panic：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#a6e22e>value</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>AType</span>.(<span style=color:#a6e22e>BInterface</span>) {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;ok&#34;</span>)
+</span></span><span style=display:flex><span>} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;no&#34;</span>)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>如果断言失败，那么 ok 的值将会是 false,但是如果断言成功 ok 的值将会是 true,同时 value 将会得到所期待的正确的值。</p><a href=http://www.vimiix.com/vimiix-blog/posts/2019-08-29-how-to-ensure-a-type-implements-an-interface/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2019-03-28-use-hls-to-encrypt-video/>HLS视频加密</a></h1><b><time>2019.03.28 16:22</time></b>
 <a href=/tags/note>note</a>
 <a href=/tags/video>video</a>
 <a href=/tags/encrypt>encrypt</a>
@@ -59,18 +54,9 @@ package main type Programmer interface { Code() string } type Human struct {} //
 <a href=/tags/note>note</a>
 <a href=/tags/matplotlib>matplotlib</a>
 <a href=/tags/solution>solution</a><div><p>第一次在 mac 系统上使用<strong>matplotlib</strong>库的时候，在执行的时候，往往会遇到下面这样的问题：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ImportError: Python is not installed as a framework. balabala....
-</span></span></code></pre></div><h3 id=解决方案>解决方案</h3><p>当然这个问题很好解决，网上有一搜就会找到如下两种解决方案：</p><h4 id=第一种方案是在系统中设置>第一种方案是在系统中设置：</h4><ul><li>假设你已经通过<code>pip install matplotlib</code>安装了 matplotlib，那么在你的根目录中会有一个名为<code>〜/ .matplotlib</code>的目录。</li><li>在这个目录中创建一个<code>matplotlibrc</code>的文件 ,在里面添加一行代码：<code>backend: TkAgg</code>，保存退出即可。</li></ul><p>总结为一行 shell 命令就是：<code>echo "backend: TkAgg" >> ~/.matplotlib/matplotlibrc</code></p><p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。</p><h4 id=第二种方案是在代码中设置>第二种方案是在代码中设置：</h4><p>在引用<code>matplotlib</code>库的代码之前，添加如下两行代码（确认安装 TkInter）：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> matplotlib
-</span></span><span style=display:flex><span>matplotlib<span style=color:#f92672>.</span>use(<span style=color:#e6db74>&#39;TkAgg&#39;</span>)
-</span></span></code></pre></div><p>这样也可以临时的修改前面提到的 <code>backend</code>变量。</p><a href=http://www.vimiix.com/vimiix-blog/posts/2018-10-16-explore-the-problem-of-matplotlib-on-macosx/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2018-10-10-dont-just-learn-a-new-language-framework-implement-it-as-a-running-open-source-project/>[译]实践出真知</a></h1><b><time>2018.10.10 23:22</time></b>
+</span></span></code></pre></div><h3 id=解决方案>解决方案</h3><p>当然这个问题很好解决，网上有一搜就会找到如下两种解决方案：</p><h4 id=第一种方案是在系统中设置>第一种方案是在系统中设置</h4><ul><li>假设你已经通过<code>pip install matplotlib</code>安装了 matplotlib，那么在你的根目录中会有一个名为<code>〜/ .matplotlib</code>的目录。</li><li>在这个目录中创建一个<code>matplotlibrc</code>的文件 ,在里面添加一行代码：<code>backend: TkAgg</code>，保存退出即可。</li></ul><p>总结为一行 shell 命令就是：<code>echo "backend: TkAgg" >> ~/.matplotlib/matplotlibrc</code></p><p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。</p><a href=http://www.vimiix.com/vimiix-blog/posts/2018-10-16-explore-the-problem-of-matplotlib-on-macosx/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2018-10-10-dont-just-learn-a-new-language-framework-implement-it-as-a-running-open-source-project/>[译]实践出真知</a></h1><b><time>2018.10.10 23:22</time></b>
 <a href=/tags/note>note</a>
-<a href=/tags/translation>translation</a><div>Aristotle（亚里士多德），希腊著名的哲学家和科学家，曾经说过：“对于那些我们在能做到之前必须学习如何做的事情，我们需要边做边学 (For the things we have to learn before we can do them, we learn by doing them.)”。想象一下，假如你已经读过 3 本关于骑行的书了，然后有人给你一辆自行车并让你骑它，你能骑吗？很显然，答案是“不能”。这无关乎你曾经读了多少关于骑行的书或你看了多少相关视频的事情。它需要你真正骑上一辆自行车，去保持平衡，去学习脚，手和眼睛的协调配合才能掌握的一件事情。学习新技术，新语言或框架同样也是如此。
-如果现在你在想：我都不会某个语言或某个框架，我要怎么去实现这个开源项目呢，那么先停止抱怨。也许你是技术或编程的新手，但你需要知道如何去学习新事物。学习新东西的最好方法就是实践。这篇文章将重点关注普适通用的方法。它会帮助你从我想要学习&rsquo;X&rsquo;到我有一个项目在&rsquo;X&rsquo;运行，所以继续往下看。如果你决定通过做一个项目来学习新东西，那就把它开源吧。Github 是托管你的开源项目的首选服务商。在其上你可以享受很多的免费服务。这篇文章的编写主要面向编程起步者，但对于经验丰富的软件工程师也同样有用。
-摘要（TLDR;） 通过编写项目来学习语言/框架，然后使用免费使用服务开源出去。不要只看课程，阅读文档，然后找到解决方案就完事，实践出真知。在项目中去使用 git 并尽量 docker 化。代码需要添加正确的代码质量检查服务以找到最佳实践，将项目部署到服务器上，让其可以对外通过 URL 访问。
-不要只看课程，阅读文档，找到解决方案就完事 如今，学习新知识有很多选择。视频课程仍然是最受欢迎的媒介之一。你可以在Udemy，Pluralsight甚至Youtube上学习。在你边做边学之前，观看视频只会在某种程度上有所帮助，更好的方式是阅读官方手册。例如，阅读 React JS 文档比仅通过观看 React JS 课程更好。这样你会发现创作者的思想在其中。理清创作一个 Javascript 框架/库背后的逻辑会帮助你找到最合适的解决方案。
-学习使用 Git 进行协作 “没有谁是一座孤岛” ，特别是在技术方面，你通常不会单独工作，肯定是作为团队的一员。因此，即使在学习新内容时，也要尝试找可以一起合作的人。与其它流行的代码协作工具相比，Git 非常受欢迎。当有超过 1 人为项目编写代码时，它是很有用的。你应该通过实践学习 git，可以通过查看Github 教程。我强烈推荐边做边学。当你将代码推送到 Github 之后，任何人都可以为你的项目贡献力量。
-实现 docker 化，克服我的机器综合症 都8102 年了，如果你想让你的应用程序更易于使用，请使用Docker。这对于增加对开源项目的贡献也有很大帮助。使用docker compose在本地运行项目就像执行 2 个命令一样。Docker 有很多优点。对于初学者来说，这是一种确保你的应用可以在其他人的机器上以相同的方式运行的方法。在你部署应用程序的服务器上也是如此。只要它在 Docker 上运行良好，你就大可以放心，它保证可以在任何环境中无问题地运行。
-添加代码质量检查 只是让你的项目能够运行不应该是你的最终目标。代码质量，稳定性等也应该是你追求的一个指标。你需要给你准备开源的项目添加代码质量检查流程（单元测试是必不可少的）。根据语言/框架，你可以选择任何服务。我推荐Code Climate。Code Climate 支持各种语言，从 Javascript 到 PHP，从 Java / Kotlin 到 Swift，适用于移动开发人员。通过最新的浏览器插件，你可以在 Github 的 PR 界面直观的查看关于代码的检查情况。只需将其连接一次到你的 Github 仓库，就可以开始查看的你的代码质量报告。然后你就可以通过这个来改良你的代码。举个例子。
-<a href=http://www.vimiix.com/vimiix-blog/posts/2018-10-10-dont-just-learn-a-new-language-framework-implement-it-as-a-running-open-source-project/>Read more...</a></div></article><div><a href=/vimiix-blog/>上一页</a>
+<a href=/tags/translation>translation</a><div><p>Aristotle（亚里士多德），希腊著名的哲学家和科学家，曾经说过：“对于那些我们在能做到之前必须学习如何做的事情，我们需要边做边学 (<em>For the things we have to learn before we can do them, we learn by doing them.</em>)”。想象一下，假如你已经读过 3 本关于骑行的书了，然后有人给你一辆自行车并让你骑它，你能骑吗？很显然，答案是“不能”。这无关乎你曾经读了多少关于骑行的书或你看了多少相关视频的事情。它需要你真正骑上一辆自行车，去保持平衡，去学习脚，手和眼睛的协调配合才能掌握的一件事情。学习新技术，新语言或框架同样也是如此。</p><p>如果现在你在想：我都不会某个语言或某个框架，我要怎么去实现这个开源项目呢，那么先停止抱怨。也许你是技术或编程的新手，但你需要知道如何去学习新事物。学习新东西的最好方法就是实践。这篇文章将重点关注普适通用的方法。它会帮助你从我想要学习&rsquo;X&rsquo;到我有一个项目在&rsquo;X&rsquo;运行，所以继续往下看。如果你决定通过做一个项目来学习新东西，那就把它开源吧。Github 是托管你的开源项目的首选服务商。在其上你可以享受很多的免费服务。这篇文章的编写主要面向编程起步者，但对于经验丰富的软件工程师也同样有用。</p><a href=http://www.vimiix.com/vimiix-blog/posts/2018-10-10-dont-just-learn-a-new-language-framework-implement-it-as-a-running-open-source-project/>Read more...</a></div></article><div><a href=/vimiix-blog/>上一页</a>
 2 of 9
 <a href=/vimiix-blog/page/3/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.

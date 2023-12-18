@@ -16,170 +16,170 @@
 </span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#f92672>import</span> (
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;crypto/hmac&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;crypto/md5&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;crypto/sha1&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;encoding/base64&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;encoding/binary&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;encoding/hex&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;fmt&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;hash&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;math&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;strings&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;crypto/hmac&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;crypto/md5&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;crypto/sha1&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;encoding/base64&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;encoding/binary&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;encoding/hex&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;fmt&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;hash&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;math&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#e6db74>&#34;strings&#34;</span>
 </span></span><span style=display:flex><span>)
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>const</span> (
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>PayloadSize</span>    = <span style=color:#ae81ff>8</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>InitVectorSize</span> = <span style=color:#ae81ff>16</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>SignatureSize</span>  = <span style=color:#ae81ff>4</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>EKey</span>           = <span style=color:#e6db74>&#34;&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>IKey</span>           = <span style=color:#e6db74>&#34;&#34;</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>UTF8</span>           = <span style=color:#e6db74>&#34;utf-8&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>PayloadSize</span>    = <span style=color:#ae81ff>8</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>InitVectorSize</span> = <span style=color:#ae81ff>16</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>SignatureSize</span>  = <span style=color:#ae81ff>4</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>EKey</span>           = <span style=color:#e6db74>&#34;&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>IKey</span>           = <span style=color:#e6db74>&#34;&#34;</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>UTF8</span>           = <span style=color:#e6db74>&#34;utf-8&#34;</span>
 </span></span><span style=display:flex><span>)
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>AddBase64Padding</span>(<span style=color:#a6e22e>base64Input</span> <span style=color:#66d9ef>string</span>) <span style=color:#66d9ef>string</span> {
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>b64</span> <span style=color:#66d9ef>string</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>b64</span> = <span style=color:#a6e22e>base64Input</span>
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> len(<span style=color:#a6e22e>b64</span>) <span style=color:#f92672>%</span> <span style=color:#ae81ff>4</span>; <span style=color:#a6e22e>i</span> <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>b64</span> <span style=color:#f92672>+=</span> <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>Repeat</span>(<span style=color:#e6db74>&#34;=&#34;</span>, <span style=color:#ae81ff>4</span><span style=color:#f92672>-</span><span style=color:#a6e22e>i</span>)
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>b64</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>b64</span> <span style=color:#66d9ef>string</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>b64</span> = <span style=color:#a6e22e>base64Input</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> len(<span style=color:#a6e22e>b64</span>) <span style=color:#f92672>%</span> <span style=color:#ae81ff>4</span>; <span style=color:#a6e22e>i</span> <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>b64</span> <span style=color:#f92672>+=</span> <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>Repeat</span>(<span style=color:#e6db74>&#34;=&#34;</span>, <span style=color:#ae81ff>4</span><span style=color:#f92672>-</span><span style=color:#a6e22e>i</span>)
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>b64</span>
 </span></span><span style=display:flex><span>}
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>CreateHmac</span>(<span style=color:#a6e22e>key</span>, <span style=color:#a6e22e>mode</span> <span style=color:#66d9ef>string</span>, <span style=color:#a6e22e>isBase64</span> <span style=color:#66d9ef>bool</span>) (<span style=color:#a6e22e>hash</span>.<span style=color:#a6e22e>Hash</span>, <span style=color:#66d9ef>error</span>) {
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>b64DecodedKey</span> []<span style=color:#66d9ef>byte</span>
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>k</span> []<span style=color:#66d9ef>byte</span>
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>err</span> <span style=color:#66d9ef>error</span>
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>isBase64</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>b64DecodedKey</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>base64</span>.<span style=color:#a6e22e>URLEncoding</span>.<span style=color:#a6e22e>DecodeString</span>(<span style=color:#a6e22e>AddBase64Padding</span>(<span style=color:#a6e22e>key</span>))
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>			<span style=color:#a6e22e>key</span> = string(<span style=color:#a6e22e>b64DecodedKey</span>[:])
-</span></span><span style=display:flex><span>		}
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>mode</span> <span style=color:#f92672>==</span> <span style=color:#a6e22e>UTF8</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>k</span> = []byte(<span style=color:#a6e22e>key</span>)
-</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>k</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>hex</span>.<span style=color:#a6e22e>DecodeString</span>(<span style=color:#a6e22e>key</span>)
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>err</span>
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>hmac</span>.<span style=color:#a6e22e>New</span>(<span style=color:#a6e22e>sha1</span>.<span style=color:#a6e22e>New</span>, <span style=color:#a6e22e>k</span>), <span style=color:#66d9ef>nil</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>b64DecodedKey</span> []<span style=color:#66d9ef>byte</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>k</span> []<span style=color:#66d9ef>byte</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>err</span> <span style=color:#66d9ef>error</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>isBase64</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>b64DecodedKey</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>base64</span>.<span style=color:#a6e22e>URLEncoding</span>.<span style=color:#a6e22e>DecodeString</span>(<span style=color:#a6e22e>AddBase64Padding</span>(<span style=color:#a6e22e>key</span>))
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>   <span style=color:#a6e22e>key</span> = string(<span style=color:#a6e22e>b64DecodedKey</span>[:])
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>mode</span> <span style=color:#f92672>==</span> <span style=color:#a6e22e>UTF8</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>k</span> = []byte(<span style=color:#a6e22e>key</span>)
+</span></span><span style=display:flex><span> } <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>k</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>hex</span>.<span style=color:#a6e22e>DecodeString</span>(<span style=color:#a6e22e>key</span>)
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>err</span>
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>hmac</span>.<span style=color:#a6e22e>New</span>(<span style=color:#a6e22e>sha1</span>.<span style=color:#a6e22e>New</span>, <span style=color:#a6e22e>k</span>), <span style=color:#66d9ef>nil</span>
 </span></span><span style=display:flex><span>}
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>HmacSum</span>(<span style=color:#a6e22e>_hmac</span> <span style=color:#a6e22e>hash</span>.<span style=color:#a6e22e>Hash</span>, <span style=color:#a6e22e>buf</span> []<span style=color:#66d9ef>byte</span>) []<span style=color:#66d9ef>byte</span> {
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>_hmac</span>.<span style=color:#a6e22e>Reset</span>()
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>_hmac</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>buf</span>)
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>_hmac</span>.<span style=color:#a6e22e>Sum</span>(<span style=color:#66d9ef>nil</span>)
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>_hmac</span>.<span style=color:#a6e22e>Reset</span>()
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>_hmac</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>buf</span>)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>_hmac</span>.<span style=color:#a6e22e>Sum</span>(<span style=color:#66d9ef>nil</span>)
 </span></span><span style=display:flex><span>}
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>key</span> <span style=color:#66d9ef>string</span>, <span style=color:#a6e22e>buf</span> []<span style=color:#66d9ef>byte</span>) ([]<span style=color:#66d9ef>byte</span>, <span style=color:#66d9ef>error</span>) {
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>_hmac</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>CreateHmac</span>(<span style=color:#a6e22e>key</span>, <span style=color:#a6e22e>UTF8</span>, <span style=color:#66d9ef>true</span>)
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;jzt/encrypt: create hmac error, %s&#34;</span>, <span style=color:#a6e22e>err</span>.<span style=color:#a6e22e>Error</span>())
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>err</span>
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>HmacSum</span>(<span style=color:#a6e22e>_hmac</span>, <span style=color:#a6e22e>buf</span>), <span style=color:#66d9ef>nil</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>_hmac</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>CreateHmac</span>(<span style=color:#a6e22e>key</span>, <span style=color:#a6e22e>UTF8</span>, <span style=color:#66d9ef>true</span>)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;jzt/encrypt: create hmac error, %s&#34;</span>, <span style=color:#a6e22e>err</span>.<span style=color:#a6e22e>Error</span>())
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>err</span>
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>HmacSum</span>(<span style=color:#a6e22e>_hmac</span>, <span style=color:#a6e22e>buf</span>), <span style=color:#66d9ef>nil</span>
 </span></span><span style=display:flex><span>}
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>EncryptPrice</span>(<span style=color:#a6e22e>price</span> <span style=color:#66d9ef>float64</span>) (<span style=color:#66d9ef>string</span>, <span style=color:#66d9ef>error</span>) {
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> (
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>iv</span>         = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>InitVectorSize</span>)
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>encoded</span>    = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>signature</span>  = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>SignatureSize</span>)
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>priceBytes</span> = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
-</span></span><span style=display:flex><span>	)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> (
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>iv</span>         = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>InitVectorSize</span>)
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>encoded</span>    = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>signature</span>  = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>SignatureSize</span>)
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>priceBytes</span> = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
+</span></span><span style=display:flex><span> )
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>sum</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>md5</span>.<span style=color:#a6e22e>Sum</span>([]byte(<span style=color:#e6db74>&#34;&#34;</span>))
-</span></span><span style=display:flex><span>	copy(<span style=color:#a6e22e>iv</span>[:], <span style=color:#a6e22e>sum</span>[:])
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>sum</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>md5</span>.<span style=color:#a6e22e>Sum</span>([]byte(<span style=color:#e6db74>&#34;&#34;</span>))
+</span></span><span style=display:flex><span> copy(<span style=color:#a6e22e>iv</span>[:], <span style=color:#a6e22e>sum</span>[:])
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#75715e>// pad = hmac(e_key, iv)  // first 8 bytes
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>pad</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>EKey</span>, <span style=color:#a6e22e>iv</span>[:])
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;&#34;</span>, <span style=color:#a6e22e>err</span>
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>pad</span> = <span style=color:#a6e22e>pad</span>[:<span style=color:#a6e22e>PayloadSize</span>]
+</span></span><span style=display:flex><span> <span style=color:#75715e>// pad = hmac(e_key, iv)  // first 8 bytes
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span> <span style=color:#a6e22e>pad</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>EKey</span>, <span style=color:#a6e22e>iv</span>[:])
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;&#34;</span>, <span style=color:#a6e22e>err</span>
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>pad</span> = <span style=color:#a6e22e>pad</span>[:<span style=color:#a6e22e>PayloadSize</span>]
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>bits</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Float64bits</span>(<span style=color:#a6e22e>price</span>)
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>binary</span>.<span style=color:#a6e22e>BigEndian</span>.<span style=color:#a6e22e>PutUint64</span>(<span style=color:#a6e22e>priceBytes</span>, <span style=color:#a6e22e>bits</span>)
-</span></span><span style=display:flex><span>	<span style=color:#75715e>// enc_price = pad &lt;xor&gt; price
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>priceBytes</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>encoded</span>[<span style=color:#a6e22e>i</span>] = <span style=color:#a6e22e>pad</span>[<span style=color:#a6e22e>i</span>] ^ <span style=color:#a6e22e>priceBytes</span>[<span style=color:#a6e22e>i</span>]
-</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>bits</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Float64bits</span>(<span style=color:#a6e22e>price</span>)
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>binary</span>.<span style=color:#a6e22e>BigEndian</span>.<span style=color:#a6e22e>PutUint64</span>(<span style=color:#a6e22e>priceBytes</span>, <span style=color:#a6e22e>bits</span>)
+</span></span><span style=display:flex><span> <span style=color:#75715e>// enc_price = pad &lt;xor&gt; price
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span> <span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>priceBytes</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>encoded</span>[<span style=color:#a6e22e>i</span>] = <span style=color:#a6e22e>pad</span>[<span style=color:#a6e22e>i</span>] ^ <span style=color:#a6e22e>priceBytes</span>[<span style=color:#a6e22e>i</span>]
+</span></span><span style=display:flex><span> }
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#75715e>// signature = hmac(i_key, data || iv), first 4 bytes
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>sig</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>IKey</span>, append(<span style=color:#a6e22e>priceBytes</span>[:], <span style=color:#a6e22e>iv</span>[:]<span style=color:#f92672>...</span>))
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;&#34;</span>, <span style=color:#a6e22e>err</span>
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>signature</span> = <span style=color:#a6e22e>sig</span>[:<span style=color:#a6e22e>SignatureSize</span>]
+</span></span><span style=display:flex><span> <span style=color:#75715e>// signature = hmac(i_key, data || iv), first 4 bytes
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span> <span style=color:#a6e22e>sig</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>IKey</span>, append(<span style=color:#a6e22e>priceBytes</span>[:], <span style=color:#a6e22e>iv</span>[:]<span style=color:#f92672>...</span>))
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;&#34;</span>, <span style=color:#a6e22e>err</span>
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>signature</span> = <span style=color:#a6e22e>sig</span>[:<span style=color:#a6e22e>SignatureSize</span>]
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#75715e>// final_message = WebSafeBase64Encode( iv || enc_price || signature )
-</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>finalMessage</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>TrimRight</span>(
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>base64</span>.<span style=color:#a6e22e>URLEncoding</span>.<span style=color:#a6e22e>EncodeToString</span>(append(append(<span style=color:#a6e22e>iv</span>[:], <span style=color:#a6e22e>encoded</span>[:]<span style=color:#f92672>...</span>), <span style=color:#a6e22e>signature</span>[:]<span style=color:#f92672>...</span>)),
-</span></span><span style=display:flex><span>		<span style=color:#e6db74>&#34;=&#34;</span>)
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>finalMessage</span>, <span style=color:#66d9ef>nil</span>
+</span></span><span style=display:flex><span> <span style=color:#75715e>// final_message = WebSafeBase64Encode( iv || enc_price || signature )
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span> <span style=color:#a6e22e>finalMessage</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>TrimRight</span>(
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>base64</span>.<span style=color:#a6e22e>URLEncoding</span>.<span style=color:#a6e22e>EncodeToString</span>(append(append(<span style=color:#a6e22e>iv</span>[:], <span style=color:#a6e22e>encoded</span>[:]<span style=color:#f92672>...</span>), <span style=color:#a6e22e>signature</span>[:]<span style=color:#f92672>...</span>)),
+</span></span><span style=display:flex><span>  <span style=color:#e6db74>&#34;=&#34;</span>)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>finalMessage</span>, <span style=color:#66d9ef>nil</span>
 </span></span><span style=display:flex><span>}
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>DecryptPrice</span>(<span style=color:#a6e22e>finalMessage</span> <span style=color:#66d9ef>string</span>) (<span style=color:#66d9ef>float64</span>, <span style=color:#66d9ef>error</span>) {
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>err</span> <span style=color:#66d9ef>error</span>
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>errPrice</span> <span style=color:#66d9ef>float64</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>encryptedPrice</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>AddBase64Padding</span>(<span style=color:#a6e22e>finalMessage</span>)
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>decoded</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>base64</span>.<span style=color:#a6e22e>URLEncoding</span>.<span style=color:#a6e22e>DecodeString</span>(<span style=color:#a6e22e>encryptedPrice</span>)
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>err</span>
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> (
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>iv</span>         = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>InitVectorSize</span>)
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>p</span>          = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>signature</span>  = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>SignatureSize</span>)
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>priceBytes</span> = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
-</span></span><span style=display:flex><span>	)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>err</span> <span style=color:#66d9ef>error</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>errPrice</span> <span style=color:#66d9ef>float64</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>encryptedPrice</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>AddBase64Padding</span>(<span style=color:#a6e22e>finalMessage</span>)
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>decoded</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>base64</span>.<span style=color:#a6e22e>URLEncoding</span>.<span style=color:#a6e22e>DecodeString</span>(<span style=color:#a6e22e>encryptedPrice</span>)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>err</span>
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> (
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>iv</span>         = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>InitVectorSize</span>)
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>p</span>          = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>signature</span>  = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>SignatureSize</span>)
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>priceBytes</span> = make([]<span style=color:#66d9ef>byte</span>, <span style=color:#a6e22e>PayloadSize</span>)
+</span></span><span style=display:flex><span> )
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	copy(<span style=color:#a6e22e>iv</span>[:], <span style=color:#a6e22e>decoded</span>[<span style=color:#ae81ff>0</span>:<span style=color:#ae81ff>16</span>])
-</span></span><span style=display:flex><span>	copy(<span style=color:#a6e22e>p</span>[:], <span style=color:#a6e22e>decoded</span>[<span style=color:#ae81ff>16</span>:<span style=color:#ae81ff>24</span>])
-</span></span><span style=display:flex><span>	copy(<span style=color:#a6e22e>signature</span>[:], <span style=color:#a6e22e>decoded</span>[<span style=color:#ae81ff>24</span>:<span style=color:#ae81ff>28</span>])
+</span></span><span style=display:flex><span> copy(<span style=color:#a6e22e>iv</span>[:], <span style=color:#a6e22e>decoded</span>[<span style=color:#ae81ff>0</span>:<span style=color:#ae81ff>16</span>])
+</span></span><span style=display:flex><span> copy(<span style=color:#a6e22e>p</span>[:], <span style=color:#a6e22e>decoded</span>[<span style=color:#ae81ff>16</span>:<span style=color:#ae81ff>24</span>])
+</span></span><span style=display:flex><span> copy(<span style=color:#a6e22e>signature</span>[:], <span style=color:#a6e22e>decoded</span>[<span style=color:#ae81ff>24</span>:<span style=color:#ae81ff>28</span>])
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>pad</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>EKey</span>, <span style=color:#a6e22e>iv</span>[:])
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>err</span>
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>pad</span> = <span style=color:#a6e22e>pad</span>[:<span style=color:#a6e22e>PayloadSize</span>]
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>p</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>priceBytes</span>[<span style=color:#a6e22e>i</span>] = <span style=color:#a6e22e>pad</span>[<span style=color:#a6e22e>i</span>] ^ <span style=color:#a6e22e>p</span>[<span style=color:#a6e22e>i</span>]
-</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>pad</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>EKey</span>, <span style=color:#a6e22e>iv</span>[:])
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>err</span>
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>pad</span> = <span style=color:#a6e22e>pad</span>[:<span style=color:#a6e22e>PayloadSize</span>]
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>p</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>priceBytes</span>[<span style=color:#a6e22e>i</span>] = <span style=color:#a6e22e>pad</span>[<span style=color:#a6e22e>i</span>] ^ <span style=color:#a6e22e>p</span>[<span style=color:#a6e22e>i</span>]
+</span></span><span style=display:flex><span> }
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>sig</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>IKey</span>, append(<span style=color:#a6e22e>priceBytes</span>[:], <span style=color:#a6e22e>iv</span>[:]<span style=color:#f92672>...</span>))
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>err</span>
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>sig</span> = <span style=color:#a6e22e>sig</span>[:<span style=color:#a6e22e>SignatureSize</span>]
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>sig</span> {
-</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>sig</span>[<span style=color:#a6e22e>i</span>] <span style=color:#f92672>!=</span> <span style=color:#a6e22e>signature</span>[<span style=color:#a6e22e>i</span>] {
-</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;jzt/decrypt: Failed to decrypt, got:%s ,expect:%s&#34;</span>, string(<span style=color:#a6e22e>sig</span>), string(<span style=color:#a6e22e>signature</span>))
-</span></span><span style=display:flex><span>		}
-</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>sig</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>Hmac</span>(<span style=color:#a6e22e>IKey</span>, append(<span style=color:#a6e22e>priceBytes</span>[:], <span style=color:#a6e22e>iv</span>[:]<span style=color:#f92672>...</span>))
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>err</span>
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>sig</span> = <span style=color:#a6e22e>sig</span>[:<span style=color:#a6e22e>SignatureSize</span>]
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>sig</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>sig</span>[<span style=color:#a6e22e>i</span>] <span style=color:#f92672>!=</span> <span style=color:#a6e22e>signature</span>[<span style=color:#a6e22e>i</span>] {
+</span></span><span style=display:flex><span>   <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errPrice</span>, <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;jzt/decrypt: Failed to decrypt, got:%s ,expect:%s&#34;</span>, string(<span style=color:#a6e22e>sig</span>), string(<span style=color:#a6e22e>signature</span>))
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span> }
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>price</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Float64frombits</span>(<span style=color:#a6e22e>binary</span>.<span style=color:#a6e22e>BigEndian</span>.<span style=color:#a6e22e>Uint64</span>(<span style=color:#a6e22e>priceBytes</span>))
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>price</span>, <span style=color:#66d9ef>nil</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>price</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>math</span>.<span style=color:#a6e22e>Float64frombits</span>(<span style=color:#a6e22e>binary</span>.<span style=color:#a6e22e>BigEndian</span>.<span style=color:#a6e22e>Uint64</span>(<span style=color:#a6e22e>priceBytes</span>))
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>price</span>, <span style=color:#66d9ef>nil</span>
 </span></span><span style=display:flex><span>}
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>result</span> <span style=color:#66d9ef>string</span>
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>err</span> <span style=color:#66d9ef>error</span>
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>var</span> <span style=color:#a6e22e>price</span> <span style=color:#66d9ef>float64</span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>EncryptPrice</span>(<span style=color:#ae81ff>0.11</span>)
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;Encryption failed. Error : %s&#34;</span>, <span style=color:#a6e22e>err</span>)
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>result</span>)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>result</span> <span style=color:#66d9ef>string</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>err</span> <span style=color:#66d9ef>error</span>
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>var</span> <span style=color:#a6e22e>price</span> <span style=color:#66d9ef>float64</span>
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>result</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>EncryptPrice</span>(<span style=color:#ae81ff>0.11</span>)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;Encryption failed. Error : %s&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>result</span>)
 </span></span><span style=display:flex><span>
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>price</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>DecryptPrice</span>(<span style=color:#e6db74>&#34;1B2M2Y8AsgTpgAmY7PhCfumh5TxN_8-DUn4uHg&#34;</span>)
-</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-</span></span><span style=display:flex><span>		<span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;Encryption failed. Error : %s&#34;</span>, <span style=color:#a6e22e>err</span>)
-</span></span><span style=display:flex><span>	}
-</span></span><span style=display:flex><span>	<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>price</span>)
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>price</span>, <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>DecryptPrice</span>(<span style=color:#e6db74>&#34;1B2M2Y8AsgTpgAmY7PhCfumh5TxN_8-DUn4uHg&#34;</span>)
+</span></span><span style=display:flex><span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>err</span> = <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;Encryption failed. Error : %s&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span> }
+</span></span><span style=display:flex><span> <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>price</span>)
 </span></span><span style=display:flex><span>}
 </span></span></code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/vimiix-blog/posts/2023-12-15-ssx/>SSX，一个有记忆的 ssh 客户端</a></li><li><a href=/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li><li><a href=/vimiix-blog/posts/2021-07-08-opengauss-driver-and-orm/>使用SQLAlchemy以多IP方式连接openGauss数据库</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/",this.page.identifier="/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/"};(function(){var e=document,t=e.createElement("script");t.src="https://vimiix-blog.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
