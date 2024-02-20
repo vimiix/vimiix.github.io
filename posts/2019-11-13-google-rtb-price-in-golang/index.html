@@ -1,14 +1,14 @@
 <!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Golang实现Google在RTB广告中价格加密方案</title>
-<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/vimiix-blog/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=http://www.vimiix.com/vimiix-blog/><b>首页</b></a>.
-<a href=/vimiix-blog/posts/><b>文章列表</b></a>.
-<a href=/vimiix-blog/categories/><b>分类</b></a>.
-<a href=/vimiix-blog/tags/><b>标签</b></a>.
-<a href=/vimiix-blog/friends/><b>友链</b></a>.
-<a href=/vimiix-blog/about/><b>关于</b></a>.
-<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Golang实现Google在RTB广告中价格加密方案</h1><b><time>2019.11.13 16:22</time></b>
-<a href=/vimiix-blog/%20/tags/solution>solution</a>
-<a href=/vimiix-blog/%20/tags/golang>golang</a>
-<a href=/vimiix-blog/%20/tags/rtb>rtb</a><div><h2 id=rtb>RTB</h2><p>RTB 广告是一种实时竞价广告，就是在针对每个广告位有展示机会的时候，会实时多方竞价，价格最有优势的广告主会竞得这次展示机会，在媒体测在拿到素材的时候，需将本次成交的价格，上报给指定的监控服务器，这时就需要将实时价格按照指定的加密方案加密后，替换 GET 链接中的请求参数中的价格宏来上报。</p><p>官方给出的源代码有 Java 和 C++ 版本, 下载地址： <a href=https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source>https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source</a></p><p>本文主要通过 golang 来实现的 google 的价格<a href=https://developers.google.com/authorized-buyers/rtb/response-guide/decrypt-price#encryption-scheme>加密方案</a>。</p><h3 id=source-code>Source Code</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Practice makes perfect (ง •̀_•́)ง</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/categories/><b>分类</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Golang实现Google在RTB广告中价格加密方案</h1><b><time>2019.11.13 16:22</time></b>
+<a href=/%20/tags/solution>solution</a>
+<a href=/%20/tags/golang>golang</a>
+<a href=/%20/tags/rtb>rtb</a><div><h2 id=rtb>RTB</h2><p>RTB 广告是一种实时竞价广告，就是在针对每个广告位有展示机会的时候，会实时多方竞价，价格最有优势的广告主会竞得这次展示机会，在媒体测在拿到素材的时候，需将本次成交的价格，上报给指定的监控服务器，这时就需要将实时价格按照指定的加密方案加密后，替换 GET 链接中的请求参数中的价格宏来上报。</p><p>官方给出的源代码有 Java 和 C++ 版本, 下载地址： <a href=https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source>https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source</a></p><p>本文主要通过 golang 来实现的 google 的价格<a href=https://developers.google.com/authorized-buyers/rtb/response-guide/decrypt-price#encryption-scheme>加密方案</a>。</p><h3 id=source-code>Source Code</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
 </span></span><span style=display:flex><span>
 </span></span><span style=display:flex><span><span style=color:#75715e>/*
 </span></span></span><span style=display:flex><span><span style=color:#75715e>golang 实现 google 的rtb 价格加密方案
@@ -181,7 +181,7 @@
 </span></span><span style=display:flex><span> }
 </span></span><span style=display:flex><span> <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#a6e22e>price</span>)
 </span></span><span style=display:flex><span>}
-</span></span></code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/vimiix-blog/posts/2024-02-20-be-a-better-developer-with-these-git-good-practices/>[译]做一个拥有 Git 好习惯的开发者</a></li><li><a href=/vimiix-blog/posts/2023-12-15-ssx/>SSX，一个有记忆的 ssh 客户端</a></li><li><a href=/vimiix-blog/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/vimiix-blog/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/vimiix-blog/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/",this.page.identifier="/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/"};(function(){var e=document,t=e.createElement("script");t.src="https://vimiix-blog.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+</span></span></code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2024-02-20-be-a-better-developer-with-these-git-good-practices/>[译]做一个拥有 Git 好习惯的开发者</a></li><li><a href=/posts/2023-12-15-ssx/>SSX，一个有记忆的 ssh 客户端</a></li><li><a href=/posts/2023-06-21-manage-go-multiple-versions/>Shell 函数实现Go语言多版本管理轻量级方案</a></li><li><a href=/posts/2021-12-21-learn-distributed-transaction/>分布式事务笔记(XA,TCC,Saga)</a></li><li><a href=/posts/2021-09-01-simulate-disk-readonly-scenario/>磁盘只读（readonly）故障场景模拟</a></li></ul></div></div></aside><div id=disqus_thread></div><script>var disqus_config=function(){this.page.url="https://www.vimiix.com/posts/2019-11-13-google-rtb-price-in-golang/",this.page.identifier="/posts/2019-11-13-google-rtb-price-in-golang/"};(function(){var e=document,t=e.createElement("script");t.src="https://vimiix-blog.disqus.com/embed.js",t.setAttribute("data-timestamp",+new Date),(e.head||e.body).appendChild(t)})()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2024
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
