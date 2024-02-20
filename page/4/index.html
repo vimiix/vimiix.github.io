@@ -5,7 +5,9 @@
 <a href=/vimiix-blog/tags/><b>标签</b></a>.
 <a href=/vimiix-blog/friends/><b>友链</b></a>.
 <a href=/vimiix-blog/about/><b>关于</b></a>.
-<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/>《算法图解》读书笔记4-分治思想和快排</a></h1><b><time>2018.05.30 16:20</time></b>
+<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/>《算法图解》读书笔记5-散列函数及扩展</a></h1><b><time>2018.06.02 16:20</time></b>
+<a href=/tags/algorithms>algorithms</a>
+<a href=/tags/linux>Linux</a><div><h2 id=散列函数>散列函数</h2><p>散列函数就是一种<strong>映射</strong>，是从关键字到存储地址的映射。通常，包含散列函数的算法的算法复杂度都为 O(1)，对应到 Python 中的数据结构就是字典，给一个 key 可以得到一个固定的 value 值。散列函数必须满足一些要求：</p><ul><li>它必须是一直的。例如，假设输入 apple 时得到的是 4，那么每次输入 apple 时，都必须是 4，不然这个散列函数就是无意义的；</li><li>散列函数应该将不同的输入值，对应到不同的值上。（虽然不同的 key 对应相同的 value 是允许的，但最理想的情况是不同的 key，对应不同的 value，这种称之为<a href=https://zh.wikipedia.org/wiki/%E5%AE%8C%E7%BE%8E%E6%95%A3%E5%88%97>完美散列</a>）</li></ul><a href=http://www.vimiix.com/vimiix-blog/posts/2018-06-02-grokking-algorithms-chapter-5/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/>《算法图解》读书笔记4-分治思想和快排</a></h1><b><time>2018.05.30 16:20</time></b>
 <a href=/tags/algorithms>algorithms</a>
 <a href=/tags/linux>Linux</a><div><h2 id=分而治之divide-and-conquer>分而治之（Divide and Conquer）</h2><p>所谓分而治之，分为分解问题，但我们目的是解决大问题，所有还有将分解后得到的结果贡献回大问题，最终使得我们解决大问题。</p><p>分而治之的思想是采用了递归的思想，将原问题分成几个规模较小但是<strong>类似</strong>于原问题的子问题， 通过递归的方式来求解这些小问题，最后将子问题的解合并来得到原问题的解。分治思想的本质是我们中学时候学的数学归纳法。</p><p>书上提到，使用分治思想解决问题的过程包括两个步骤，其实应该是三个步骤：</p><ol><li>找出基线条件，这种条件必须尽可能简单。</li><li>不断将问题分解为子问题（或者说缩小规模），直达符合基线条件。</li><li>合并子问题的结果，得到最终问题的解（利用系统栈的特性实现过程状态的记录）</li></ol><a href=http://www.vimiix.com/vimiix-blog/posts/2018-05-30-grokking-algorithms-chapter-4/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2018-05-25-grokking-algorithms-chapter-2/>《算法图解》读书笔记2-数组链表和选择排序</a></h1><b><time>2018.05.25 19:20</time></b>
 <a href=/tags/algorithms>algorithms</a>
@@ -45,14 +47,10 @@
 </span></span><span style=display:flex><span>Writing objects: 100% <span style=color:#f92672>(</span>21/21<span style=color:#f92672>)</span>, 1018.52 KiB | 17.87 MiB/s, <span style=color:#66d9ef>done</span>.
 </span></span><span style=display:flex><span>Total <span style=color:#ae81ff>21</span> <span style=color:#f92672>(</span>delta 7<span style=color:#f92672>)</span>, reused <span style=color:#ae81ff>0</span> <span style=color:#f92672>(</span>delta 0<span style=color:#f92672>)</span>
 </span></span><span style=display:flex><span><span style=color:#75715e># 卡在这里</span>
-</span></span></code></pre></div><a href=http://www.vimiix.com/vimiix-blog/posts/2018-03-18-git-push-hangs-on-chunked/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2018-03-11-manage-your-virtualenv-with-pipenv/>[Python]使用pipenv管理python虚拟环境</a></h1><b><time>2018.03.11 18:20</time></b>
-<a href=/tags/pipenv>pipenv</a>
-<a href=/tags/autoenv>autoenv</a>
-<a href=/tags/python>Python</a>
-<a href=/tags/virtualenv>virtualenv</a><div><h2 id=前言>前言</h2><p>近期的项目中，我开始尝试着从 virtualenv 管理 python 虚拟环境，切换到用 pipenv 来管理。</p><p>经过一段时间的使用，着实觉得 pipenv 使用的更加顺手，更加的便捷。这当然也延续了 <a href=https://www.kennethreitz.org/>Kenneth</a> 大神一贯的项目作风&ndash; <strong><code>For Humans</code></strong> 。</p><p>再配合上 <strong><code>autoenv</code></strong>（自动激活虚拟环境的工具），更加的 Perfect！</p><a href=http://www.vimiix.com/vimiix-blog/posts/2018-03-11-manage-your-virtualenv-with-pipenv/>Read more...</a></div></article><div><a href=/vimiix-blog/page/3/>上一页</a>
+</span></span></code></pre></div><a href=http://www.vimiix.com/vimiix-blog/posts/2018-03-18-git-push-hangs-on-chunked/>Read more...</a></div></article><div><a href=/vimiix-blog/page/3/>上一页</a>
 4 of 9
 <a href=/vimiix-blog/page/5/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
-<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2024
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
 <a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>

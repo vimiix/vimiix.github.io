@@ -5,7 +5,20 @@
 <a href=/vimiix-blog/tags/><b>标签</b></a>.
 <a href=/vimiix-blog/friends/><b>友链</b></a>.
 <a href=/vimiix-blog/about/><b>关于</b></a>.
-<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2023-12-15-ssx/>SSX，一个有记忆的 ssh 客户端</a></h1><b><time>2023.12.15 00:50</time></b>
+<a href=/vimiix-blog/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2024-02-20-be-a-better-developer-with-these-git-good-practices/>[译]做一个拥有 Git 好习惯的开发者</a></h1><b><time>2024.02.20 00:50</time></b>
+<a href=/tags/translation>translation</a>
+<a href=/tags/git>git</a>
+<a href=/tags/best-practices>best-practices</a><div>如果你是一名开发人员，你可能每天都会使用 git 作为版本控制系统。这个工具的使用对于应用程序的开发过程是至关重要的，无论是在团队协作还是单独工作。但是，常常会遇到混乱的项目库，提交的 commit 信息不明确，不能传达有用的内容，以及滥用分支等问题。了解如何正确使用 git 并遵循良好的实践对于那些想要在就业市场中脱颖而出的人来说是必不可少的。
+Git 分支的命名约定 当我们在处理代码版本控制时，我们应该遵循的一个好的习惯，就是为分支、提交、拉取请求等使用清晰和描述性的名称。确保所有团队成员都有一个简洁的工作流程是至关重要的。除了提高工作效率之外，记录项目的开发过程也简化了团队合作。通过遵循这些实践，你很快就会获益其中。
+基于此，开发者社区创建了一些分支命名的约定，你可以在项目中遵循这些约定。虽然遵循下列规则不是硬性的要求，但它们可以帮助你提高开发技能。
+使用小写字母：分支名称不要用大写字母，强制小写; 连字符分隔：如果分支名称包含多个单词，请使用连字符将它们分开，遵循短横线命名法。避免使用帕斯卡命名法、驼峰命名法或蛇形命名法; (a-z, 0-9)：分支名称中只使用字母数字字符和连字符，避免使用其他字符; 不要使用连续的连字符(&ndash;)：这种做法可能令人困惑。例如，如果你有分支类型(如feature, bugfix, hotfix等)，使用斜杠(/)代替; 避免在分支名称的末尾使用连字符：这是没有意义的，因为连字符分隔单词，最后没有单词要分隔; 最重要的：使用描述性的、简洁的、清晰的名称来定义分支上做了什么; 不好的分支命名：
+fixSidebar feature-new-sidebar- FeatureNewSidebar feat_add_sidebar 好的分支名：
+feature/new-sidebar add-new-sidebar hotfix/interval-query-param-on-get-historical-data 分支名称约定前缀 有时分支的目的并不明确。它可以是一个新特性、错误修复、文档更新或其他任何东西。为了解决这个问题，通常的做法是在分支名称上使用前缀来快速解释分支的目的。
+feature：它表达了一个将被开发的新功能。例如：feature/add-filters; release：用于准备新版本的发布。release/ 前缀通常用于在合并分支主版本的新更新以创建版本之前执行诸如最后修改和修订之类的任务。例如，release/v3.3.1-beta; bugfix：它表达的信息是，你正在解决代码中的一个bug，而且它通常与一个问题有关。例如，bugfix/sign-in-flow; hotfix：类似于 bugfix，但它与修复生产环境中存在的关键错误有关。例如，hotfix/cors-error; docs：写一些文档。例如，docs/quick-start; 如果你在工作中使用任务管理相关的工具，如Jira, Trello, ClickUp，或任何类似的工具，可以考虑先创建用户故事卡，每张卡有一个数字相关联。所以，通常可以把这些卡的编号用在分支名称的前缀中。例如：
+feature/T-531-add-sidebar docs/T-789-update-readme hotfix/T-142-security-path 提交信息 Commit message 接下来，我们来讨论一下提交消息。不幸的是，我们经常会看到这样的提交信息，如：“added a lot of things”或“Pikachu, I choose you”等（是的，我曾经发现一个项目的提交信息与poksammon战斗有关）。
+提交信息在开发过程中非常重要，创造一段美好的历史会在你的人生旅途中给你带来很多帮助。和分支一样，社区也有对于提交信息的规范约定，你可以在下面了解到:
+提交消息有三个重要部分:主题 Subject、描述 Description和页脚 Footer。提交的主题是必需的，并且定义了提交的目的。描述(主体)用于为提交的目的提供额外的上下文和解释。最后是页脚，通常用于元数据，如分配提交。虽然同时使用描述和页脚被认为是一种很好的做法，但这不是必需的。 在主题行中使用祈使句。 例如： Add README.md ✅; Added README.md ❌; Adding README.md ❌;
+<a href=http://www.vimiix.com/vimiix-blog/posts/2024-02-20-be-a-better-developer-with-these-git-good-practices/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2023-12-15-ssx/>SSX，一个有记忆的 ssh 客户端</a></h1><b><time>2023.12.15 00:50</time></b>
 <a href=/tags/golang>golang</a>
 <a href=/tags/ssx>ssx</a>
 <a href=/tags/ssh>ssh</a>
@@ -34,12 +47,9 @@
 <a href=/tags/python>Python</a>
 <a href=/tags/mq>MQ</a><div><p>beanstalkd 是一个简单快速的分布式工作队列系统，协议基于 ASCII 编码运行在 tcp 上。其最初设计目的是通过后台异步执行耗时任务方式降低高容量 Web 应用的页面延时。而其简单、轻量、易用等特点，和对任务优先级、延时/超时重发等控制，以及<a href=https://github.com/beanstalkd/beanstalkd/wiki/Client-Libraries>众多语言版本的客户端</a>的良好支持，使其可以很好的在各种需要队列系统的场景中应用。</p><p>Beanstalk 的应用场景主要有：</p><ul><li>消息异步处理（消息队列的基本需求）</li><li>消息延迟处理，实现循环队列</li></ul><a href=http://www.vimiix.com/vimiix-blog/posts/2020-03-11-beanstalkd-note/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2020-02-21-richardson-model/>[译]Richardson成熟度模型</a></h1><b><time>2020.02.21 16:22</time></b>
 <a href=/tags/translation>translation</a>
-<a href=/tags/richardson>Richardson</a><div><blockquote><p>原文链接：<a href=https://martinfowler.com/articles/richardsonMaturityModel.html>https://martinfowler.com/articles/richardsonMaturityModel.html</a></p></blockquote><h3 id=迈向-rest-的荣耀之巅>迈向 REST 的荣耀之巅</h3><p>Leonard Richardson 提出的一个模型，将实现 REST 方法的主要元素分解为三个步骤，分别包括：资源（Resources）、HTTP 动词(HTTP Verbs，如<code>GET</code>、<code>POST</code>等)和超媒体控制（Hypermedia Controls）。</p><p>在<a href="https://www.amazon.cn/dp/0596805829/ref=sr_1_1?ie=UTF8&amp;qid=1551228104&amp;sr=8-1&amp;keywords=REST+in+Practice">Rest In Practice</a>一书中，解释了如何使用 Restful Web Service 来处理企业面临的许多集成问题。本书的核心观点是，Web 就是一个大规模可扩展的分布式系统存在、并可以很好的工作的证明，而我们可以根据这一观点更容易地构建集成系统。</p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/5hdvom.png alt></figure></p><a href=http://www.vimiix.com/vimiix-blog/posts/2020-02-21-richardson-model/>Read more...</a></div></article><article><h1><a href=http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/>Golang实现Google在RTB广告中价格加密方案</a></h1><b><time>2019.11.13 16:22</time></b>
-<a href=/tags/solution>solution</a>
-<a href=/tags/golang>golang</a>
-<a href=/tags/rtb>rtb</a><div><h2 id=rtb>RTB</h2><p>RTB 广告是一种实时竞价广告，就是在针对每个广告位有展示机会的时候，会实时多方竞价，价格最有优势的广告主会竞得这次展示机会，在媒体测在拿到素材的时候，需将本次成交的价格，上报给指定的监控服务器，这时就需要将实时价格按照指定的加密方案加密后，替换 GET 链接中的请求参数中的价格宏来上报。</p><p>官方给出的源代码有 Java 和 C++ 版本, 下载地址： <a href=https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source>https://code.google.com/archive/p/privatedatacommunicationprotocol/source/default/source</a></p><p>本文主要通过 golang 来实现的 google 的价格<a href=https://developers.google.com/authorized-buyers/rtb/response-guide/decrypt-price#encryption-scheme>加密方案</a>。</p><a href=http://www.vimiix.com/vimiix-blog/posts/2019-11-13-google-rtb-price-in-golang/>Read more...</a></div></article><div>1 of 9
+<a href=/tags/richardson>Richardson</a><div><blockquote><p>原文链接：<a href=https://martinfowler.com/articles/richardsonMaturityModel.html>https://martinfowler.com/articles/richardsonMaturityModel.html</a></p></blockquote><h3 id=迈向-rest-的荣耀之巅>迈向 REST 的荣耀之巅</h3><p>Leonard Richardson 提出的一个模型，将实现 REST 方法的主要元素分解为三个步骤，分别包括：资源（Resources）、HTTP 动词(HTTP Verbs，如<code>GET</code>、<code>POST</code>等)和超媒体控制（Hypermedia Controls）。</p><p>在<a href="https://www.amazon.cn/dp/0596805829/ref=sr_1_1?ie=UTF8&amp;qid=1551228104&amp;sr=8-1&amp;keywords=REST+in+Practice">Rest In Practice</a>一书中，解释了如何使用 Restful Web Service 来处理企业面临的许多集成问题。本书的核心观点是，Web 就是一个大规模可扩展的分布式系统存在、并可以很好的工作的证明，而我们可以根据这一观点更容易地构建集成系统。</p><p><figure><img src=https://static.vimiix.com/uPic/2021-04-06/5hdvom.png alt></figure></p><a href=http://www.vimiix.com/vimiix-blog/posts/2020-02-21-richardson-model/>Read more...</a></div></article><div>1 of 9
 <a href=/vimiix-blog/page/2/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
-<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2023
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2024
 Copyright (c) 2017-2021, Vimiix Yao; All rights reserved.
 <a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer></body></html>
