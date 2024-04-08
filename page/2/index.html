@@ -1,5 +1,5 @@
 <!doctype html><html lang=cn-zh><head><meta name=generator content="Hugo 0.120.4"><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Hi, I'm Vimiix</title>
-<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/%20css/style.css><link rel=alternate type=application/rss+xml href=/index.xml title="Hi, I'm Vimiix"></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Get hands dirty.</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css><link rel=alternate type=application/rss+xml href=/index.xml title="Hi, I'm Vimiix"></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right>Get hands dirty.</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
 <a href=/posts/><b>文章列表</b></a>.
 <a href=/categories/><b>分类</b></a>.
 <a href=/tags/><b>标签</b></a>.
@@ -59,8 +59,8 @@
 <a href=/tags/solution>solution</a><div><p>第一次在 mac 系统上使用<strong>matplotlib</strong>库的时候，在执行的时候，往往会遇到下面这样的问题：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>ImportError: Python is not installed as a framework. balabala....
 </span></span></code></pre></div><h3 id=解决方案>解决方案</h3><p>当然这个问题很好解决，网上有一搜就会找到如下两种解决方案：</p><h4 id=第一种方案是在系统中设置>第一种方案是在系统中设置</h4><ul><li>假设你已经通过<code>pip install matplotlib</code>安装了 matplotlib，那么在你的根目录中会有一个名为<code>〜/ .matplotlib</code>的目录。</li><li>在这个目录中创建一个<code>matplotlibrc</code>的文件 ,在里面添加一行代码：<code>backend: TkAgg</code>，保存退出即可。</li></ul><p>总结为一行 shell 命令就是：<code>echo "backend: TkAgg" >> ~/.matplotlib/matplotlibrc</code></p><p>这种方式可以设定整个系统的 matplotlib 渲染使用的引擎，但是不好的是，代码会变得不可移植，如果服务器很多，我们需要每一台机器都去设置这个参数，这时候就需要使用第二种方案。</p><a href=https://www.vimiix.com/posts/2018-10-16-explore-the-problem-of-matplotlib-on-macosx/>Read more...</a></div></article><div><a href=/>上一页</a>
 2 of 9
-<a href=/page/3/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=/page/3/>下一页</a></div></main><noscript><img src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/pixel.gif></noscript><script defer src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/script.js></script><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2024
 Copyright (c) 2017-2024, Vimiix Yao; All rights reserved.
-<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p></footer><noscript><img src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/pixel.gif></noscript><script defer src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/script.js></script></body></html>
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a><noscript><img src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/pixel.gif></noscript><script defer src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/script.js></script></p></footer></body></html>
