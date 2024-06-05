@@ -5,7 +5,15 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2017-04-26-better-than-yesterday/>随笔|做一个比昨天的自己更优秀的人</a></h1><b><time>2017.04.26 10:17</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2017-05-04-how-to-use-eval/>[转]Python中eval的强大与潜在风险</a></h1><b><time>2017.05.04 23:57</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/eval>eval</a><div>这两天在做项目的过程中，遇到 eval 这个方法，不是很会用，经过一番搜索学习，特此收藏一篇乌云网深度好文，以备以后回顾。
+原文出处：WooYun - 隐形人真忙
+0x00 前言 eval 是 Python 用于执行 python 表达式的一个内置函数，使用 eval，可以很方便的将字符串动态执行。比如下列代码：
+#!python >>> eval("1+2") 3 >>> eval("[x for x in range(10)]") [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] 当内存中的内置模块含有 os 的话，eval 同样可以做到命令执行：
+#!python >>> import os >>> eval("os.system('whoami')") win-20140812chjadministrator 0 当然，eval 只能执行 Python 的表达式类型的代码，不能直接用它进行 import 操作，但 exec 可以。如果非要使用 eval 进行 import，则使用import：
+#!python >>> exec('import os') >>> eval('import os') Traceback (most recent call last): File "", line 1, in File "", line 1 import os ^ SyntaxError: invalid syntax >>> eval("__import__('os').
+<a href=https://www.vimiix.com/posts/2017-05-04-how-to-use-eval/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-04-26-better-than-yesterday/>随笔|做一个比昨天的自己更优秀的人</a></h1><b><time>2017.04.26 10:17</time></b>
 <a href=/tags/%E9%9A%8F%E7%AC%94>随笔</a>
 <a href=/tags/%E7%94%9F%E6%B4%BB>生活</a><div>正文 还依稀记得在上学时
 不止一次的憧憬着自己毕业后
@@ -59,9 +67,7 @@
 <a href=/tags/tuple>tuple</a>
 <a href=/tags/dict>dict</a>
 <a href=/tags/python>Python</a><div><p>本篇是一篇随手笔记，记录了对于 Python 的数据类型中元组（Tuple）和字典（Dict）的一些认识，以及部分内置方法的介绍。</p><a href=https://www.vimiix.com/posts/2017-03-31-introduction-of-tuple-and-dict/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-03-28-encode-and-decode/>Python|py2中字符与字节之间的编解码</a></h1><b><time>2017.03.28 13:56</time></b>
-<a href=/tags/python>Python</a><div><p>据说，每个做 Python 开发的都被字符编码的问题搞晕过，最常见的错误就是 UnicodeEncodeError、UnicodeDecodeError，你好像知道怎么解决，遗憾的是，错误又出现在其它地方，问题总是重蹈覆辙，str 到 unicode 之间的转换用哪 decode 还是 encode 方法还特不好记，老是混淆，问题究竟出在哪里？</p><a href=https://www.vimiix.com/posts/2017-03-28-encode-and-decode/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-03-15-syntaxerror-non-ascii-character-e8-in/>Python-SyntaxError:Non-ASCII character '\e8' in....</a></h1><b><time>2017.03.15 22:53</time></b>
-<a href=/tags/python>Python</a>
-<a href=/tags/syntaxerror>SyntaxError</a><div><h2 id=syntaxerrornon-ascii-character-e8-in-file>SyntaxError:Non-ASCII character &lsquo;\e8&rsquo; in File&mldr;</h2><a href=https://www.vimiix.com/posts/2017-03-15-syntaxerror-non-ascii-character-e8-in/>Read more...</a></div></article><div><a href=/page/7/>上一页</a>
+<a href=/tags/python>Python</a><div><p>据说，每个做 Python 开发的都被字符编码的问题搞晕过，最常见的错误就是 UnicodeEncodeError、UnicodeDecodeError，你好像知道怎么解决，遗憾的是，错误又出现在其它地方，问题总是重蹈覆辙，str 到 unicode 之间的转换用哪 decode 还是 encode 方法还特不好记，老是混淆，问题究竟出在哪里？</p><a href=https://www.vimiix.com/posts/2017-03-28-encode-and-decode/>Read more...</a></div></article><div><a href=/page/7/>上一页</a>
 8 of 9
 <a href=/page/9/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
