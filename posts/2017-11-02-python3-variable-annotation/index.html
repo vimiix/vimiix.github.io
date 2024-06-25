@@ -5,7 +5,8 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>[译]Python3:变量注释</h1><b><time>2017.11.02 13:12</time></b>
+<a href=/index.xml><b>RSS</b></a>.
+<a href=https://ssx.vimiix.com><b>SSX</b></a>.</nav></p></header><main><article><h1>[译]Python3:变量注释</h1><b><time>2017.11.02 13:12</time></b>
 <a href=/%20/tags/python>Python</a>
 <a href=/%20/tags/annotation>annotation</a>
 <a href=/%20/tags/translation>translation</a><div><p>Python 在 3.6 版中添加了一个叫做<strong>变量注释</strong>的语法。变量注释简单讲就是对于类型提示的增强，这个概念是在 Python3.5 中开始引入的。变量注释的完整解释在<a href=https://www.python.org/dev/peps/pep-0526>PEP 526</a>中进行了详细说明。在本文中，我们将将要的回顾一下类型提示，然后再介绍新的变量注释语法。</p><h2 id=什么是类型提示>什么是类型提示？</h2><p>Python 中的类型提示就是明显的声明函数和方法中的参数是具有确定的类型的。 Python 本身是不强制编程时候定义参数的类型“提示”，但是你可以使用像<a href=http://mypy-lang.org/>mypy</a>这样的工具来强制类型提示，就像 C++一样。我们来看一个常见的没有添加类型提示的函数：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>add</span>(a, b):

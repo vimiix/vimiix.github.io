@@ -5,7 +5,8 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Python-SyntaxError:Non-ASCII character '\e8' in....</h1><b><time>2017.03.15 22:53</time></b>
+<a href=/index.xml><b>RSS</b></a>.
+<a href=https://ssx.vimiix.com><b>SSX</b></a>.</nav></p></header><main><article><h1>Python-SyntaxError:Non-ASCII character '\e8' in....</h1><b><time>2017.03.15 22:53</time></b>
 <a href=/%20/tags/python>Python</a>
 <a href=/%20/tags/syntaxerror>SyntaxError</a><div><h2 id=syntaxerrornon-ascii-character-e8-in-file>SyntaxError:Non-ASCII character &lsquo;\e8&rsquo; in File&mldr;</h2><p>遇到下面这种提示的错误</p><p><figure><img src=http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/error.png alt></figure></p><p>修正方法：检查文件头部的UTF-8编码语句是否书写正确</p><pre tabindex=0><code>	#coding=utf-8
 </code></pre><p>今天下午同事梦鸽遇到一个问题，想直接把要找的一篇网页源代码中的特定的链接找出来，看到她需要每天手动复制粘贴出来然后一点一点删除，这样来找的话，效率也太低了。刚好我最近也刚开始学习python编程，何不写个脚本练练手？</p><p>所以就花了一个多小时帮梦鸽童鞋写了一个自动抓取链接的脚本，虽然开始一直头疼不会正则表达式该怎么写，但最终用笨办法：通过用</p><ul><li>循环</li><li>条件</li><li>逻辑</li></ul><p>这些基本的运算符，帮她实现了这个功能。</p><p>在这个过程中，遇到了最上面的这个错误，排查了半天以为是哪里的标点符号用成了中文字符，最后一想&rsquo;Non-ASCII&rsquo;意思就是找不到对应的ASCII码，既然找不到，是不是文件的编码格式错了，才想起来回头去看文件头部的</p><pre><code>#coding = utf-8

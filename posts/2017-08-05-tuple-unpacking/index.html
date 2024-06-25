@@ -5,7 +5,8 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Python|元组拆包和具名元组解析</h1><b><time>2017.08.05 17:02</time></b>
+<a href=/index.xml><b>RSS</b></a>.
+<a href=https://ssx.vimiix.com><b>SSX</b></a>.</nav></p></header><main><article><h1>Python|元组拆包和具名元组解析</h1><b><time>2017.08.05 17:02</time></b>
 <a href=/%20/tags/python>Python</a>
 <a href=/%20/tags/tuple>tuple</a>
 <a href=/%20/tags/namedtuple>namedtuple</a><div><h2 id=前言>前言</h2><p>在 Python 中元组是一个相较于其他语言比较特别的一个内置序列类型。有些 python 入门教程把元组成为“不可变的列表”，这种说法是不完备的，其并没有完整的概括元组的特点。除了用作不可变的列表，它还可以用于没有字段名的数据记录。下面的内容就围绕元组作为数据记录属性展开，并介绍带字段名的具名元组函数<code>namedtuple</code>，列表属性不再本文中叙述。</p><h2 id=元组对于数据的记录>元组对于数据的记录</h2><p>元组中的每个元素都存放了记录中一个字段的数据，外加这个字段的位置，正是这个位置信息给数据赋予了意义。</p><p>下面的一段代码就演示了元组被当作记录来使用。如果在任何的表达式里我们在元组内对元素排序，这些元素多携带的信息就会丢失，因为这些信息是跟它们的位置强关联的。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Python data-lang=Python><span style=display:flex><span>	<span style=color:#75715e>#把元组作记录</span>

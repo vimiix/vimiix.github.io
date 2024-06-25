@@ -5,7 +5,8 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>磁盘只读（readonly）故障场景模拟</h1><b><time>2021.09.01 16:15</time></b>
+<a href=/index.xml><b>RSS</b></a>.
+<a href=https://ssx.vimiix.com><b>SSX</b></a>.</nav></p></header><main><article><h1>磁盘只读（readonly）故障场景模拟</h1><b><time>2021.09.01 16:15</time></b>
 <a href=/%20/tags/disk>disk</a>
 <a href=/%20/tags/simulate>simulate</a>
 <a href=/%20/tags/test>test</a><div><p>假设服务器目前有多个盘，<code>vdb1</code>这块分区盘专门用于数据库程序的数据目录，我们就用 <code>vdb1</code> 这个盘来模拟只读故障场景。</p><p><figure><img src=https://static.vimiix.com/upic/2021-09-01/image-20210901154323971.png alt=image-20210901154323971></figure></p><h3 id=1-卸载指定盘>1. 卸载指定盘</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>umount /dev/vdb1
