@@ -7,10 +7,10 @@
 <a href=/about/><b>关于</b></a>.
 <a href=/index.xml><b>RSS</b></a>.
 <a href=https://ssx.vimiix.com><b>SSX</b></a>.</nav></p></header><main><article><h1>获取存储在又拍云CDN中视频的时长</h1><b><time>2019.01.30 16:22</time></b>
-<a href=/%20/tags/note>note</a>
-<a href=/%20/tags/video>video</a>
-<a href=/%20/tags/cdn>CDN</a>
-<a href=/%20/tags/%E5%8F%88%E6%8B%8D%E4%BA%91>又拍云</a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>pip install upyun
+<a href=/tags/note>note</a>
+<a href=/tags/video>video</a>
+<a href=/tags/cdn>CDN</a>
+<a href=/tags/%E5%8F%88%E6%8B%8D%E4%BA%91>又拍云</a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>pip install upyun
 </span></span></code></pre></div><p>（官方代码开源地址：<a href=https://github.com/upyun/python-sdk/>https://github.com/upyun/python-sdk/</a> )</p><h3 id=继承官方类编写需求代码>继承官方类，编写需求代码</h3><p>官方的 SDK 中只提供了一些基础的方法，可以在源码的依赖文件中看到，只依赖 <code>requests</code> 一个包，所以，官方库其实是实现了对网络交互的封装，没有实际的业务功能，真正又拍云 CDN 提供的服务，需要自己通过这个 SDK 发起 api 请求来获取。</p><p>既然这样，那就继承官方提供的 SDK，增加自己需要的方法：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>from</span> upyun <span style=color:#f92672>import</span> UpYun
 </span></span><span style=display:flex><span><span style=color:#f92672>from</span> config <span style=color:#f92672>import</span> BUCKET, USER, PASSWORD
 </span></span><span style=display:flex><span>
