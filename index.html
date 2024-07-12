@@ -6,7 +6,11 @@
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于</b></a>.
 <a href=/index.xml><b>RSS</b></a>.
-<a href=https://ssx.vimiix.com><b>SSX</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2024-06-05-working-mechanism-of-synchronous-standby-names-in-mogdb/>MogDB 中 synchronous_standby_names 参数的工作机制</a></h1><b><time>2024.06.05 11:03</time></b>
+<a href=https://ssx.vimiix.com><b>SSX</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2024-06-05-writing-custom-database-backends-in-django/>自定义 Django 中数据库的后端</a></h1><b><time>2024.07.12 11:35</time></b>
+<a href=/tags/django>django</a>
+<a href=/tags/python>python</a>
+<a href=/tags/notes>notes</a>
+<a href=/tags/database>database</a><div><p>Django 是一个全能的高级 Python Web 框架，它使得开发人员可以快速构建 Web 应用程序。Django 的一个关键特性就是它对多种数据库的支持。开发人员可以使用各种数据库后端来存储数据，如 SQLite、PostgreSQL、MySQL、Oracle 等等。但是，有时开发人员需要编写自定义数据库后端来支持一些 Django 默认不支持的特定数据库。在本文，我们将学习如何在 Django 中编写自定义数据库的后端。</p><a href=https://www.vimiix.com/posts/2024-06-05-writing-custom-database-backends-in-django/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2024-06-05-working-mechanism-of-synchronous-standby-names-in-mogdb/>MogDB 中 synchronous_standby_names 参数的工作机制</a></h1><b><time>2024.06.05 11:03</time></b>
 <a href=/tags/mogdb>mogdb</a>
 <a href=/tags/synchronous_standby_names>synchronous_standby_names</a>
 <a href=/tags/notes>notes</a><div><p>在 MogDB 中，参数 <code>synchronous_standby_names</code> 用于配置同步复制设置。特别是当这个参数设置为 <code>'*'</code> 时，表示可以使用任何一个可用的同步备库作为同步备库。这个配置允许任何一个当前连接的备库都可以被用作同步备库，而不需要明确指定备库的名称。</p><a href=https://www.vimiix.com/posts/2024-06-05-working-mechanism-of-synchronous-standby-names-in-mogdb/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2024-02-20-be-a-better-developer-with-these-git-good-practices/>[译]做一个拥有 Git 好习惯的开发者</a></h1><b><time>2024.02.20 00:50</time></b>
@@ -35,11 +39,7 @@
 <a href=/tags/goroutine>goroutine</a><div><h2 id=goroutine>Goroutine</h2><p>C#、Lua、Python 的用户可能会发现 Go 的 goroutine 和协程之间有很多相似之处，没错，从命名上也可以看出二者具有相似性。</p><p>但二者之间也有些区别：</p><ul><li>goroutine 隐含了并行的特性，一切交给 go 的 runtime 来实现调度，而协程需要应用自己来编写并行代码</li><li>goroutine 通过信道（<code>Channel</code>）进行通信；协程通过 <code>yield</code> 和 <code>next</code>操作进行通信</li></ul><p>一般来说，goroutine 比协程更强大。而且，我们可以很容易地将协程的逻辑移植到 goroutine 来获得更好的并行效果。</p><a href=https://www.vimiix.com/posts/2021-04-07-concurrency-in-go/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2021-03-22-auth-windows-user-in-golang/>Golang实现Windows系统用户和密码校验</a></h1><b><time>2021.03.22 16:22</time></b>
 <a href=/tags/note>note</a>
 <a href=/tags/windows>windows</a>
-<a href=/tags/golang>golang</a><div><p>本质上是通过调用 windows 的一个 API —— <a href=https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-logonuserw><code>LogonUserW</code></a> ，来实现对于用户密码的校验。</p><blockquote><p>仅适用于在本地校验，不支持远程连接校验</p></blockquote><p>用一个示例代码来进行说明，下面是目录结构中，<code>main.go</code> 是程序入口文件，auth 包中，我们仅实现 windows 系统的校验代码，其他平台不属于本文介绍内容，就直接返回 nil 即可。</p><a href=https://www.vimiix.com/posts/2021-03-22-auth-windows-user-in-golang/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2020-03-11-beanstalkd-note/>beanstalkd消息队列</a></h1><b><time>2020.03.11 16:22</time></b>
-<a href=/tags/beanstalkd>beanstalkd</a>
-<a href=/tags/note>note</a>
-<a href=/tags/python>Python</a>
-<a href=/tags/mq>MQ</a><div><p>beanstalkd 是一个简单快速的分布式工作队列系统，协议基于 ASCII 编码运行在 tcp 上。其最初设计目的是通过后台异步执行耗时任务方式降低高容量 Web 应用的页面延时。而其简单、轻量、易用等特点，和对任务优先级、延时/超时重发等控制，以及<a href=https://github.com/beanstalkd/beanstalkd/wiki/Client-Libraries>众多语言版本的客户端</a>的良好支持，使其可以很好的在各种需要队列系统的场景中应用。</p><p>Beanstalk 的应用场景主要有：</p><ul><li>消息异步处理（消息队列的基本需求）</li><li>消息延迟处理，实现循环队列</li></ul><a href=https://www.vimiix.com/posts/2020-03-11-beanstalkd-note/>Read more...</a></div></article><div>1 of 9
+<a href=/tags/golang>golang</a><div><p>本质上是通过调用 windows 的一个 API —— <a href=https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-logonuserw><code>LogonUserW</code></a> ，来实现对于用户密码的校验。</p><blockquote><p>仅适用于在本地校验，不支持远程连接校验</p></blockquote><p>用一个示例代码来进行说明，下面是目录结构中，<code>main.go</code> 是程序入口文件，auth 包中，我们仅实现 windows 系统的校验代码，其他平台不属于本文介绍内容，就直接返回 nil 即可。</p><a href=https://www.vimiix.com/posts/2021-03-22-auth-windows-user-in-golang/>Read more...</a></div></article><div>1 of 9
 <a href=/page/2/>下一页</a></div></main><footer><p><a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
 <a href=mailto:i@vimiix.com><b>Email</b></a>.<br>&copy; 2024
