@@ -1,8 +1,10 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/linux/</link><description>Recent content in Linux on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Wed, 01 Sep 2021 16:15:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/linux/index.xml" rel="self" type="application/rss+xml"/><item><title>磁盘只读（readonly）故障场景模拟</title><link>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</link><pubDate>Wed, 01 Sep 2021 16:15:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</guid><description>&lt;p>假设服务器目前有多个盘，&lt;code>vdb1&lt;/code>这块分区盘专门用于数据库程序的数据目录，我们就用 &lt;code>vdb1&lt;/code> 这个盘来模拟只读故障场景。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Linux on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/linux/</link><description>Recent content in Linux on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Wed, 01 Sep 2021 16:15:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/linux/index.xml" rel="self" type="application/rss+xml"/><item><title>磁盘只读（readonly）故障场景模拟</title><link>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</link><pubDate>Wed, 01 Sep 2021 16:15:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</guid><description>&lt;p>假设服务器目前有多个盘，&lt;code>vdb1&lt;/code>这块分区盘专门用于数据库程序的数据目录，我们就用 &lt;code>vdb1&lt;/code> 这个盘来模拟只读故障场景。&lt;/p>
 &lt;p>
 &lt;figure>
-&lt;img src="https://static.vimiix.com/upic/2021-09-01/image-20210901154323971.png" alt="image-20210901154323971" />
+ &lt;img src="https://static.vimiix.com/upic/2021-09-01/image-20210901154323971.png" alt="image-20210901154323971" />
 &lt;/figure>
+
+
 &lt;/p>
 &lt;h3 id="1-卸载指定盘">1. 卸载指定盘&lt;/h3>
 &lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>umount /dev/vdb1
@@ -73,6 +75,8 @@ RHEL7 的安装 启动画面
 Install Red Hat Enterprise Linux 7.2 in basic graphics mod #基本图形化安装
 Rescue a Red Hat Enterprise Linux system #修复系统</description></item><item><title>Linux-git branch用法(查看、新建、删除、重命名)</title><link>https://www.vimiix.com/posts/2017-03-08-git-branch-usage/</link><pubDate>Wed, 08 Mar 2017 10:41:08 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-03-08-git-branch-usage/</guid><description>&lt;p>
 &lt;figure>
-&lt;img src="https://static.vimiix.com/uPic/2021-04-06/KQLlUb.jpg" alt="" />
+ &lt;img src="https://static.vimiix.com/uPic/2021-04-06/KQLlUb.jpg" alt="" />
 &lt;/figure>
+
+
 &lt;/p></description></item></channel></rss>

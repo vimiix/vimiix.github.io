@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>note on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/note/</link><description>Recent content in note on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 28 Mar 2019 16:22:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/note/index.xml" rel="self" type="application/rss+xml"/><item><title>HLS视频加密</title><link>https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</link><pubDate>Thu, 28 Mar 2019 16:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</guid><description>&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Note on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/note/</link><description>Recent content in Note on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 28 Mar 2019 16:22:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/note/index.xml" rel="self" type="application/rss+xml"/><item><title>HLS视频加密</title><link>https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</link><pubDate>Thu, 28 Mar 2019 16:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2019-03-28-use-hls-to-encrypt-video/</guid><description>&lt;blockquote>
 &lt;p>最近在做视频管理后台，主要提供点播服务，涉及到需要对视频进行加密处理以防止视频被随意下载。&lt;/p>
 &lt;p>调研了一番之后确定使用 HLS(HTTP Live Streaming) 基于 HTTP 的流媒体网络传输协议技术来处理视频。&lt;/p>
 &lt;p>所以本文主要记录关于学习 HLS 视频加密技术的笔记&lt;/p>
@@ -81,8 +81,10 @@
 &lt;p>如图所示，图中有一块角上缺了一个方格的国际象棋棋盘，现在我们想用 L 形砖拼接出这样一块棋盘。&lt;/p>
 &lt;p>
 &lt;figure>
-&lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/chess-board.jpg" alt="" />
+ &lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/chess-board.jpg" alt="" />
 &lt;/figure>
+
+
 &lt;/p></description></item><item><title>[算法笔记]侏儒排序算法实现和复杂度分析</title><link>https://www.vimiix.com/posts/2017-07-31-gnomesort/</link><pubDate>Mon, 31 Jul 2017 15:58:21 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-07-31-gnomesort/</guid><description>&lt;h1 id="侏儒排序">侏儒排序&lt;/h1>
 &lt;h3 id="介绍">介绍&lt;/h3>
 &lt;p>侏儒排序是由 Hamid Sarbazi-Azad 在 2000 年提出的，也叫愚人排序法（Stupid sort）。这种排序算法一种简单的复杂度为&lt;code>平方级&lt;/code>的排序算法，一般实际生产中不会用到。&lt;/p></description></item></channel></rss>

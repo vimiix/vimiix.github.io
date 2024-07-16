@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/python/</link><description>Recent content in Python on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Sun, 21 Oct 2018 11:22:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/python/index.xml" rel="self" type="application/rss+xml"/><item><title>pipenv错误解决:TypeError: "module" object is not callable</title><link>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</link><pubDate>Sun, 21 Oct 2018 11:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</guid><description>&lt;h3 id="软件版本">软件版本&lt;/h3>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Python on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/python/</link><description>Recent content in Python on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Sun, 21 Oct 2018 11:22:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/python/index.xml" rel="self" type="application/rss+xml"/><item><title>pipenv错误解决:TypeError: "module" object is not callable</title><link>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</link><pubDate>Sun, 21 Oct 2018 11:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</guid><description>&lt;h3 id="软件版本">软件版本&lt;/h3>
 &lt;p>今天在折腾一台新的云主机，所以我在安装环境的时候&lt;code>pip&lt;/code>和&lt;code>pipenv&lt;/code>都选择安装了最新版本&lt;/p>
 &lt;p>（&lt;em>注：正是这两个版本配合才会出现下面的报错，旧版本或以后的新版本的 Pipenv 不会出现&lt;/em>）。&lt;/p>
 &lt;p>具体如下：&lt;/p>
@@ -103,8 +103,10 @@
 &lt;p>作为学习，可以一起来看一下，python 是如何让代码自动地重新加载的？&lt;/p></description></item><item><title>[python]ImportError:attempted relative import with no known parent package</title><link>https://www.vimiix.com/posts/2017-12-29-import-error-relative-no-parent/</link><pubDate>Fri, 29 Dec 2017 12:37:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-12-29-import-error-relative-no-parent/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
 &lt;p>在这篇文章中，我将会解析 &lt;code>ImportError: attempted relative import with no known parent package&lt;/code> 这个异常的原因。当你在运行的 python 脚本。使用了相对引用方式 &lt;em>(类似&lt;code>import ..module&lt;/code>)&lt;/em> 去引用包时，可能会出现这个异常。&lt;/p></description></item><item><title>[译]关于python字典类型最疯狂的表达方式</title><link>https://www.vimiix.com/posts/2017-12-28-python-mystery-dict-expression/</link><pubDate>Thu, 28 Dec 2017 10:31:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-12-28-python-mystery-dict-expression/</guid><description>&lt;p>&lt;a href="https://juejin.im/post/5a4459b05188257d6a7ed76b">
 &lt;figure>
-&lt;img src="https://badge.juejin.im/entry/5a4459c9f265da43112080ea/likes.svg?style=flat-square" alt="" />
+ &lt;img src="https://badge.juejin.im/entry/5a4459c9f265da43112080ea/likes.svg?style=flat-square" alt="" />
 &lt;/figure>
+
+
 &lt;/a>&lt;/p>
 &lt;blockquote>
 &lt;p>一篇来自 &lt;a href="https://dbader.org/blog/python-mystery-dict-expression">Dan Bader&lt;/a> 的有趣的博文，一起来学习一下，如何去研究一个意外的 Python 现象。&lt;/p>
@@ -118,9 +120,9 @@
 &lt;/blockquote></description></item><item><title>Python|使用Anaconda完成Python多环境配置</title><link>https://www.vimiix.com/posts/2017-06-01-python-multiversion-dev-anaconda/</link><pubDate>Thu, 01 Jun 2017 09:53:54 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-06-01-python-multiversion-dev-anaconda/</guid><description>&lt;p>今天是六月一号，国际儿童节，首先祝生活中的每一个宝宝（&lt;em>只要你觉得自己是宝宝，那你就是&lt;/em>）&lt;!-- raw HTML omitted -->Happy Children&amp;rsquo;s Day!!!&lt;!-- raw HTML omitted -->&lt;/p>
 &lt;p>OK,言归正传，昨天开始学习 Django 开发，个人认为，作为主流趋势，我倾向于用 pyhton3.x 开发，因为 web 开发有别与其他，对于实时响应要求相对较高，python3 可以更好的优化。在刚刚结束的 Pycon2017 上，来自 Instagram 的 Lisa Guo 和 Hui Ding（两位华裔）分别介绍了&lt;a href="https://www.youtube.com/watch?v=66XoCk79kjM">Instagram 为何选择 py3 以及整个网站迁移 py3 的过程&lt;/a>。虽然还不是很具体了解其中的差别，但一个体量不小的公司做出了向 python3 迁移的举动，一定说明 python3 在 web 开发上有肯定的优势。&lt;/p></description></item><item><title>Python-from __future__ import print_function</title><link>https://www.vimiix.com/posts/2017-05-12-print-function/</link><pubDate>Fri, 12 May 2017 14:55:03 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-05-12-print-function/</guid><description>&lt;p>Python 提供了**__future__**模块，把下一个新版本的特性导入到当前版本，于是我们就可以在当前版本中测试一些新版本的特性&lt;/p>
 &lt;p>在 python2.x 的环境是使用下面语句，则第二句语法检查通过，第三句语法检查失败&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-Python" data-lang="Python">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">from&lt;/span> __future__ &lt;span style="color:#f92672">import&lt;/span> print_function
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">&amp;#39;good&amp;#39;&lt;/span>) &lt;span style="color:#75715e">#可以通过执行&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print &lt;span style="color:#e6db74">&amp;#39;bad&amp;#39;&lt;/span> &lt;span style="color:#75715e">#语法错误&lt;/span>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-Python" data-lang="Python">&lt;span style="display:flex;">&lt;span>	&lt;span style="color:#f92672">from&lt;/span> __future__ &lt;span style="color:#f92672">import&lt;/span> print_function
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	print(&lt;span style="color:#e6db74">&amp;#39;good&amp;#39;&lt;/span>) &lt;span style="color:#75715e">#可以通过执行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>	print &lt;span style="color:#e6db74">&amp;#39;bad&amp;#39;&lt;/span> &lt;span style="color:#75715e">#语法错误&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>[转]Python中eval的强大与潜在风险</title><link>https://www.vimiix.com/posts/2017-05-04-how-to-use-eval/</link><pubDate>Thu, 04 May 2017 23:57:34 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-05-04-how-to-use-eval/</guid><description>这两天在做项目的过程中，遇到 eval 这个方法，不是很会用，经过一番搜索学习，特此收藏一篇乌云网深度好文，以备以后回顾。
 原文出处：WooYun - 隐形人真忙
 0x00 前言 eval 是 Python 用于执行 python 表达式的一个内置函数，使用 eval，可以很方便的将字符串动态执行。比如下列代码：
@@ -128,32 +130,44 @@
 #!python &amp;gt;&amp;gt;&amp;gt; import os &amp;gt;&amp;gt;&amp;gt; eval(&amp;#34;os.system(&amp;#39;whoami&amp;#39;)&amp;#34;) win-20140812chjadministrator 0 当然，eval 只能执行 Python 的表达式类型的代码，不能直接用它进行 import 操作，但 exec 可以。如果非要使用 eval 进行 import，则使用import：
 #!python &amp;gt;&amp;gt;&amp;gt; exec(&amp;#39;import os&amp;#39;) &amp;gt;&amp;gt;&amp;gt; eval(&amp;#39;import os&amp;#39;) Traceback (most recent call last): File &amp;#34;&amp;#34;, line 1, in File &amp;#34;&amp;#34;, line 1 import os ^ SyntaxError: invalid syntax &amp;gt;&amp;gt;&amp;gt; eval(&amp;#34;__import__(&amp;#39;os&amp;#39;).</description></item><item><title>Python操作MySQL数据库</title><link>https://www.vimiix.com/posts/2017-04-20-use-python-to-operate-mysql/</link><pubDate>Thu, 20 Apr 2017 23:57:34 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-04-20-use-python-to-operate-mysql/</guid><description>&lt;p>
 &lt;figure>
-&lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/python&amp;#43;mysql.jpg" alt="" />
+ &lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/python&amp;#43;mysql.jpg" alt="" />
 &lt;/figure>
+
+
 &lt;/p></description></item><item><title>Python-文件操作</title><link>https://www.vimiix.com/posts/2017-04-13-file-operation/</link><pubDate>Thu, 13 Apr 2017 15:50:34 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-04-13-file-operation/</guid><description>&lt;p>
 &lt;figure>
-&lt;img src="https://static.vimiix.com/uPic/2021-04-06/uDCgf4.jpg" alt="header" />
+ &lt;img src="https://static.vimiix.com/uPic/2021-04-06/uDCgf4.jpg" alt="header" />
 &lt;/figure>
+
+
 &lt;/p>
 &lt;h2 id="打开文件">打开文件&lt;/h2>
 &lt;p>在 Pyhton 中，使用&lt;!-- raw HTML omitted -->open()&lt;!-- raw HTML omitted -->函数打开文件，并返回文件对象，拿到这个文件对象，就可以读取或修改这个文件。&lt;!-- raw HTML omitted -->open()&lt;!-- raw HTML omitted -->是一个 python 内建函数，可以直接调用。&lt;/p></description></item><item><title>Python-关于Python中闭包的一些理解</title><link>https://www.vimiix.com/posts/2017-04-09-about-closure/</link><pubDate>Sun, 09 Apr 2017 17:07:34 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-04-09-about-closure/</guid><description>&lt;p>
 &lt;figure>
-&lt;img src="https://static.vimiix.com/uPic/2021-04-06/rRo70V.jpg" alt="" />
+ &lt;img src="https://static.vimiix.com/uPic/2021-04-06/rRo70V.jpg" alt="" />
 &lt;/figure>
+
+
 &lt;/p>
 &lt;p>&lt;strong>看不懂的定义&lt;/strong>：闭包是由函数及其相关的引用环境组合而成的实体(即：闭包=函数+引用环境)。&lt;/p></description></item><item><title>Python-高阶函数习题练习</title><link>https://www.vimiix.com/posts/2017-04-08-practice-by-using-higher-order-functions/</link><pubDate>Sat, 08 Apr 2017 15:50:34 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-04-08-practice-by-using-higher-order-functions/</guid><description>&lt;p>
 &lt;figure>
-&lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/map-reduce-filter.jpg" alt="" />
+ &lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/map-reduce-filter.jpg" alt="" />
 &lt;/figure>
+
+
 &lt;/p>
 &lt;h5 id="本文是针对mapreduce和filter三个高阶函数的程序练习">本文是针对map()，reduce()和filter()三个高阶函数的程序练习。&lt;/h5></description></item><item><title>自助购物机交易源码</title><link>https://www.vimiix.com/posts/2017-04-05-self-service-shopping-machine/</link><pubDate>Wed, 05 Apr 2017 18:57:34 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-04-05-self-service-shopping-machine/</guid><description>&lt;p>
 &lt;figure>
-&lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/self-service-machine.jpg" alt="" />
+ &lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/self-service-machine.jpg" alt="" />
 &lt;/figure>
+
+
 &lt;/p>
 &lt;h5 id="本文是一篇纯源码功能上实现了自助购物机的基本交易过程">本文是一篇纯源码，功能上实现了自助购物机的基本交易过程。&lt;/h5></description></item><item><title>Python-运算符和流程控制</title><link>https://www.vimiix.com/posts/2017-04-01-operators-and-flow-control/</link><pubDate>Sat, 01 Apr 2017 14:34:20 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-04-01-operators-and-flow-control/</guid><description>&lt;p>
 &lt;figure>
-&lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/operator-flow-control.jpg" alt="" />
+ &lt;img src="http://vimiix-blog.oss-cn-qingdao.aliyuncs.com/operator-flow-control.jpg" alt="" />
 &lt;/figure>
+
+
 &lt;/p>
 &lt;p>随手笔记，本篇介绍了python中的各种运算符以及2种流程控制语句。&lt;/p></description></item><item><title>Python|对于元组和字典的认识</title><link>https://www.vimiix.com/posts/2017-03-31-introduction-of-tuple-and-dict/</link><pubDate>Fri, 31 Mar 2017 15:00:06 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-03-31-introduction-of-tuple-and-dict/</guid><description>&lt;p>本篇是一篇随手笔记，记录了对于 Python 的数据类型中元组（Tuple）和字典（Dict）的一些认识，以及部分内置方法的介绍。&lt;/p></description></item><item><title>Python|py2中字符与字节之间的编解码</title><link>https://www.vimiix.com/posts/2017-03-28-encode-and-decode/</link><pubDate>Tue, 28 Mar 2017 13:56:18 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-03-28-encode-and-decode/</guid><description>&lt;p>据说，每个做 Python 开发的都被字符编码的问题搞晕过，最常见的错误就是 UnicodeEncodeError、UnicodeDecodeError，你好像知道怎么解决，遗憾的是，错误又出现在其它地方，问题总是重蹈覆辙，str 到 unicode 之间的转换用哪 decode 还是 encode 方法还特不好记，老是混淆，问题究竟出在哪里？&lt;/p></description></item><item><title>Python-SyntaxError:Non-ASCII character '\e8' in....</title><link>https://www.vimiix.com/posts/2017-03-15-syntaxerror-non-ascii-character-e8-in/</link><pubDate>Wed, 15 Mar 2017 22:53:51 +0000</pubDate><guid>https://www.vimiix.com/posts/2017-03-15-syntaxerror-non-ascii-character-e8-in/</guid><description>&lt;h2 id="syntaxerrornon-ascii-character-e8-in-file">SyntaxError:Non-ASCII character &amp;lsquo;\e8&amp;rsquo; in File&amp;hellip;&lt;/h2></description></item></channel></rss>

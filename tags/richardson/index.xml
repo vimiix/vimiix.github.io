@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Richardson on Hi, I'm Vimiix</title><link>https://www.vimiix.com/tags/richardson/</link><description>Recent content in Richardson on Hi, I'm Vimiix</description><generator>Hugo -- gohugo.io</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 21 Feb 2020 16:22:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/tags/richardson/index.xml" rel="self" type="application/rss+xml"/><item><title>[译]Richardson成熟度模型</title><link>https://www.vimiix.com/posts/2020-02-21-richardson-model/</link><pubDate>Fri, 21 Feb 2020 16:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2020-02-21-richardson-model/</guid><description>&lt;blockquote>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Richardson on Hi, I'm Vimiix</title><link>https://www.vimiix.com/tags/richardson/</link><description>Recent content in Richardson on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 21 Feb 2020 16:22:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/tags/richardson/index.xml" rel="self" type="application/rss+xml"/><item><title>[译]Richardson成熟度模型</title><link>https://www.vimiix.com/posts/2020-02-21-richardson-model/</link><pubDate>Fri, 21 Feb 2020 16:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2020-02-21-richardson-model/</guid><description>&lt;blockquote>
 &lt;p>原文链接：&lt;a href="https://martinfowler.com/articles/richardsonMaturityModel.html">https://martinfowler.com/articles/richardsonMaturityModel.html&lt;/a>&lt;/p>
 &lt;/blockquote>
 &lt;h3 id="迈向-rest-的荣耀之巅">迈向 REST 的荣耀之巅&lt;/h3>
@@ -6,6 +6,8 @@
 &lt;p>在&lt;a href="https://www.amazon.cn/dp/0596805829/ref=sr_1_1?ie=UTF8&amp;amp;qid=1551228104&amp;amp;sr=8-1&amp;amp;keywords=REST+in+Practice">Rest In Practice&lt;/a>一书中，解释了如何使用 Restful Web Service 来处理企业面临的许多集成问题。本书的核心观点是，Web 就是一个大规模可扩展的分布式系统存在、并可以很好的工作的证明，而我们可以根据这一观点更容易地构建集成系统。&lt;/p>
 &lt;p>
 &lt;figure>
-&lt;img src="https://static.vimiix.com/uPic/2021-04-06/5hdvom.png" alt="" />
+ &lt;img src="https://static.vimiix.com/uPic/2021-04-06/5hdvom.png" alt="" />
 &lt;/figure>
+
+
 &lt;/p></description></item></channel></rss>
