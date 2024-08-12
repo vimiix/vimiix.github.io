@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Weakref on Hi, I'm Vimiix</title><link>https://www.vimiix.com/tags/weakref/</link><description>Recent content in Weakref on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 12 Aug 2024 08:35:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/tags/weakref/index.xml" rel="self" type="application/rss+xml"/><item><title>Python中的弱引用</title><link>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</link><pubDate>Mon, 12 Aug 2024 08:35:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
+&lt;p>在理解弱引用之前，我们需要先了解 python 中的对象引用和垃圾回收的基本概念，这样更有助于对弱引用的理解。&lt;/p>
+&lt;h3 id="对象引用">对象引用&lt;/h3>
+&lt;p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 &lt;code>a = 1&lt;/code>，这里 &lt;code>a&lt;/code> 就是对象 &lt;code>1&lt;/code> 的引用。每个引用的所指向的对象都可以通过 &lt;code>id()&lt;/code> 函数来查看，两个引用是否相同可以通过 &lt;code>is&lt;/code> 运算符来比较。&lt;/p>
+&lt;blockquote>
+&lt;p>补充 &lt;code>==&lt;/code>和 &lt;code>is&lt;/code> 的区别：&lt;code>==&lt;/code> 运算符比较对象的值（对象中保存的数据），而 &lt;code>is&lt;/code> 比较引用的对象是否为同一个。&lt;/p>
+&lt;/blockquote>
+&lt;p>如果想要查看一个对象的内引用次数，可以通过 &lt;code>sys.getrefcount(a) -1&lt;/code> 查看（&lt;em>减1是因为调用 sys.getrefcount 函数传递参数时会增加一次引用&lt;/em>）。&lt;/p>
+&lt;p>&lt;strong>为了说明后面的弱引用，我们将计数的引用成为强引用。&lt;/strong>&lt;/p></description></item></channel></rss>

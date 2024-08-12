@@ -1,0 +1,129 @@
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Python中的弱引用</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css><noscript><img src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/pixel.gif></noscript><script defer src=https://shynet.vimiix.com/ingress/7c85700e-0592-42ce-82b8-24bc42798b16/script.js></script></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right;color:gray;font-size:x-large>Get hands dirty.</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/projects/><b>实践</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于我</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Python中的弱引用</h1><b><time>2024.08.12 08:35</time></b>
+<a href=/tags/python>python</a>
+<a href=/tags/weakref>weakref</a>
+<a href=/tags/notes>notes</a><div><h2 id=前言>前言</h2><p>在理解弱引用之前，我们需要先了解 python 中的对象引用和垃圾回收的基本概念，这样更有助于对弱引用的理解。</p><h3 id=对象引用>对象引用</h3><p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 <code>a = 1</code>，这里 <code>a</code> 就是对象 <code>1</code> 的引用。每个引用的所指向的对象都可以通过 <code>id()</code> 函数来查看，两个引用是否相同可以通过 <code>is</code> 运算符来比较。</p><blockquote><p>补充 <code>==</code>和 <code>is</code> 的区别：<code>==</code> 运算符比较对象的值（对象中保存的数据），而 <code>is</code> 比较引用的对象是否为同一个。</p></blockquote><p>如果想要查看一个对象的内引用次数，可以通过 <code>sys.getrefcount(a) -1</code> 查看（<em>减1是因为调用 sys.getrefcount 函数传递参数时会增加一次引用</em>）。</p><p><strong>为了说明后面的弱引用，我们将计数的引用成为强引用。</strong></p><h2 id=垃圾回收>垃圾回收</h2><p>Python 中的对象在以下两种情况下会被视为垃圾，进而将其所占用的内存回收（GC）：</p><ol><li><strong>没有任何引用指向该对象</strong>；</li><li>存在循环引用；（<em>循环引用解释器会判定为无法获取，所以都会被销毁，不在本文展开</em>）</li></ol><p><code>del</code> 语法可以实现删除一个对象的引用，而不是对象本身，当我们将指向目标对象的所有引用都删除后，才会触发 Python 的解释器的垃圾回收机制，回收该对象的内存地址。（<strong>理解到这里就够，关于更详细的分代垃圾回收的算法等，请自行学习</strong>）</p><p>另外，除了使用 <code>del</code> 来删除引用外，重新绑定也可能会导致对象引用数量归零触发垃圾回收。比如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span>a <span style=color:#f92672>=</span> [<span style=color:#ae81ff>1</span>]
+</span></span><span style=display:flex><span>a <span style=color:#f92672>=</span> [<span style=color:#ae81ff>2</span>]  <span style=color:#75715e># 此时 [1] 这个对象就会被销毁，因为引用 a 被指向了 [2] 这个对象，[1] 的引用数就归零了</span>
+</span></span></code></pre></div><h2 id=weakref-模块的原理>weakref 模块的原理</h2><p>在 Python 中，内存管理是一个重要的话题。通过前言的铺垫，我们大概了解了 Python 是通过引用计数的方式实现内存管理机制来管理对象的生命周期的。然而，有些情况下，我们可能希望在不影响对象生命周期的前提下，引用某些对象，这时候就可以使用 Python 中的 <code>weakref</code> 模块。</p><p><code>weakref</code>（弱引用）是一个用于跟踪对象的模块，它允许创建不会阻止对象被垃圾回收的引用。通常情况下，Python 中的强引用会增加对象的引用计数，当强引用计数变为零时，Python的垃圾回收器会自动回收该对象。然而，使用 <code>weakref</code> 创建的弱引用不会增加对象的引用计数，因此，当该对象的强引用计数降为零时，即使弱引用仍然存在，垃圾回收器也会回收该对象。</p><p>弱引用的存在使得我们可以创建对象的缓存、代理对象等场景，并且不会因不必要的引用而导致内存泄漏或对象无法及时回收。</p><h2 id=weakref-的使用方法>weakref 的使用方法</h2><h3 id=创建弱引用>创建弱引用</h3><p>在 Python 中，<code>weakref.ref</code> 函数可以用于创建弱引用。例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> weakref
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>A</span>:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> __init__(self, value):
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>value <span style=color:#f92672>=</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>obj <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>10</span>)
+</span></span><span style=display:flex><span>weak_ref <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>ref(obj)
+</span></span><span style=display:flex><span>print(weak_ref)  <span style=color:#75715e># 输出：&lt;weakref at 0x...; to &#39;A&#39; at 0x...&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 通过弱引用访问原对象</span>
+</span></span><span style=display:flex><span>print(weak_ref())  <span style=color:#75715e># 输出：&lt;__main__.A object at 0x...&gt;</span>
+</span></span></code></pre></div><p>在上述代码中，我们创建了一个 <code>A</code> 对象并将其传递给 <code>weakref.ref</code> 以创建一个弱引用。通过 <code>weak_ref()</code> 可以访问到原始对象。需要注意的是，如果原对象被垃圾回收，<code>weak_ref()</code>将返回 <code>None</code>。</p><h3 id=弱引用的回调>弱引用的回调</h3><p>在某些情况下，我们可能希望在弱引用所指向的对象被回收时执行特定的操作。这时，我们可以为弱引用注册一个回调函数。例如：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> weakref
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>A</span>:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> __del__(self):
+</span></span><span style=display:flex><span>        <span style=color:#75715e># 这里演示调用顺序，不建议自己在 __del__ 方法中自定义代码</span>
+</span></span><span style=display:flex><span>        print(<span style=color:#e6db74>&#34;A object is being destroyed&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>on_finalize</span>(reference):
+</span></span><span style=display:flex><span>    print(<span style=color:#e6db74>f</span><span style=color:#e6db74>&#34;Object </span><span style=color:#e6db74>{</span>reference<span style=color:#e6db74>}</span><span style=color:#e6db74> is being finalized.&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>obj <span style=color:#f92672>=</span> A()
+</span></span><span style=display:flex><span>weak_ref <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>ref(obj, on_finalize)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 删除强引用，触发垃圾回收</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>del</span> obj
+</span></span><span style=display:flex><span><span style=color:#75715e># 输出：A object is being destroyed</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 输出：Object &lt;weakref at 0x...; dead&gt; is being finalized.</span>
+</span></span></code></pre></div><p>在这里，我们为 <code>weakref.ref</code> 传递了一个回调函数 <code>on_finalize</code>。当对象被垃圾回收时，该回调函数会被触发。</p><h3 id=weakrefweakvaluedictionary>weakref.WeakValueDictionary</h3><p><code>weakref.WeakValueDictionary</code> 是 <code>weakref</code> 模块中常用的一个类，它提供了一个类似于字典的对象，其中的值是通过弱引用进行存储的。使用 <code>WeakValueDictionary</code> 可以避免缓存中的对象被意外持久化，从而有效地防止内存泄漏。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> weakref
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>A</span>:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> __init__(self, value):
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>value <span style=color:#f92672>=</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>weak_dict <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>WeakValueDictionary()
+</span></span><span style=display:flex><span>obj1 <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>10</span>)
+</span></span><span style=display:flex><span>obj2 <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>20</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>weak_dict[<span style=color:#e6db74>&#39;a&#39;</span>] <span style=color:#f92672>=</span> obj1
+</span></span><span style=display:flex><span>weak_dict[<span style=color:#e6db74>&#39;b&#39;</span>] <span style=color:#f92672>=</span> obj2
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>print(weak_dict[<span style=color:#e6db74>&#39;a&#39;</span>])  <span style=color:#75715e># 输出：&lt;__main__.A object at 0x...&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>del</span> obj1
+</span></span><span style=display:flex><span>print(weak_dict(<span style=color:#e6db74>&#39;a&#39;</span>))  <span style=color:#75715e># 输出：None</span>
+</span></span></code></pre></div><p>当 <code>obj1</code> 被删除时，对应的弱引用也会失效，因此在字典中查询 <code>'a'</code> 的值会返回<code>None</code>。</p><h3 id=weakrefweakkeydictionary>weakref.WeakKeyDictionary</h3><p><code>weakref.WeakKeyDictionary</code> 与 <code>WeakValueDictionary</code> 类似，只不过它使用弱引用来存储字典的键，而不是值。这在需要根据对象特性进行缓存或者存储临时数据的场景中非常有用。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> weakref
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>A</span>:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> __init__(self, value):
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>value <span style=color:#f92672>=</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>obj1 <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>10</span>)
+</span></span><span style=display:flex><span>obj2 <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>20</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>weak_dict <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>WeakKeyDictionary()
+</span></span><span style=display:flex><span>weak_dict[obj1] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;First&#39;</span>
+</span></span><span style=display:flex><span>weak_dict[obj2] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;Second&#39;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>print(weak_dict[obj1])  <span style=color:#75715e># 输出：First</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>del</span> obj1
+</span></span><span style=display:flex><span>print(list(weak_dict<span style=color:#f92672>.</span>keys()))  <span style=color:#75715e># 仅输出 [&lt;__main__.A object at 0x...&gt;]，obj1 对应的键已删除</span>
+</span></span></code></pre></div><h3 id=weakrefref-和-weakrefproxy-的区别>weakref.ref() 和 weakref.proxy() 的区别</h3><p><code>weakref.ref()</code> 和 <code>weakref.proxy()</code> 都是用于创建对象的弱引用的工具，但它们在行为和应用场景上存在一些区别。</p><p>访问方式：</p><ul><li><code>weakref.ref()</code> 返回的是一个弱引用对象，你需要调用这个对象才能访问原始对象，并且需要手动处理可能返回None的情况。</li><li><code>weakref.proxy()</code> 返回的是一个代理对象，直接使用它就可以像使用原始对象一样操作，但如果原始对象被回收，访问时会抛出异常。</li></ul><p>举个实例便于理解：</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> weakref
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>A</span>:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> __init__(self, value):
+</span></span><span style=display:flex><span>            self<span style=color:#f92672>.</span>value <span style=color:#f92672>=</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>ref <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>ref(c_obj)
+</span></span><span style=display:flex><span>ref() <span style=color:#75715e># &lt;__main__.C object at 0x...&gt;</span>
+</span></span><span style=display:flex><span>ref()<span style=color:#f92672>.</span>value <span style=color:#75715e># 1</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>proxy <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>proxy(c_obj)
+</span></span><span style=display:flex><span>proxy <span style=color:#75715e># &lt;weakproxy at 0x... to C at 0x...&gt;</span>
+</span></span><span style=display:flex><span>proxy<span style=color:#f92672>.</span>value <span style=color:#75715e># 1</span>
+</span></span></code></pre></div><h2 id=weakref-的约束>weakref 的约束</h2><p>并非所有对象都可以弱引用。支持弱引用的对象包括<strong>类实例、用 Python(但不是用C) 编写的函数、实例方法、set、frozensets、一些文件对象、生成器、类型对象、套接字、数组、deque、正则表达式模式对象和代码对象</strong>。</p><p>一些内置类型(如 <code>str</code>，<code>list</code> 和 <code>dict</code> )不直接支持弱引用，但可以通过子类化添加支持:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Dict</span>(dict):
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>pass</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>obj <span style=color:#f92672>=</span> Dict(red<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>, green<span style=color:#f92672>=</span><span style=color:#ae81ff>2</span>, blue<span style=color:#f92672>=</span><span style=color:#ae81ff>3</span>)   <span style=color:#75715e># 该对象是可以被弱引用的</span>
+</span></span></code></pre></div><p>其他内置类型(如 <code>tuple</code> 和 <code>int</code> )即使在子类化时也不支持弱引用。</p><h2 id=weakref-的应用场景>weakref 的应用场景</h2><h3 id=实现缓存机制>实现缓存机制</h3><p>在实际应用中，我们经常需要缓存一些对象以提高性能，但又不希望这些对象永久占用内存。这时候可以利用 <code>weakref</code> 来实现一个弱引用的缓存机制，确保缓存中的对象在内存不足时可以被自动回收。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> weakref
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Cache</span>:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> __init__(self):
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>_cache <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>WeakValueDictionary()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>get</span>(self, key):
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> self<span style=color:#f92672>.</span>_cache<span style=color:#f92672>.</span>get(key)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>set</span>(self, key, value):
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>_cache[key] <span style=color:#f92672>=</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>cache <span style=color:#f92672>=</span> Cache()
+</span></span><span style=display:flex><span>obj <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>10</span>)
+</span></span><span style=display:flex><span>cache<span style=color:#f92672>.</span>set(<span style=color:#e6db74>&#39;item&#39;</span>, obj)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>print(cache<span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#39;item&#39;</span>))  <span style=color:#75715e># &lt;__main__.A object at 0x...&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>del</span> obj
+</span></span><span style=display:flex><span>print(cache<span style=color:#f92672>.</span>get(<span style=color:#e6db74>&#39;item&#39;</span>))  <span style=color:#75715e># None</span>
+</span></span></code></pre></div><p>这种机制在需要处理大量临时对象、避免内存泄漏的场景中非常有用。</p><h3 id=使用弱引用集合>使用弱引用集合</h3><p><code>weakref</code> 模块还提供了 <code>WeakSet</code> 类，用于实现一个弱引用的集合。它与普通集合类似，但其中的元素会以弱引用形式存在。</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> weakref
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>A</span>:
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>def</span> __init__(self, value):
+</span></span><span style=display:flex><span>        self<span style=color:#f92672>.</span>value <span style=color:#f92672>=</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>obj1 <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>10</span>)
+</span></span><span style=display:flex><span>obj2 <span style=color:#f92672>=</span> A(<span style=color:#ae81ff>20</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>my_set <span style=color:#f92672>=</span> weakref<span style=color:#f92672>.</span>WeakSet([obj1, obj2])
+</span></span><span style=display:flex><span>print(obj1 <span style=color:#f92672>in</span> my_set)  <span style=color:#75715e># True</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>del</span> obj1
+</span></span><span style=display:flex><span>print(my_set) <span style=color:#75715e># {&lt;weakref at 0x...; to &#39;A&#39; at 0x...&gt;}</span>
+</span></span></code></pre></div><p>这种弱引用集合在需要跟踪大量对象但又不希望阻止其被回收时特别有用。</p><h3 id=总结>总结</h3><p><code>weakref</code> 模块提供了一种有效的内存管理手段，特别适合用于需要临时缓存对象、不希望持久占用内存的场景。通过对 <code>weakref</code> 的深入理解与合理应用，我们可以在复杂系统中更好地管理对象的生命周期，避免内存泄漏，提高程序的运行效率。</p></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2024-08-12-weakref-in-python/>Python中的弱引用</a></li><li><a href=/posts/2024-07-12-writing-custom-database-backends-in-django/>自定义 Django 中数据库的后端</a></li><li><a href=/posts/2024-06-05-working-mechanism-of-synchronous-standby-names-in-mogdb/>MogDB 中 synchronous_standby_names 参数的工作机制</a></li><li><a href=/posts/2024-02-20-be-a-better-developer-with-these-git-good-practices/>[译]做一个拥有 Git 好习惯的开发者</a></li><li><a href=/posts/2023-12-15-ssx/>SSX，一个有记忆的 ssh 客户端</a></li></ul></div></div></aside><footer><p>Social Links:
+<a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br><hr>&copy; 2017-2024
+Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p><script src=https://l2dwidget.js.org/lib/L2Dwidget.min.js></script><script>L2Dwidget.init({model:{jsonPath:"https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json"}})</script></footer></body></html>

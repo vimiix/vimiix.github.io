@@ -5,7 +5,10 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于我</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2024-07-12-writing-custom-database-backends-in-django/>自定义 Django 中数据库的后端</a></h1><b><time>2024.07.12 11:35</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2024-08-12-weakref-in-python/>Python中的弱引用</a></h1><b><time>2024.08.12 08:35</time></b>
+<a href=/tags/python>python</a>
+<a href=/tags/weakref>weakref</a>
+<a href=/tags/notes>notes</a><div><h2 id=前言>前言</h2><p>在理解弱引用之前，我们需要先了解 python 中的对象引用和垃圾回收的基本概念，这样更有助于对弱引用的理解。</p><h3 id=对象引用>对象引用</h3><p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 <code>a = 1</code>，这里 <code>a</code> 就是对象 <code>1</code> 的引用。每个引用的所指向的对象都可以通过 <code>id()</code> 函数来查看，两个引用是否相同可以通过 <code>is</code> 运算符来比较。</p><blockquote><p>补充 <code>==</code>和 <code>is</code> 的区别：<code>==</code> 运算符比较对象的值（对象中保存的数据），而 <code>is</code> 比较引用的对象是否为同一个。</p></blockquote><p>如果想要查看一个对象的内引用次数，可以通过 <code>sys.getrefcount(a) -1</code> 查看（<em>减1是因为调用 sys.getrefcount 函数传递参数时会增加一次引用</em>）。</p><p><strong>为了说明后面的弱引用，我们将计数的引用成为强引用。</strong></p><a href=https://www.vimiix.com/posts/2024-08-12-weakref-in-python/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2024-07-12-writing-custom-database-backends-in-django/>自定义 Django 中数据库的后端</a></h1><b><time>2024.07.12 11:35</time></b>
 <a href=/tags/django>django</a>
 <a href=/tags/python>python</a>
 <a href=/tags/notes>notes</a>
@@ -77,10 +80,7 @@
 <a href=/tags/tool>tool</a>
 <a href=/tags/bash>bash</a><div><p>现在大部分的科技公司开发模式，都是基于 Git 进行多人协作开发。所以，对于我们每一个开发者来说，Git 的操作就是必不可少的技能了（不是锦上添花，而是必不可少）。对于 Git 的操作，不是本次记录的内容，网上的<a href=https://git-scm.com/book/zh/v1/%E8%B5%B7%E6%AD%A5-Git-%E5%9F%BA%E7%A1%80>教程</a>可以在官网找到。</p><p>今天我想记录一下我本机多用户管理的一点小操作。</p><p>当每进入一家新公司的时候，总会在新公司领到一个新的公司邮箱，基本上这个邮箱也就是你在公司期间进行代码开发的 git 账户。这时候，加上我们平时在 <a href=https://github.com>GitHub</a> 的账户，就会有两个账户需要切换使用。</p><p>下面是我个人的一点小技巧记录，不一定是最好的，但只要自己用着方便就 OK，如果此时看文章的你有好的方法的话，可以请在讨论区交流。</p><a href=https://www.vimiix.com/posts/2018-11-08-change-git-account-by-script/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/>从七牛云到阿里云的自动化迁移代码说明</a></h1><b><time>2018.10.29 23:22</time></b>
 <a href=/tags/python>Python</a>
-<a href=/tags/tool>tool</a><div><p>前几天叙事性的写了<a href=https://vimiix.com/post/2018/10/24/move-qiniuyun-to-alioss/>一篇</a>，有点像日记，这篇分析一下代码逻辑，便于以后回顾。</p><h3 id=工具>工具</h3><ul><li>python3.5</li><li>顺手的 IDE（轻量级推荐<a href=https://code.visualstudio.com/>vscode</a>）</li><li><a href=https://github.com/qiniu/qshell#%E4%B8%8B%E8%BD%BD>qiniu/qshell</a> （本文是基于 mac 系统开发，所以使用 qshell 的 mac 版本，读者请根据自己的系统下载，也可以直接跳至文末，下载本文源码，源码中 tool 文件夹中已经下载好了 mac 下的工具。这个工具只有一步使用到，所以如果只是使用一下，可以不用研究他的所有指令）</li></ul><a href=https://www.vimiix.com/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-10-24-move-qiniuyun-to-alioss/>七牛云数据自动迁移到阿里云OSS</a></h1><b><time>2018.10.24 19:22</time></b>
-<a href=/tags/python>Python</a>
-<a href=/tags/tool>tool</a>
-<a href=/tags/migrate>migrate</a><div><h3 id=背景>背景</h3><p>近期收到两封七牛云发来的邮件：</p><blockquote><p>测试域名回收通知</p><p>您的账号 xxx 在七牛云融合 CDN 加速平台有以下测试域名<strong>还剩 7 个自然日会被系统自动回收</strong></p></blockquote><p>由于，我博客所有的图片文件都是存储在七牛云的，这个域名也使用了一年多了，怎么突然要回收呢？</p><p>上网一搜才知道，大概是有什么不法分子之类的，使用七牛云的免费空间传播色情暴力之类的内容，被 Godday 制裁了，现在新申请的 bucket 只能使用一个月，要想绑定域名，还得备案操作。俺这小博客，也就自己玩玩的一个国外服务器，也备不了案啊。</p><p>无奈，看网上很多人都是被回收了才知道自己的图片都访问不了。还好我习惯性的看这些推送邮件，给自己留了一周时间用来备份转移。既然免费的不好用了，微博之类的图床不好迁移，所以就买了一年阿里云的 OSS 服务。</p><p>虽然我的图片还算不是很多，但要是一张一张手动下载再上传到阿里云，也是不小的工作量，而且太浪费时间了。</p><a href=https://www.vimiix.com/posts/2018-10-24-move-qiniuyun-to-alioss/>Read more...</a></div></article><div>1 of 5
+<a href=/tags/tool>tool</a><div><p>前几天叙事性的写了<a href=https://vimiix.com/post/2018/10/24/move-qiniuyun-to-alioss/>一篇</a>，有点像日记，这篇分析一下代码逻辑，便于以后回顾。</p><h3 id=工具>工具</h3><ul><li>python3.5</li><li>顺手的 IDE（轻量级推荐<a href=https://code.visualstudio.com/>vscode</a>）</li><li><a href=https://github.com/qiniu/qshell#%E4%B8%8B%E8%BD%BD>qiniu/qshell</a> （本文是基于 mac 系统开发，所以使用 qshell 的 mac 版本，读者请根据自己的系统下载，也可以直接跳至文末，下载本文源码，源码中 tool 文件夹中已经下载好了 mac 下的工具。这个工具只有一步使用到，所以如果只是使用一下，可以不用研究他的所有指令）</li></ul><a href=https://www.vimiix.com/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/>Read more...</a></div></article><div>1 of 5
 <a href=/page/2/>下一页</a></div></main><footer><p>Social Links:
 <a href=https://github.com/vimiix><b>Github</b></a>.
 <a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
