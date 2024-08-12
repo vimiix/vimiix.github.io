@@ -2,9 +2,7 @@
 &lt;p>在理解弱引用之前，我们需要先了解 python 中的对象引用和垃圾回收的基本概念，这样更有助于对弱引用的理解。&lt;/p>
 &lt;h3 id="对象引用">对象引用&lt;/h3>
 &lt;p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 &lt;code>a = 1&lt;/code>，这里 &lt;code>a&lt;/code> 就是对象 &lt;code>1&lt;/code> 的引用。每个引用的所指向的对象都可以通过 &lt;code>id()&lt;/code> 函数来查看，两个引用是否相同可以通过 &lt;code>is&lt;/code> 运算符来比较。&lt;/p>
-&lt;blockquote>
-&lt;p>补充 &lt;code>==&lt;/code>和 &lt;code>is&lt;/code> 的区别：&lt;code>==&lt;/code> 运算符比较对象的值（对象中保存的数据），而 &lt;code>is&lt;/code> 比较引用的对象是否为同一个。&lt;/p>
-&lt;/blockquote>
+&lt;p>&lt;em>(&lt;code>==&lt;/code>和 &lt;code>is&lt;/code> 的区别：&lt;code>==&lt;/code> 运算符比较对象的值（对象中保存的数据），而 &lt;code>is&lt;/code> 比较引用的对象是否为同一个。)&lt;/em>&lt;/p>
 &lt;p>如果想要查看一个对象的内引用次数，可以通过 &lt;code>sys.getrefcount(a) -1&lt;/code> 查看（&lt;em>减1是因为调用 sys.getrefcount 函数传递参数时会增加一次引用&lt;/em>）。&lt;/p>
 &lt;p>&lt;strong>为了说明后面的弱引用，我们将计数的引用成为强引用。&lt;/strong>&lt;/p>
 &lt;h2 id="垃圾回收">垃圾回收&lt;/h2>
@@ -163,7 +161,7 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">del&lt;/span> obj1
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>print(my_set) &lt;span style="color:#75715e"># {&amp;lt;weakref at 0x...; to &amp;#39;A&amp;#39; at 0x...&amp;gt;}&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这种弱引用集合在需要跟踪大量对象但又不希望阻止其被回收时特别有用。&lt;/p>
-&lt;h3 id="总结">总结&lt;/h3>
+&lt;h2 id="总结">总结&lt;/h2>
 &lt;p>&lt;code>weakref&lt;/code> 模块提供了一种有效的内存管理手段，特别适合用于需要临时缓存对象、不希望持久占用内存的场景。通过对 &lt;code>weakref&lt;/code> 的深入理解与合理应用，我们可以在复杂系统中更好地管理对象的生命周期，避免内存泄漏，提高程序的运行效率。&lt;/p></description></item><item><title>自定义 Django 中数据库的后端</title><link>https://www.vimiix.com/posts/2024-07-12-writing-custom-database-backends-in-django/</link><pubDate>Fri, 12 Jul 2024 11:35:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-07-12-writing-custom-database-backends-in-django/</guid><description>&lt;p>Django 是一个全能的高级 Python Web 框架，它使得开发人员可以快速构建 Web 应用程序。Django 的一个关键特性就是它对多种数据库的支持。开发人员可以使用各种数据库后端来存储数据，如 SQLite、PostgreSQL、MySQL、Oracle 等等。但是，有时开发人员需要编写自定义数据库后端来支持一些 Django 默认不支持的特定数据库。在本文，我们将学习如何在 Django 中编写自定义数据库的后端。&lt;/p>
 &lt;h2 id="步骤1了解django的数据库api">步骤1：了解Django的数据库API&lt;/h2>
 &lt;p>在开始编写自定义数据库后端之前，我们需要了解Django的数据库API是如何工作的。Django的数据库API是一组允许开发人员与数据库交互的类和方法。Django数据库API中的关键类是:&lt;/p>
