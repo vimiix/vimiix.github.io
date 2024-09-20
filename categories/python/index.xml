@@ -4,7 +4,88 @@
 &lt;p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 &lt;code>a = 1&lt;/code>，这里 &lt;code>a&lt;/code> 就是对象 &lt;code>1&lt;/code> 的引用。每个引用的所指向的对象都可以通过 &lt;code>id()&lt;/code> 函数来查看，两个引用是否相同可以通过 &lt;code>is&lt;/code> 运算符来比较。&lt;/p>
 &lt;p>&lt;em>(&lt;code>==&lt;/code>和 &lt;code>is&lt;/code> 的区别：&lt;code>==&lt;/code> 运算符比较对象的值（对象中保存的数据），而 &lt;code>is&lt;/code> 比较引用的对象是否为同一个。)&lt;/em>&lt;/p>
 &lt;p>如果想要查看一个对象的内引用次数，可以通过 &lt;code>sys.getrefcount(a) -1&lt;/code> 查看（&lt;em>减1是因为调用 sys.getrefcount 函数传递参数时会增加一次引用&lt;/em>）。&lt;/p>
-&lt;p>&lt;strong>为了说明后面的弱引用，我们将计数的引用成为强引用。&lt;/strong>&lt;/p></description></item><item><title>pipenv错误解决:TypeError: "module" object is not callable</title><link>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</link><pubDate>Sun, 21 Oct 2018 11:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</guid><description>&lt;h3 id="软件版本">软件版本&lt;/h3>
+&lt;p>&lt;strong>为了说明后面的弱引用，我们将计数的引用成为强引用。&lt;/strong>&lt;/p></description></item><item><title>psycopg2 基于 openGauss libpq 中 execPramasBatch 和 execPreparedBatch 接口批量操作性能测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
+&lt;p>如果要查看 Psycopg2 不同接口之间批量操作对比测试，请访问&lt;a href="https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/">这篇笔记&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="测试环境">测试环境&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>组件&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>客户端操作系统&lt;/td>
+&lt;td>Rocky Linux 8&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>服务端配置&lt;/td>
+&lt;td>2C6G, 40G HDD&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>CPU&lt;/td>
+&lt;td>Intel Xeon Processor (Icelake)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>数据库&lt;/td>
+&lt;td>MogDB 5.0&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>网络&lt;/td>
+&lt;td>300M宽带&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Python&lt;/td>
+&lt;td>3.6.8&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Psycopg2&lt;/td>
+&lt;td>&lt;a href="https://gitee.com/vimiix/openGauss-connector-python-psycopg2/tree/dev">vimiix/openGauss-connector-python-psycopg2&lt;/a>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;blockquote>
+&lt;p>注意：&lt;/p>
+&lt;ol>
+&lt;li>由于真正的性能和服务器的配置，网络情况相关性也比较大，本测试所有的测试用例环境条件一致，只有参数作为变量，所以请不要注重数值本身，重点关注不同情况下的性能比例&lt;/li>
+&lt;li>本测试只取了 100/1000/10000 这个page_size，具有一定的性能趋势，但不代表一味的增大 page_size 就可以提高性能，必然存在一个性能拐点的参数值，而且不同的场景存在不同的性能拐点，要找到性能拐点仍需根据实际情况进行更多的测试。&lt;/li>
+&lt;/ol>
+&lt;/blockquote></description></item><item><title>psycopg2 批量操作接口性能测试</title><link>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</link><pubDate>Wed, 12 Jul 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</guid><description>&lt;h2 id="测试版本">测试版本&lt;/h2>
+&lt;p>本测试基于 openGauss 版本的 psycopg2 驱动&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> psycopg2 &lt;span style="color:#66d9ef">as&lt;/span> pg
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__libpq_version__
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">90204&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__version__
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;2.8.6 (dt dec pq3 ext)&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="测试环境">测试环境&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>组件&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>客户端&lt;/td>
+&lt;td>Rocky Linux 8 虚拟机&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>数据库&lt;/td>
+&lt;td>openGauss 3.0.3 in docker&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>网络&lt;/td>
+&lt;td>本地回路网卡&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Python&lt;/td>
+&lt;td>3.6.8&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table></description></item><item><title>pipenv错误解决:TypeError: "module" object is not callable</title><link>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</link><pubDate>Sun, 21 Oct 2018 11:22:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/</guid><description>&lt;h3 id="软件版本">软件版本&lt;/h3>
 &lt;p>今天在折腾一台新的云主机，所以我在安装环境的时候&lt;code>pip&lt;/code>和&lt;code>pipenv&lt;/code>都选择安装了最新版本&lt;/p>
 &lt;p>（&lt;em>注：正是这两个版本配合才会出现下面的报错，旧版本或以后的新版本的 Pipenv 不会出现&lt;/em>）。&lt;/p>
 &lt;p>具体如下：&lt;/p>

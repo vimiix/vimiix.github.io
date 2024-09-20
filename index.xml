@@ -1,4 +1,99 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 12 Aug 2024 08:35:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Python中的弱引用</title><link>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</link><pubDate>Mon, 12 Aug 2024 08:35:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 20 Sep 2024 08:54:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>如何做code review</title><link>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</link><pubDate>Fri, 20 Sep 2024 08:54:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</guid><description>&lt;h2 id="为什么要做code-review">为什么要做code review&lt;/h2>
+&lt;p>从一个需求开发的完整生命周期来看，大约会包含以下过程:&lt;/p>
+&lt;ol>
+&lt;li>需求分析，考虑人员情况、功能预期上线时间、技术难度等诸多因素，与 PM 讨论合理调整需求，分配资源；&lt;/li>
+&lt;li>整体设计，对设计进行 review；&lt;/li>
+&lt;li>代码开发；&lt;/li>
+&lt;li>开发自我 review，观察、思考与整体设计的出入，保证代码遵循团队规范（至少得通过静态代码检查）；&lt;/li>
+&lt;li>添加相应的单元测试，并保证已有的单元测试不受影响；&lt;/li>
+&lt;li>&lt;strong>code review，请相关同事对代码进行 review，修复 review 中发现的问题&lt;/strong>；&lt;/li>
+&lt;li>提交代码给 QA 测试，QA 会进行功能测试、集成测试、性能测试、压力测试等；&lt;/li>
+&lt;li>修复测试发现的 bug 后功能上线。&lt;/li>
+&lt;/ol>
+&lt;p>从上属流程可以看出，代码写完了会有专业的测试同事来进行全方位的测试，那么为什么还要 code review 呢？其次，合格的程序员理论上都会 review 自己的代码，还有没有必要请同事来 review 呢？&lt;/p>
+&lt;p>一个 bug，可能在代码 review 的时候被发现；也可能在测试的时候被发现；最坏的情况下，被用户发现，当然，此时很可能给用户、产品带来损失。越早发现问题，受影响的人员越少，修复成本就越小。&lt;/p>
+&lt;p>开发人员有时也有一个误区，觉得自己完成 “代码开发” 这一步就万事大吉了，测试的事情就应交给 QA 去执行。但很多时候，QA 更多从功能角度去验证代码，有时候黑箱测试也很难覆盖到全部情况，比如异常、安全性问题、版本依赖。况且现在很多公司都逐渐去掉专门的 Test，开发得自己测试，但思维定势导致很难发现自己的问题，对自己代码的 review 也是如此。另外，知道自己的代码也被人“拿着放大镜仔细观察”，自然写代码的时候也认真一些。&lt;/p>
+&lt;p>另外，从上述流程可以看出：&lt;/p>
+&lt;ul>
+&lt;li>其实应该有两次定位不同的 review：对整体设计的 review，主要目的是从大方向上保证设计确实能满足需求；其次是 code review，保证代码实现符合设计约束，且编码没有明显的缺陷。&lt;/li>
+&lt;li>用来 code review 的代码，应该既满足团队代码规范，又基本保证功能的正确。&lt;/li>
+&lt;/ul>
+&lt;p>在我们的实践中，对于复杂的系统，会要求现先设计 review。而对于简单的、或者开发比较有把握的功能，则是将设计 review 与代码 review 合并。本文讨论的 code review 其实就是后者：既关注设计，又关注核心代码。&lt;/p>
+&lt;h2 id="code-review-的目标和原则">code review 的目标和原则&lt;/h2>
+&lt;p>code review 的首要目标是：&lt;strong>找出代码中的缺陷，保证代码质量&lt;/strong>。其次，通过 review 也能相互学习，提高团队整体水平，而且特别有利于新人快速融入团队，保持与团队风格一致。最后，保证每个核心功能有多个同事了解，降低风险。&lt;/p>
+&lt;p>从其核心目标我们就可以看出 code review 的第一原则：&lt;strong>对事不对人&lt;/strong>。这一点需要 reviewer、author 达成共识。code review 不是批斗大会，reviewer、author 并没有高低之分。&lt;/p>
+&lt;p>对于 reviewer 而言，参与的首要目的在于协助发现问题，因此：&lt;/p>
+&lt;ul>
+&lt;li>尽量质疑自己而不是对方&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>✓：我没有看懂这段代码的逻辑
+×：你这段代码有问题吧&lt;/p>
+&lt;/blockquote>
+&lt;ul>
+&lt;li>指出代码有问题而不是指责人&lt;/li>
+&lt;/ul>
+&lt;blockquote>
+&lt;p>✓：这段代码是不是可能出问题
+×：你又写出 bug 来了&lt;/p>
+&lt;/blockquote>
+&lt;p>对于 author，应当把 review 当作一次学习成长的机会，毕竟平时又有谁来给你免费建议和指导呢？因此，不要一开始就是防御的姿态，即使 reviewer 有所误解也不用脸红脖子粗的去争论。&lt;/p>
+&lt;p>要真正让 author 放松，达到和谐 review 的效果，个人觉得还要注意以下几点：&lt;/p>
+&lt;ul>
+&lt;li>review 不应该与任何 KPI 挂钩，review 发现的缺陷不应纳入绩效考核。&lt;/li>
+&lt;li>团队 Leader 应该少发言（否则就会变成 Leader 说啥就是啥），甚至要少参加无关的 review，毕竟任何人都不希望给 Leader 留下自己很菜的印象。&lt;/li>
+&lt;li>得需要有人充当仲裁者的角色，化解 reviewer 与 author 的冲突。而且，必要的时候维护 author。&lt;/li>
+&lt;/ul>
+&lt;h2 id="code-review-步骤以及注意事项">code review 步骤以及注意事项&lt;/h2>
+&lt;p>code review 并不简单是一堆人一起看代码，要让 code review 的效果最大化，整个流程是需要认真组织的：&lt;/p>
+&lt;h3 id="review-前">review 前&lt;/h3>
+&lt;ul>
+&lt;li>author 得保证代码质量：代码满足团队规范且基本测试通过&lt;/li>
+&lt;li>author 至少提前一天通知参与 review 会议的同事，提供必要的需求、设计文档&lt;/li>
+&lt;li>reviewer 简单了解需求、设计、代码实现&lt;/li>
+&lt;/ul>
+&lt;p>这里需要注意的是，与会人员越少越好，无关的同事最好不要参加 review。如果与会者对相关的功能不感兴趣，那么就存粹是在浪费时间，这也是很多人不喜欢 code review 的原因。&lt;/p>
+&lt;h3 id="review-中">review 中&lt;/h3>
+&lt;p>review 的过程大约是：&lt;/p>
+&lt;ul>
+&lt;li>author 大致讲解需求和整体设计，然后是核心代码&lt;/li>
+&lt;li>reviewer 提出问题，author 确认是否是问题&lt;/li>
+&lt;li>对发现的问题进行记录，分类处理&lt;/li>
+&lt;/ul>
+&lt;p>review 中需要注意：&lt;/p>
+&lt;ul>
+&lt;li>控制 review 的时间，codereview 本身就是一个高强度的活动，时间过长大家都很疲惫，效率也会下降，经验值一个小时左右比较合适。&lt;/li>
+&lt;li>控制 review 的代码量，需要大家仔细阅读的代码最好也控制在 200 - 400 逻辑行（这个数值也是 the art of unix programming 中对模块代码量的建议值）&lt;/li>
+&lt;li>需要有支主持人控场，把控时间和进度。和任何高效会议一样，应该避免发散，尽量只发现问题，并不深入讨论如何解决问题。&lt;/li>
+&lt;li>记录发现的问题，以及相应的解决方案：
+&lt;ul>
+&lt;li>已有明确修复方案只待执行？&lt;/li>
+&lt;li>还是需要修复但解决方法尚需要进一步讨论？&lt;/li>
+&lt;li>还是在下一次迭代时再修复？&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>reviewer 内容依次是：&lt;/p>
+&lt;ul>
+&lt;li>是否满足功能需求，有没有多做，有没有少做，有没有潜在的 bug，&lt;/li>
+&lt;li>是否满足非功能需求。性能（高频调用的函数、核心算法）？可用性（异常处理是否完善）？可读性？&lt;/li>
+&lt;li>代码质量、规范&lt;/li>
+&lt;/ul>
+&lt;p>上面也提到，code review 本身是个高强度的活动，因此容易漏掉一些关键点点，因此不妨做一个 review list，对照这个 list 去考察代码。list 保证了 code review 的质量下限，且不影响与会者发挥主观能动性，发现其他问题。&lt;/p>
+&lt;p>此外，也需要避免在没有明确规范的问题下过多争执。达到同样的效果，A 方法可以，B 方法也可以，如果团队没有约束用哪种方法，那么就不要在 code review 的时候讨论。&lt;/p>
+&lt;h3 id="review-后">review 后&lt;/h3>
+&lt;p>review 会议结束并不意味这个 review 这个活动结束，因为还有待解决的问题，因此应该借助工具跟踪 review 发现的问题，指明问题的修复者、问题的验收人、问题的验收时间。当一次 review 所关联的所有问题都得到修复之后，review 活动才算结束。&lt;/p>
+&lt;h2 id="总结">总结&lt;/h2>
+&lt;p>如何才能 code review 有效且高效，总结以下几点：&lt;/p>
+&lt;ul>
+&lt;li>会前充分准备，与会人员最少化&lt;/li>
+&lt;li>参考 review list，发现问题但不发散去讨论解决问题&lt;/li>
+&lt;li>会后跟进问题修复&lt;/li>
+&lt;/ul>
+&lt;p>最重要的事，是通过几次组织良好的实践让大家看到 code review 确实是有价值的，有所收获才愿意持续付出。&lt;/p>
+&lt;blockquote>
+&lt;p>本文摘自: &lt;a href="https://www.cnblogs.com/xybaby/p/12601471.html">https://www.cnblogs.com/xybaby/p/12601471.html&lt;/a>, 特此留存学习。&lt;/p>
+&lt;/blockquote></description></item><item><title>Python中的弱引用</title><link>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</link><pubDate>Mon, 12 Aug 2024 08:35:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
 &lt;p>在理解弱引用之前，我们需要先了解 python 中的对象引用和垃圾回收的基本概念，这样更有助于对弱引用的理解。&lt;/p>
 &lt;h3 id="对象引用">对象引用&lt;/h3>
 &lt;p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 &lt;code>a = 1&lt;/code>，这里 &lt;code>a&lt;/code> 就是对象 &lt;code>1&lt;/code> 的引用。每个引用的所指向的对象都可以通过 &lt;code>id()&lt;/code> 函数来查看，两个引用是否相同可以通过 &lt;code>is&lt;/code> 运算符来比较。&lt;/p>
@@ -485,7 +580,723 @@ Update unit tests. ❌;&lt;/p>
 &lt;/figure>
 
 
-&lt;/p></description></item><item><title>Shell 函数实现Go语言多版本管理轻量级方案</title><link>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</link><pubDate>Wed, 21 Jun 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</guid><description>&lt;h2 id="现有的工具方案">现有的工具方案&lt;/h2>
+&lt;/p></description></item><item><title>psycopg2 基于 openGauss libpq 中 execPramasBatch 和 execPreparedBatch 接口批量操作性能测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
+&lt;p>如果要查看 Psycopg2 不同接口之间批量操作对比测试，请访问&lt;a href="https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/">这篇笔记&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="测试环境">测试环境&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>组件&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>客户端操作系统&lt;/td>
+&lt;td>Rocky Linux 8&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>服务端配置&lt;/td>
+&lt;td>2C6G, 40G HDD&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>CPU&lt;/td>
+&lt;td>Intel Xeon Processor (Icelake)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>数据库&lt;/td>
+&lt;td>MogDB 5.0&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>网络&lt;/td>
+&lt;td>300M宽带&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Python&lt;/td>
+&lt;td>3.6.8&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Psycopg2&lt;/td>
+&lt;td>&lt;a href="https://gitee.com/vimiix/openGauss-connector-python-psycopg2/tree/dev">vimiix/openGauss-connector-python-psycopg2&lt;/a>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;blockquote>
+&lt;p>注意：&lt;/p>
+&lt;ol>
+&lt;li>由于真正的性能和服务器的配置，网络情况相关性也比较大，本测试所有的测试用例环境条件一致，只有参数作为变量，所以请不要注重数值本身，重点关注不同情况下的性能比例&lt;/li>
+&lt;li>本测试只取了 100/1000/10000 这个page_size，具有一定的性能趋势，但不代表一味的增大 page_size 就可以提高性能，必然存在一个性能拐点的参数值，而且不同的场景存在不同的性能拐点，要找到性能拐点仍需根据实际情况进行更多的测试。&lt;/li>
+&lt;/ol>
+&lt;/blockquote>
+&lt;h2 id="插入-insert">插入 INSERT&lt;/h2>
+&lt;h3 id="execute_values">execute_values&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows\page_size&lt;/th>
+&lt;th>100(default)&lt;/th>
+&lt;th>1000&lt;/th>
+&lt;th>10000&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>2089&lt;/td>
+&lt;td>349&lt;/td>
+&lt;td>204&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>10842&lt;/td>
+&lt;td>1801&lt;/td>
+&lt;td>707&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>21445&lt;/td>
+&lt;td>3625&lt;/td>
+&lt;td>1257&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-516c5469-88d8-49a9-aa26-f2f9f1ec1613.png" alt="image.png" />
+&lt;/figure>
+
+
+
+&lt;figure>
+ &lt;img src="media/16911146554324/16911308769356.jpg" alt="" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="execute_params_batch">execute_params_batch&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows\page_size&lt;/th>
+&lt;th>100(default)&lt;/th>
+&lt;th>1000&lt;/th>
+&lt;th>10000&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>2243&lt;/td>
+&lt;td>504&lt;/td>
+&lt;td>312&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>11574&lt;/td>
+&lt;td>2591&lt;/td>
+&lt;td>1539&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>22552&lt;/td>
+&lt;td>5511&lt;/td>
+&lt;td>2980&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-fd681e08-7363-4db5-8e1d-754b8bdfb3da.png" alt="image.png" />
+&lt;/figure>
+
+
+
+&lt;figure>
+ &lt;img src="media/16911146554324/16911308253116.jpg" alt="" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="execute_prepared_batch">execute_prepared_batch&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows\page_size&lt;/th>
+&lt;th>100(default)&lt;/th>
+&lt;th>1000&lt;/th>
+&lt;th>10000&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>2328&lt;/td>
+&lt;td>506&lt;/td>
+&lt;td>339&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>11307&lt;/td>
+&lt;td>2836&lt;/td>
+&lt;td>1480&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>22976&lt;/td>
+&lt;td>5920&lt;/td>
+&lt;td>3425&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-518f41ab-9c6c-4e57-9d94-f98ae68ba36d.png" alt="image.png" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="相同行数时不同-page_size-的接口性能对比">相同行数时，不同 page_size 的接口性能对比&lt;/h3>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-02bacd93-c5a3-4ec4-a954-89d4f03fe802.png" alt="image.png" />
+&lt;/figure>
+
+
+
+
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-9f236784-0b64-477b-8f70-ac8b79747c70.png" alt="image.png" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h2 id="更新-update">更新 UPDATE&lt;/h2>
+&lt;h3 id="execute_values-1">execute_values&lt;/h3>
+&lt;blockquote>
+&lt;p>用法比较饶，需要把 values 的部分单独用一个 %s 占位&lt;/p>
+&lt;/blockquote>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows\page_size&lt;/th>
+&lt;th>100(default)&lt;/th>
+&lt;th>1000&lt;/th>
+&lt;th>10000&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>3884&lt;/td>
+&lt;td>562&lt;/td>
+&lt;td>393&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>15367&lt;/td>
+&lt;td>3429&lt;/td>
+&lt;td>2601&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>25882&lt;/td>
+&lt;td>11313&lt;/td>
+&lt;td>5356&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-213bda25-3da2-4b23-abba-e67879979e27.png" alt="image.png" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="execute_params_batch-1">execute_params_batch&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows\page_size&lt;/th>
+&lt;th>100(default)&lt;/th>
+&lt;th>1000&lt;/th>
+&lt;th>10000&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>2746&lt;/td>
+&lt;td>810&lt;/td>
+&lt;td>579&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>13359&lt;/td>
+&lt;td>4478&lt;/td>
+&lt;td>3026&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>28432&lt;/td>
+&lt;td>8529&lt;/td>
+&lt;td>5923&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-f4e32c61-474f-4aa1-b6b2-fda119fb873d.png" alt="image.png" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="execute_prepared_batch-1">execute_prepared_batch&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows\page_size&lt;/th>
+&lt;th>100(default)&lt;/th>
+&lt;th>1000&lt;/th>
+&lt;th>10000&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>2747&lt;/td>
+&lt;td>896&lt;/td>
+&lt;td>635&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>12860&lt;/td>
+&lt;td>6153&lt;/td>
+&lt;td>3626&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>28445&lt;/td>
+&lt;td>10103&lt;/td>
+&lt;td>10828&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-cf3056f0-470e-498d-8726-8b299722076f.png" alt="image.png" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h2 id="相同行数时不同-page_size-的接口性能对比-1">相同行数时，不同 page_size 的接口性能对比&lt;/h2>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-1b57b5fe-da83-41de-b6be-e567d7a401dd.png" alt="image.png" />
+&lt;/figure>
+
+
+
+
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-798f7b69-bf8b-409f-8060-18f29491a66d.png" alt="image.png" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h2 id="结论">结论&lt;/h2>
+&lt;ol>
+&lt;li>任何接口，在对于大批量操作时，调大 page_size 均可以得到有效的性能提升&lt;/li>
+&lt;li>从数据来看， execute_values 的性能不管在INSERT还是UPDATE的表现，都稍稍好于 execute_params_batch 和 execute_prepared_batch（由于测试的局限性，可能也不一定）。execute_params_batch 和 execute_prepared_batch 两个接口性能差别不大，底层走的是一套接口。&lt;/li>
+&lt;li>从使用上来说，execute_values 使用比较饶，如果要使用这个接口更新，写SQL的复杂度大于其他两个，比如相同的更新操作：
+&lt;ul>
+&lt;li>execute_values： &lt;code>UPDATE t3 as t SET j = data.j FROM (VALUES %s) AS data (j, i) WHERE t.i = data.i&lt;/code>&lt;/li>
+&lt;li>其他两个：&lt;code>UPDATE t3 SET j=$1 WHERE t3.i=$2&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol></description></item><item><title>psycopg2 批量操作接口性能测试</title><link>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</link><pubDate>Wed, 12 Jul 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</guid><description>&lt;h2 id="测试版本">测试版本&lt;/h2>
+&lt;p>本测试基于 openGauss 版本的 psycopg2 驱动&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> psycopg2 &lt;span style="color:#66d9ef">as&lt;/span> pg
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__libpq_version__
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">90204&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__version__
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;2.8.6 (dt dec pq3 ext)&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="测试环境">测试环境&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>组件&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>客户端&lt;/td>
+&lt;td>Rocky Linux 8 虚拟机&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>数据库&lt;/td>
+&lt;td>openGauss 3.0.3 in docker&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>网络&lt;/td>
+&lt;td>本地回路网卡&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Python&lt;/td>
+&lt;td>3.6.8&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="测试接口">测试接口&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:left">接口名&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;th>备注&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:left">&lt;a href="https://www.psycopg.org/docs/cursor.html#cursor.executemany">cursor.executemany(query, vars_list)&lt;/a>&lt;/td>
+&lt;td>执行一个数据库操作，vars_list 列表中的所有参数会逐个被应用到query 中，每组参数都会单独封包发送给服务端。&lt;/td>
+&lt;td>该函数主要用于更新数据库的命令，查询返回的任何结果集都将被丢弃。在其当前实现中，此方法并不比在循环中执行execute()快。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;a href="https://www.psycopg.org/docs/extras.html#psycopg2.extras.execute_batch">psycopg2.extras.execute_batch(cur, sql, argslist, page_size=100)&lt;/a>&lt;/td>
+&lt;td>批量执行一个数据库操作，执行的SQL和 executemany 相同，只是单个数据包发送时会发送一批SQL，数量由page_size决定。这样可以减少和服务端的通信次数&lt;/td>
+&lt;td>execute_batch()也可以和预处理语句(PREPARE, EXECUTE, DEALLOCATE)一起使用。&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">extras.execute_batch + 预处理语句&lt;/td>
+&lt;td>使用PREPARE提交创建一个statement，然后通过 execute_batch 提交&lt;/td>
+&lt;td>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:left">&lt;a href="https://www.psycopg.org/docs/extras.html#psycopg2.extras.execute_values">psycopg2.extras.execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False)&lt;/a>&lt;/td>
+&lt;td>将参数和SQL封装为一条SQL执行，单条SQL中参数的个数由 page_size 决定。&lt;/td>
+&lt;td>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2 id="性能对比">性能对比&lt;/h2>
+&lt;h3 id="insert">INSERT&lt;/h3>
+&lt;h4 id="测试数据">测试数据&lt;/h4>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows&lt;/th>
+&lt;th>executemany&lt;/th>
+&lt;th>execute_batch&lt;/th>
+&lt;th style="text-align:left">prepare+execute_batch&lt;/th>
+&lt;th style="text-align:left">execute_values&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>9.782&lt;/td>
+&lt;td>0.707&lt;/td>
+&lt;td style="text-align:left">0.501&lt;/td>
+&lt;td style="text-align:left">0.266&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>52.979&lt;/td>
+&lt;td>3.123&lt;/td>
+&lt;td style="text-align:left">2.637&lt;/td>
+&lt;td style="text-align:left">1.226&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>111.504&lt;/td>
+&lt;td>6.831&lt;/td>
+&lt;td style="text-align:left">4.557&lt;/td>
+&lt;td style="text-align:left">2.125&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="insert耗时对比图">INSERT耗时对比图&lt;/h4>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-5709755a-dafa-4096-858c-7301e5160cd2.jpg" alt="batch-insert" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h4 id="insert-去除-executemany-对比">INSERT 去除 executemany 对比&lt;/h4>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-fa992e73-e08f-4e7e-8be3-79ea905a339e.jpg" alt="batch-insert-exclude-executemany" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="update">UPDATE&lt;/h3>
+&lt;h4 id="测试数据-1">测试数据&lt;/h4>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows&lt;/th>
+&lt;th>executemany&lt;/th>
+&lt;th>execute_batch&lt;/th>
+&lt;th style="text-align:left">prepare+execute_batch&lt;/th>
+&lt;th style="text-align:left">execute_values&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>5.015&lt;/td>
+&lt;td>0.617&lt;/td>
+&lt;td style="text-align:left">0.425&lt;/td>
+&lt;td style="text-align:left">0.356&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>24.639&lt;/td>
+&lt;td>3.467&lt;/td>
+&lt;td style="text-align:left">1.905&lt;/td>
+&lt;td style="text-align:left">5.237&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>100,000&lt;/td>
+&lt;td>52.095&lt;/td>
+&lt;td>6.927&lt;/td>
+&lt;td style="text-align:left">3.473&lt;/td>
+&lt;td style="text-align:left">21.102&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="update-耗时对比图">UPDATE 耗时对比图&lt;/h4>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230713-75ea074d-253a-4f82-a94c-eeb3e2280727.jpg" alt="16892490588494.jpg" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="delete">DELETE&lt;/h3>
+&lt;h4 id="测试数据-2">测试数据&lt;/h4>
+&lt;p>(&lt;em>100000 条数据组耗时太久不做展示&lt;/em>)&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>rows&lt;/th>
+&lt;th>executemany&lt;/th>
+&lt;th>execute_batch&lt;/th>
+&lt;th style="text-align:left">prepare+execute_batch&lt;/th>
+&lt;th style="text-align:left">execute_values&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>10,000&lt;/td>
+&lt;td>15.020&lt;/td>
+&lt;td>8.699&lt;/td>
+&lt;td style="text-align:left">0.277&lt;/td>
+&lt;td style="text-align:left">6.204&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>50,000&lt;/td>
+&lt;td>248.154&lt;/td>
+&lt;td>227.958&lt;/td>
+&lt;td style="text-align:left">1.455&lt;/td>
+&lt;td style="text-align:left">142.732&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h4 id="delete-耗时对比图">DELETE 耗时对比图&lt;/h4>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230713-f2675fd6-8e22-4b0b-b08b-564932a60d60.jpg" alt="16892491996399.jpg" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h2 id="性能分析">性能分析&lt;/h2>
+&lt;p>从耗时对比来看，插入、更新、删除在不同的数据量情况下性能是不同的，用户应该根据自己的业务场景来选择使用哪一种操作接口。&lt;/p>
+&lt;p>插入性能从低到高依次为：&lt;/p>
+&lt;p>&lt;code>executemany &amp;lt; execute_batch &amp;lt; prepare+execute_batch &amp;lt; execute_values&lt;/code>&lt;/p>
+&lt;p>更新性能从低到高依次为：&lt;/p>
+&lt;p>&lt;code>executemany &amp;lt; execute_values &amp;lt; execute_batch &amp;lt; prepare+execute_batch&lt;/code>&lt;/p>
+&lt;p>删除性能从低到高依次为：&lt;/p>
+&lt;p>&lt;code>executemany &amp;lt; execute_batch &amp;lt; execute_values &amp;lt; prepare+execute_batch&lt;/code>&lt;/p>
+&lt;p>性能的高低主要是由于在向服务端发送数据包时的方式不同导致，下面以插入的SQL为例，通过 wireshark 进行抓包可以看出 psycopg2 在通信过程中不同批处理接口的封包情况。&lt;/p>
+&lt;h3 id="executemany">executemany&lt;/h3>
+&lt;p>&lt;code>executemany&lt;/code> 提交SQL的时候是逐个应用给的参数，每个SQL都单独发送给服务端&lt;/p>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-1b04e125-3c1f-42bf-8760-fd9636479f4c.jpg" alt="fd9636479f4c.jpg" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="execute_batch">execute_batch&lt;/h3>
+&lt;p>&lt;code>execute_batch&lt;/code> 接口区别于 &lt;code>executemany&lt;/code> 的是，在发送给后端的单个请求包里的数据会一次性提交一批的SQL，这样可以减少和服务器之间通信的往返次数&lt;/p>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-52a6a6c0-4fcb-494e-84ea-54901fdb310d.jpg" alt="54901fdb310d.jpg" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="prepareexecute_batch">prepare+execute_batch&lt;/h3>
+&lt;p>&lt;code>prepare&lt;/code> 可以提前在数据库里面创建一个预备语句对象，在执行 prepare 语句的时候，指定的SQL已经经了解析、分析、重写，这样在后续执行 EXECUTE 时就避免了重复解析分析的工作，从而起到优化性能的作用。&lt;/p>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-efca89b2-a99f-4c4e-8fce-8d8abc70246d.jpg" alt="8d8abc70246d.jpg" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h3 id="execute_values">execute_values&lt;/h3>
+&lt;p>前面的三个接口，不管是单个提交还是批量提交，最终都是一行数据一个SQL发送到服务端的，所以服务端需要逐个执行，而 &lt;code>execute_values&lt;/code> 接口是会按照 page_size 分组参数后，每组参数一次性组成一个SQL进行提交。&lt;/p>
+&lt;p>
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-8fc8095f-6a20-4c01-b7d1-8031d10e389c.jpg" alt="b7d1-8031d10e389c.jpg" />
+&lt;/figure>
+
+
+
+
+&lt;figure>
+ &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-8fc8095f-6a20-4c01-b7d1-8031d10e389c.jpg" alt="b7d1-8031d10e389c.jpg" />
+&lt;/figure>
+
+
+&lt;/p>
+&lt;h2 id="测试代码">测试代码&lt;/h2>
+&lt;p>执行方式：&lt;code>python test.py &amp;lt;api&amp;gt; &amp;lt;row&amp;gt; &amp;lt;operation&amp;gt;&lt;/code>&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>&amp;lt;api&amp;gt;&lt;/code> 支持： &lt;code>executemany&lt;/code>, &lt;code>execute_batch&lt;/code>, &lt;code>prepare&lt;/code>, &lt;code>execute_values&lt;/code>&lt;/li>
+&lt;li>&lt;code>&amp;lt;operation&amp;gt;&lt;/code> 支持 &lt;code>insert&lt;/code>, &lt;code>update&lt;/code>, &lt;code>delete&lt;/code>&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># coding: utf-8&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># Usage: python test.py &amp;lt;api&amp;gt; &amp;lt;count&amp;gt; &amp;lt;operation&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> time
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> sys
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> psycopg2 &lt;span style="color:#66d9ef">as&lt;/span> pg
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> psycopg2.extras &lt;span style="color:#f92672">import&lt;/span> execute_batch, execute_values
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> contextlib &lt;span style="color:#f92672">import&lt;/span> contextmanager
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;insert&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[str(i), i] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">elif&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;update&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[i, str(i)] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">elif&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[i] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;&amp;#39;&amp;#39;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *dbname*: the database name
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *database*: the database name (only as keyword argument)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *user*: user name used to authenticate
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *password*: password used to authenticate
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *host*: database host address (defaults to UNIX socket if not provided)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *port*: connection port number (defaults to 5432 if not provided)
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;&amp;#39;&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>conf &lt;span style="color:#f92672">=&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;dbname&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;postgres&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;user&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;gaussdb&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;password&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;host&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;port&amp;#39;&lt;/span>: &lt;span style="color:#ae81ff">26000&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;sslmode&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;disable&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@contextmanager&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">calc_time&lt;/span>(s):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> start &lt;span style="color:#f92672">=&lt;/span> time&lt;span style="color:#f92672">.&lt;/span>time()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">yield&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> end &lt;span style="color:#f92672">=&lt;/span> time&lt;span style="color:#f92672">.&lt;/span>time()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>&lt;span style="color:#e6db74">{&lt;/span>s&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74"> of &amp;#39;&lt;/span>&lt;span style="color:#e6db74">{&lt;/span>sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#39; cost: &amp;#34;&lt;/span>, end &lt;span style="color:#f92672">-&lt;/span> start)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>sql_map &lt;span style="color:#f92672">=&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;insert&amp;#34;&lt;/span>: {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">1&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;INSERT INTO t_psycopg2_benchmark VALUES (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">, &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">2&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;INSERT INTO t_psycopg2_benchmark VALUES ($1, $2)&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">3&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;INSERT INTO t_psycopg2_benchmark VALUES &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;update&amp;#34;&lt;/span>: {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">1&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;UPDATE t_psycopg2_benchmark as t SET f_value = &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74"> WHERE t.f_key = &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">2&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;UPDATE t_psycopg2_benchmark as t SET f_value = $1 WHERE t.f_key = $2&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">3&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;UPDATE t_psycopg2_benchmark as t SET f_value = data.v1 FROM (VALUES &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">) AS data (id, v1) WHERE t.f_key = data.id&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>: {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">1&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key=&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">2&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key=$1&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">3&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key IN (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">insert_data&lt;/span>(conn):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">&amp;#34;* preparing data ...&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[str(i), i] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor &lt;span style="color:#f92672">=&lt;/span> conn&lt;span style="color:#f92672">.&lt;/span>cursor()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;insert into t_psycopg2_benchmark values &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_values(cursor, sql, args)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">main&lt;/span>():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">try&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn &lt;span style="color:#f92672">=&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>connect(&lt;span style="color:#f92672">**&lt;/span>conf)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">&amp;#34;* connect success&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">except&lt;/span> &lt;span style="color:#a6e22e">Exception&lt;/span> &lt;span style="color:#66d9ef">as&lt;/span> e:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;connect failed: &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>e&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor &lt;span style="color:#f92672">=&lt;/span> conn&lt;span style="color:#f92672">.&lt;/span>cursor()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;drop table if exists t_psycopg2_benchmark&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(sql)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;create table t_psycopg2_benchmark (f_key text primary key, f_value numeric)&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(sql)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> api &lt;span style="color:#f92672">=&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">1&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;insert&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> insert_data(conn)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">&amp;#34;* benchmarking ...&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;executemany&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;executemany&amp;#34;&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">1&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>executemany(sql, args)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">elif&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;execute_batch&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;execute_batch&amp;#34;&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">1&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_batch(cursor, sql, args)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">elif&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;prepare&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;execute_values&amp;#34;&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;PREPARE test_stmt AS &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">2&lt;/span>]&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_batch(cursor, &lt;span style="color:#e6db74">&amp;#34;EXECUTE test_stmt (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>, args)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_batch(cursor, &lt;span style="color:#e6db74">&amp;#34;EXECUTE test_stmt (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">, &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>, args)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(&lt;span style="color:#e6db74">&amp;#34;DEALLOCATE test_stmt&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">elif&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;execute_values&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;execute_values&amp;#34;&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">3&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_values(cursor, sql, args)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;unknow api: &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>api&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(&lt;span style="color:#e6db74">&amp;#34;delete from t_psycopg2_benchmark&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> __name__ &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;__main__&amp;#34;&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> main()
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Shell 函数实现Go语言多版本管理轻量级方案</title><link>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</link><pubDate>Wed, 21 Jun 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</guid><description>&lt;h2 id="现有的工具方案">现有的工具方案&lt;/h2>
 &lt;ul>
 &lt;li>gvm: &lt;a href="https://github.com/moovweb/gvm">https://github.com/moovweb/gvm&lt;/a>&lt;/li>
 &lt;li>g: &lt;a href="https://github.com/voidint/g">https://github.com/voidint/g&lt;/a>&lt;/li>
@@ -675,272 +1486,4 @@ Saga的核心是补偿，与TCC不同的是Saga不需要Try，而是直接进行
 &lt;/p>
 &lt;p>&lt;strong>分布式&lt;/strong>：分布式的Saga的实现使用过事件驱动的，相关的服务监听相关的事件，从而触发该服务，因此分布式Saga也叫事务编排。分布式的好处是，降低了耦合性以及系统的复杂性，系统的逻辑处理是基于事件。&lt;/p>
 &lt;p>基于分布式Saga处理的例子，通过 Kafka 作为消息中间件，每个服务订阅相关的Channel，当捕获相关的事件之后就自动触发服务。这里面最重要的是要持久化相关的环节，比如持久化事件信息以及中间信息，因为事务出现回滚或者补偿的时候会需要这些信息。更多访问：&lt;a href="https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation">https://servicecomb.apache.org/cn/docs/distributed-transactions-saga-implementation&lt;/a>&lt;/p>
-&lt;p>EOF&lt;/p></description></item><item><title>磁盘只读（readonly）故障场景模拟</title><link>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</link><pubDate>Wed, 01 Sep 2021 16:15:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2021-09-01-simulate-disk-readonly-scenario/</guid><description>&lt;p>假设服务器目前有多个盘，&lt;code>vdb1&lt;/code>这块分区盘专门用于数据库程序的数据目录，我们就用 &lt;code>vdb1&lt;/code> 这个盘来模拟只读故障场景。&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2021-09-01/image-20210901154323971.png" alt="image-20210901154323971" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="1-卸载指定盘">1. 卸载指定盘&lt;/h3>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>umount /dev/vdb1
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>想要如期卸载掉，需要确保该盘上没有被正在运行进程依赖，如果有运行中的进程依赖这个盘，会报如下报 &lt;code>target is busy&lt;/code> 的错误：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>umount: /opt: target is busy.
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>遇到该错误时，可以通过&lt;code>lsof [mountpoint]&lt;/code> 命令来查看有哪些进程依赖这块盘，kill 掉相应的进程后重新卸载。&lt;/p>
-&lt;h3 id="2-配置伪设备来镜像-devvdb1-的内容">2. 配置伪设备来镜像 /dev/vdb1 的内容&lt;/h3>
-&lt;p>卸载成功后，我们通过 &lt;code>losetup&lt;/code> 指令来配置一个loop设备（&lt;em>在类 UNIX 系统里，loop 设备是一种伪设备(pseudo-device)，或者也可以说是仿真设备。它能使我们像块设备一样访问一个文件&lt;/em>）。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>losetup /dev/loop0 /dev/vdb1
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>执行指令后，可以通过 &lt;code>losetup -l&lt;/code> 查看当前服务器上的 loop 设备列表：&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2021-09-01/image-20210901155336595.png" alt="image-20210901155336595" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="3-挂载-devloop0">3. 挂载 /dev/loop0&lt;/h3>
-&lt;p>我们已经有一个 &lt;code>/dev/loop0&lt;/code> 的伪设备镜像到了 &lt;code>/dev/vdb1&lt;/code> 上，此时，我们来挂载 &lt;code>/dev/loop0&lt;/code> 这个伪设备：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>mount /dev/loop0 /opt -o rw,errors&lt;span style="color:#f92672">=&lt;/span>remount-ro
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>通过 &lt;code>df -h&lt;/code> 可以查看到 &lt;code>/dev/loop0&lt;/code> 已经正常挂载上了&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2021-09-01/image-20210901160108398.png" alt="image-20210901160108398" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="4-正常启动应用进程这里测试用opengauss数据库">4. 正常启动应用进程（这里测试用opengauss数据库）&lt;/h3>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>gs_ctl start -D /opt/mogdb/data/
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="5-修改磁盘为只读模式故障注入">5. 修改磁盘为只读模式（故障注入）&lt;/h3>
-&lt;p>&lt;code>blockdev&lt;/code> 命令行工具是用于控制区块设备程序&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>blockdev --setro /dev/vdb1
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>此时，尝试写入 &lt;code>/dev/loop0&lt;/code> 设备，将导致I/O错误。一旦文件系统驱动程序检测到，它将以只读方式重新挂载文件系统。&lt;/p>
-&lt;p>这样就实现了磁盘只读故障的场景模拟。&lt;/p>
-&lt;h3 id="6-测试后恢复系统">6. 测试后恢复系统&lt;/h3>
-&lt;p>a. 取消挂载&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>umount /opt
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>b. 删除伪设备&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>losetup -d /dev/loop0
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>c. 将 &lt;code>/dev/vdb1&lt;/code> 设备恢复为可读写&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>blockdev --setrw /dev/vdb1
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>d. 将 &lt;code>/dev/vdb1&lt;/code> 重新挂载回来&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>mount /dev/vdb1 /opt
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;mdash; EOF &amp;mdash;&lt;/p></description></item><item><title>使用SQLAlchemy以多IP方式连接openGauss数据库</title><link>https://www.vimiix.com/posts/2021-07-08-opengauss-driver-and-orm/</link><pubDate>Thu, 08 Jul 2021 23:38:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2021-07-08-opengauss-driver-and-orm/</guid><description>&lt;h3 id="前置声明">前置声明&lt;/h3>
-&lt;blockquote>
-&lt;p>由于 &lt;a href="https://opengauss.org/zh/">openGauss&lt;/a> 数据库本身也开源不久，所以周边基础设施也正处于遍地开花的阶段，所以本文不保证长期的时效性，仅针对现阶段的问题，提出一种解决方案。&lt;/p>
-&lt;/blockquote>
-&lt;h2 id="opengauss-介绍">openGauss 介绍&lt;/h2>
-&lt;p>按照官网的介绍，openGauss 是一款高性能，高安全，高可靠的开源关系型数据库管理系统，采用木兰宽松许可证v2发行。openGauss内核早期源自开源数据库PostgreSQL，融合了华为在数据库领域多年的内核经验，在架构、事务、存储引擎、优化器及ARM架构上进行了适配与优化。&lt;/p>
-&lt;p>openGauss 在2020年6月30日开放源代码，代码托管在 gitee 上。&lt;/p>
-&lt;p>目前我所在公司也主要是做数据库方面的事情，且也基于 openGauss 内核研发了一款商业版的数据库 &lt;a href="https://enmotech.com/products/MogDB">MogDB&lt;/a>，感兴趣的也可以去了解一下。&lt;/p>
-&lt;h2 id="背景">背景&lt;/h2>
-&lt;p>针对 openGauss 的基础设施不完善，我之前基于 &lt;a href="https://github.com/python-postgres/fe">py-postgresql&lt;/a> 1.3.0 版本，开发了 openGauss 的 python 驱动，并提交到了 openGauss 官方仓库：&lt;a href="https://gitee.com/opengauss/openGauss-connector-python-pyog">https://gitee.com/opengauss/openGauss-connector-python-pyog&lt;/a>&lt;/p>
-&lt;p>该驱动适用于不使用 ORM，以SQL形式交互的 python 程序。&lt;/p>
-&lt;p>但是在对接客户的过程中，客户提出了这样的需求：&lt;/p>
-&lt;ul>
-&lt;li>程序中用到了 SQLAlchemy 做为ORM来和数据库交互&lt;/li>
-&lt;li>连接数据库时，需要支持类似 JDBC 多 IP 的方式连接（例如：&lt;code>user:password@host1:port1,host2:port2/db&lt;/code> 这种形式），这种需求主要是用于后端数据库部署形态为主备架构，且没有固定的虚拟IP用于连接，所以需要将主备所有机器的IP都传递进去，但只能返回主库的连接。&lt;/li>
-&lt;/ul>
-&lt;p>赶紧去扫了一下 SQLAlchemy 的源码，SQLAlchemy 中目前支持的 pg 驱动有：&lt;/p>
-&lt;ul>
-&lt;li>&lt;a href="https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.psycopg2">psycopg2&lt;/a>&lt;/li>
-&lt;li>&lt;a href="https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.pg8000">pg8000&lt;/a>&lt;/li>
-&lt;li>&lt;a href="https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.asyncpg">asyncpg&lt;/a>&lt;/li>
-&lt;li>&lt;a href="https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.psycopg2cffi">psycopg2cffi&lt;/a>&lt;/li>
-&lt;li>&lt;a href="https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.pypostgresql">py-postgresql&lt;/a>&lt;/li>
-&lt;li>&lt;a href="https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.pygresql">pygresql&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;p>其实只要在驱动里面实现了 &lt;a href="https://www.python.org/dev/peps/pep-0249/">PEP-249&lt;/a> (DBAPI 2.0 接口规范) 就可以。但是我们都知道，在使用 SQLAlchemy 创建 engine 的时候，需要在 &lt;code>://&lt;/code> 前面使用固定的字符串进行驱动的选择。比如 &lt;code>postgresql+pypostgresql://...&lt;/code>，内部其实就是把加号 replace 成点，然后去加载对应的驱动模块文件。&lt;/p>
-&lt;p>但是 openGauss 的驱动可能是目前不支持的，所以我们需要解决的就是两个问题：&lt;/p>
-&lt;ul>
-&lt;li>开发一个驱动，能够实现 DBAPI 2.0 接口规范，且支持多IP连接&lt;/li>
-&lt;li>增强 SQLAlchemy ，支持我们开发的 openGauss 驱动&lt;/li>
-&lt;/ul>
-&lt;p>解决了以上两个问题后，就可以和平时使用 SQLAlchemy 一样来操作 openGauss 了。&lt;/p>
-&lt;h3 id="完整架构图">完整架构图&lt;/h3>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2021-07-08/WeChat665cbcb9d30440234880c049693b01ed.png" alt="" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h2 id="py-opengauss-库">py-opengauss 库&lt;/h2>
-&lt;p>第一个问题就是要开发一个 openGauss 的驱动，我们上面提到我之前基于 &lt;a href="https://github.com/python-postgres/fe">py-postgresql&lt;/a> 1.3.0 开发了一个驱动，但是当时仅支持了 openGauss 的连接和SQL交互，现在需要基于目前的需求进行开发。&lt;/p>
-&lt;blockquote>
-&lt;p>代码目前已经发布到 github 上，源码地址：&lt;a href="https://github.com/vimiix/py-opengauss">https://github.com/vimiix/py-opengauss&lt;/a>&lt;/p>
-&lt;p>包已经推送到 pypi 上，最新版本 1.3.6&lt;/p>
-&lt;/blockquote>
-&lt;p>首先是 DBAPI 2.0 接口，庆幸的是 py-postgresql 本身就已经支持了 DBAPI 2.0 接口规范，代码位于 &lt;code>postgresql.driver.dbapi20&lt;/code>。&lt;/p>
-&lt;p>所以我们需要做的是如何在接口上支持多IP。&lt;/p>
-&lt;p>为了减少对于现有代码的侵入，我修改了 dbapi20 模块中 &lt;a href="https://github.com/vimiix/py-opengauss/blob/6cb1b6ba46a9ad86f091f5b397454dac82ed622e/py_opengauss/driver/dbapi20.py#L416">&lt;code>connect&lt;/code>&lt;/a> 函数，上层需要通过 &lt;code>host&lt;/code> 字段将IP部分（包含所有主机和端口号），传递进来进行处理。&lt;/p>
-&lt;p>例如： &lt;code>{'host': 'host1:5432,host2:6432'}&lt;/code>&lt;/p>
-&lt;p>在 connect 函数中，会遍历去进行连接，直到找到主库的连接后停止遍历返回连接。&lt;/p>
-&lt;p>这样就解决了第一个问题。&lt;/p>
-&lt;p>这部分功能已经发布到 1.3.6 版本中，所以在 pip 安装的时候需指定版本：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>pip install py-opengauss&lt;span style="color:#f92672">==&lt;/span>1.3.6
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="sqlalchemy-定制">SQLAlchemy 定制&lt;/h2>
-&lt;p>接下来是第二个问题，需要增强 SQLAlchemy 支持 py-opengauss 驱动。&lt;/p>
-&lt;blockquote>
-&lt;p>定制后的代码地址：&lt;a href="https://github.com/vimiix/sqlalchemy">https://github.com/vimiix/sqlalchemy&lt;/a>&lt;/p>
-&lt;/blockquote>
-&lt;p>我 fork 了一份 SQLAlchemy 的代码，在现有的代码上，在 &lt;code>lib/sqlalchemy/dialects/postgresql&lt;/code> 中新增 pyopengauss 的模块，在内部 dbapi 接口处返回我们的驱动即可：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@classmethod&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">dbapi&lt;/span>(cls):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">from&lt;/span> py_opengauss.driver &lt;span style="color:#f92672">import&lt;/span> dbapi20
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> dbapi20
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>这样我们就在可以 create_engine 的时候，使用 &lt;code>postgresql+pyopengauss://&lt;/code> 这个前缀来进行连接了。&lt;/p>
-&lt;p>此时还存在另外一个问题，我们在业务层创建 engine 时传入的连接字符串假如是多IP形式的，SQLAlchemy 内部会通过一个固定的&lt;a href="https://github.com/sqlalchemy/sqlalchemy/blob/990069b2e8627b7c7c649d1198390ec728b43089/lib/sqlalchemy/engine/url.py#L700">正则表达式&lt;/a>来匹配 &lt;code>user&lt;/code>, &lt;code>password&lt;/code>, &lt;code>host&lt;/code>, &lt;code>port&lt;/code>,&lt;code>db&lt;/code> 以及 &lt;code>query&lt;/code> 。但是对于多IP的字符串，匹配出来以后仅会匹配到第一个 &lt;code>host&lt;/code> 部分，剩余部分被匹配到了 &lt;code>port&lt;/code> 部分，类似下面这样：&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2021-07-08/WeChat8b3e7a354445dda961402c8102d1a308.png" alt="" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;p>这样的话，对于 port 字段进行 &lt;code>int(port)&lt;/code> 转换整型的时候，必然会报错。&lt;/p>
-&lt;p>所以我对于正则表达式进行了&lt;a href="https://github.com/vimiix/sqlalchemy/blob/49b7c05cd4c65e7d9967b8664aadae38cd2e9acb/lib/sqlalchemy/engine/url.py#L700">修改&lt;/a>，让 &lt;code>host:port&lt;/code> 部分先不拆开，一起匹配出来， 然后我们手动进行解析。如果是多IP的情况，就不进行拆分，直接放入 &lt;code>host&lt;/code> 字段传递给驱动（上面提到过，驱动部分我们也是通过该字段解析的）。如果不是多IP形式，就直接 split 拆分，&lt;code>host&lt;/code> 字段放 host， &lt;code>port&lt;/code> 字段放 port ，和常规连接一样提交给驱动即可。&lt;/p>
-&lt;p>具体代码实现：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>ipv4host &lt;span style="color:#f92672">=&lt;/span> components&lt;span style="color:#f92672">.&lt;/span>pop(&lt;span style="color:#e6db74">&amp;#34;ipv4host&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ipv6host &lt;span style="color:#f92672">=&lt;/span> components&lt;span style="color:#f92672">.&lt;/span>pop(&lt;span style="color:#e6db74">&amp;#34;ipv6host&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> ipv4host:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#e6db74">&amp;#39;,&amp;#39;&lt;/span> &lt;span style="color:#f92672">in&lt;/span> ipv4host:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e"># multiple host&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> components[&lt;span style="color:#e6db74">&amp;#34;host&amp;#34;&lt;/span>] &lt;span style="color:#f92672">=&lt;/span> ipv4host
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">elif&lt;/span> &lt;span style="color:#e6db74">&amp;#39;:&amp;#39;&lt;/span> &lt;span style="color:#f92672">in&lt;/span> ipv4host:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> host, port &lt;span style="color:#f92672">=&lt;/span> ipv4host&lt;span style="color:#f92672">.&lt;/span>split(&lt;span style="color:#e6db74">&amp;#39;:&amp;#39;&lt;/span>, &lt;span style="color:#ae81ff">1&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> components[&lt;span style="color:#e6db74">&amp;#34;host&amp;#34;&lt;/span>] &lt;span style="color:#f92672">=&lt;/span> host
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> components[&lt;span style="color:#e6db74">&amp;#34;port&amp;#34;&lt;/span>] &lt;span style="color:#f92672">=&lt;/span> int(port)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> components[&lt;span style="color:#e6db74">&amp;#34;host&amp;#34;&lt;/span>] &lt;span style="color:#f92672">=&lt;/span> ipv4host
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> components[&lt;span style="color:#e6db74">&amp;#34;host&amp;#34;&lt;/span>] &lt;span style="color:#f92672">=&lt;/span> ipv6host
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>进行了多IP的适配以后，此时的 SQLAlchemy 就能够满足我们的需求了。&lt;/p>
-&lt;p>由于我们是基于 SQLAlchemy 的定制，且为了业务代码的少变更，所以安装方式只能是通过下载源码，然后手动通过 &lt;code>python setup.py install&lt;/code> 来进行安装。安装后，业务层仅需要修改一个连接字符串即可。&lt;/p>
-&lt;h2 id="使用方式">使用方式&lt;/h2>
-&lt;ol>
-&lt;li>安装 py-opengauss&lt;/li>
-&lt;/ol>
-&lt;ul>
-&lt;li>通过 pip 安装&lt;/li>
-&lt;/ul>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>pip install py-opengauss&lt;span style="color:#f92672">==&lt;/span>1.3.6
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ul>
-&lt;li>通过源码安装&lt;/li>
-&lt;/ul>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>git clone https://github.com/vimiix/py-opengauss.git
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>cd py-opengauss
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>python3 setup.py install
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="2">
-&lt;li>安装定制后的 SQLAlchemy&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>git clone https://github.com/vimiix/sqlalchemy
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>cd sqlalchemy
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>python3 setup.py install
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="3">
-&lt;li>业务层修改连接串&lt;/li>
-&lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> sqlalchemy &lt;span style="color:#f92672">import&lt;/span> create_engine
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>engine &lt;span style="color:#f92672">=&lt;/span> create_engine(&lt;span style="color:#e6db74">&amp;#39;postgresql+pyopengauss://user:password@host1:port1,host2:port2/db&amp;#39;&lt;/span>)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Golang的并行模式实践</title><link>https://www.vimiix.com/posts/2021-04-07-concurrency-in-go/</link><pubDate>Wed, 07 Apr 2021 18:15:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2021-04-07-concurrency-in-go/</guid><description>&lt;h2 id="goroutine">Goroutine&lt;/h2>
-&lt;p>C#、Lua、Python 的用户可能会发现 Go 的 goroutine 和协程之间有很多相似之处，没错，从命名上也可以看出二者具有相似性。&lt;/p>
-&lt;p>但二者之间也有些区别：&lt;/p>
-&lt;ul>
-&lt;li>goroutine 隐含了并行的特性，一切交给 go 的 runtime 来实现调度，而协程需要应用自己来编写并行代码&lt;/li>
-&lt;li>goroutine 通过信道（&lt;code>Channel&lt;/code>）进行通信；协程通过 &lt;code>yield&lt;/code> 和 &lt;code>next&lt;/code>操作进行通信&lt;/li>
-&lt;/ul>
-&lt;p>一般来说，goroutine 比协程更强大。而且，我们可以很容易地将协程的逻辑移植到 goroutine 来获得更好的并行效果。&lt;/p>
-&lt;h2 id="generators">Generators&lt;/h2>
-&lt;p>在 python 中，要实现一个生成器，需要通过 &lt;code>yield&lt;/code> 生成数据，通过 &lt;code>next&lt;/code> 获取数据：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">integers&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> i &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#ae81ff">1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">while&lt;/span> &lt;span style="color:#66d9ef">True&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">yield&lt;/span> i
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> i&lt;span style="color:#f92672">+=&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>integerGenerator &lt;span style="color:#f92672">=&lt;/span> integers()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>next(integerGenerator)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 1&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>next(integerGenerator)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 2&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>next(integerGenerator)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 3&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>同样的，生成器也可以在 Go 中实现，只是使用了 &lt;code>channel&lt;/code> 来代替 &lt;code>yield&lt;/code>:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">integers&lt;/span> () &lt;span style="color:#66d9ef">chan&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">yield&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">make&lt;/span> (&lt;span style="color:#66d9ef">chan&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">count&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">go&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span> () {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">yield&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span> &lt;span style="color:#a6e22e">count&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">count&lt;/span>&lt;span style="color:#f92672">++&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> } ();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">yield&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">next&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">integers&lt;/span>();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">generateInteger&lt;/span> () &lt;span style="color:#66d9ef">int&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span>&lt;span style="color:#a6e22e">next&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">generateInteger&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 0
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#a6e22e">generateInteger&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 1
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#a6e22e">generateInteger&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 2
-&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="iterators">Iterators&lt;/h2>
-&lt;p>go 的 channel 在语法层面就是天然的迭代器。&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">x&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">channel&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">fmt&lt;/span>.&lt;span style="color:#a6e22e">Println&lt;/span>(&lt;span style="color:#a6e22e">x&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="futures">Futures&lt;/h2>
-&lt;p>先来看一个例子：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">InverseProduct&lt;/span> (&lt;span style="color:#a6e22e">a&lt;/span> &lt;span style="color:#a6e22e">Matrix&lt;/span>, &lt;span style="color:#a6e22e">b&lt;/span> &lt;span style="color:#a6e22e">Matrix&lt;/span>) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">a_inv&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">Inverse&lt;/span>(&lt;span style="color:#a6e22e">a&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">b_inv&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">Inverse&lt;/span>(&lt;span style="color:#a6e22e">b&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">Product&lt;/span>(&lt;span style="color:#a6e22e">a_inv&lt;/span>, &lt;span style="color:#a6e22e">b_inv&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在这个例子中，a 和 b 的求逆矩阵需要先被计算。那么为什么在计算 b 的逆矩阵时，需要等待 a 的逆计算完成呢？显然不必要，这两个求逆运算其实可以并行执行的。如下代码实现了并行计算方式：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">InverseFuture&lt;/span> (&lt;span style="color:#a6e22e">a&lt;/span> &lt;span style="color:#a6e22e">Matrix&lt;/span>) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">future&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">make&lt;/span> (&lt;span style="color:#66d9ef">chan&lt;/span> &lt;span style="color:#a6e22e">Matrix&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">go&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span> () {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">future&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span> &lt;span style="color:#a6e22e">Inverse&lt;/span>(&lt;span style="color:#a6e22e">a&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }();
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">future&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">InverseProduct&lt;/span> (&lt;span style="color:#a6e22e">a&lt;/span> &lt;span style="color:#a6e22e">Matrix&lt;/span>, &lt;span style="color:#a6e22e">b&lt;/span> &lt;span style="color:#a6e22e">Matrix&lt;/span>) {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">a_inv_future&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">InverseFuture&lt;/span>(&lt;span style="color:#a6e22e">a&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">b_inv_future&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">InverseFuture&lt;/span>(&lt;span style="color:#a6e22e">b&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">a_inv&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span>&lt;span style="color:#a6e22e">a_inv_future&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">b_inv&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span>&lt;span style="color:#a6e22e">b_inv_future&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">Product&lt;/span>(&lt;span style="color:#a6e22e">a_inv&lt;/span>, &lt;span style="color:#a6e22e">b_inv&lt;/span>);
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在这个改进版本中，InverseFuture 函数启动一个 goroutine 来执行求逆矩阵计算，并立即返回一个最终保存 future 值的 Channel，这样就实现了 a 和 b 的并行计算。&lt;/p>
-&lt;h2 id="producer-consumer">Producer-Consumer&lt;/h2>
-&lt;p>通过使用 goroutine 和 channel 可以很容易地实现生产者-消费者模型的设计：&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">var&lt;/span> &lt;span style="color:#a6e22e">done&lt;/span> = make(&lt;span style="color:#66d9ef">chan&lt;/span> &lt;span style="color:#66d9ef">bool&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">var&lt;/span> &lt;span style="color:#a6e22e">msgs&lt;/span> = make(&lt;span style="color:#66d9ef">chan&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">produce&lt;/span> () {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">i&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>; &lt;span style="color:#a6e22e">i&lt;/span> &amp;lt; &lt;span style="color:#ae81ff">10&lt;/span>; &lt;span style="color:#a6e22e">i&lt;/span>&lt;span style="color:#f92672">++&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">msgs&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span> &lt;span style="color:#a6e22e">i&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">done&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span> &lt;span style="color:#66d9ef">true&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">consume&lt;/span> () {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">msg&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span>&lt;span style="color:#a6e22e">msgs&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">fmt&lt;/span>.&lt;span style="color:#a6e22e">Println&lt;/span>(&lt;span style="color:#a6e22e">msg&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">main&lt;/span> () {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">go&lt;/span> &lt;span style="color:#a6e22e">produce&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">go&lt;/span> &lt;span style="color:#a6e22e">consume&lt;/span>()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;lt;-&lt;/span> &lt;span style="color:#a6e22e">done&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
+&lt;p>EOF&lt;/p></description></item></channel></rss>

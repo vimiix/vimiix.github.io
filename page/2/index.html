@@ -5,7 +5,17 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于我</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2018-10-24-move-qiniuyun-to-alioss/>七牛云数据自动迁移到阿里云OSS</a></h1><b><time>2018.10.24 19:22</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/>获取存储在又拍云CDN中视频的时长</a></h1><b><time>2019.01.30 16:22</time></b>
+<a href=/tags/note>note</a>
+<a href=/tags/video>video</a>
+<a href=/tags/cdn>CDN</a>
+<a href=/tags/%E5%8F%88%E6%8B%8D%E4%BA%91>又拍云</a><div><h3 id=前置条件>前置条件</h3><ul><li><p>可用的账户</p></li><li><p>安装又拍云 Python 版本的 SDK：</p></li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>pip install upyun
+</span></span></code></pre></div><p>（官方代码开源地址：<a href=https://github.com/upyun/python-sdk/>https://github.com/upyun/python-sdk/</a> )</p><a href=https://www.vimiix.com/posts/2019-01-30-get-video-duration-by-upyun-sdk/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-11-08-change-git-account-by-script/>快速切换本地Git用户记录</a></h1><b><time>2018.11.08 23:22</time></b>
+<a href=/tags/git>git</a>
+<a href=/tags/tool>tool</a>
+<a href=/tags/bash>bash</a><div><p>现在大部分的科技公司开发模式，都是基于 Git 进行多人协作开发。所以，对于我们每一个开发者来说，Git 的操作就是必不可少的技能了（不是锦上添花，而是必不可少）。对于 Git 的操作，不是本次记录的内容，网上的<a href=https://git-scm.com/book/zh/v1/%E8%B5%B7%E6%AD%A5-Git-%E5%9F%BA%E7%A1%80>教程</a>可以在官网找到。</p><p>今天我想记录一下我本机多用户管理的一点小操作。</p><p>当每进入一家新公司的时候，总会在新公司领到一个新的公司邮箱，基本上这个邮箱也就是你在公司期间进行代码开发的 git 账户。这时候，加上我们平时在 <a href=https://github.com>GitHub</a> 的账户，就会有两个账户需要切换使用。</p><p>下面是我个人的一点小技巧记录，不一定是最好的，但只要自己用着方便就 OK，如果此时看文章的你有好的方法的话，可以请在讨论区交流。</p><a href=https://www.vimiix.com/posts/2018-11-08-change-git-account-by-script/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/>从七牛云到阿里云的自动化迁移代码说明</a></h1><b><time>2018.10.29 23:22</time></b>
+<a href=/tags/python>Python</a>
+<a href=/tags/tool>tool</a><div><p>前几天叙事性的写了<a href=https://vimiix.com/post/2018/10/24/move-qiniuyun-to-alioss/>一篇</a>，有点像日记，这篇分析一下代码逻辑，便于以后回顾。</p><h3 id=工具>工具</h3><ul><li>python3.5</li><li>顺手的 IDE（轻量级推荐<a href=https://code.visualstudio.com/>vscode</a>）</li><li><a href=https://github.com/qiniu/qshell#%E4%B8%8B%E8%BD%BD>qiniu/qshell</a> （本文是基于 mac 系统开发，所以使用 qshell 的 mac 版本，读者请根据自己的系统下载，也可以直接跳至文末，下载本文源码，源码中 tool 文件夹中已经下载好了 mac 下的工具。这个工具只有一步使用到，所以如果只是使用一下，可以不用研究他的所有指令）</li></ul><a href=https://www.vimiix.com/posts/2018-10-29-move-qiniuyun-to-alioss-analysis/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-10-24-move-qiniuyun-to-alioss/>七牛云数据自动迁移到阿里云OSS</a></h1><b><time>2018.10.24 19:22</time></b>
 <a href=/tags/python>Python</a>
 <a href=/tags/tool>tool</a>
 <a href=/tags/migrate>migrate</a><div><h3 id=背景>背景</h3><p>近期收到两封七牛云发来的邮件：</p><blockquote><p>测试域名回收通知</p><p>您的账号 xxx 在七牛云融合 CDN 加速平台有以下测试域名<strong>还剩 7 个自然日会被系统自动回收</strong></p></blockquote><p>由于，我博客所有的图片文件都是存储在七牛云的，这个域名也使用了一年多了，怎么突然要回收呢？</p><p>上网一搜才知道，大概是有什么不法分子之类的，使用七牛云的免费空间传播色情暴力之类的内容，被 Godday 制裁了，现在新申请的 bucket 只能使用一个月，要想绑定域名，还得备案操作。俺这小博客，也就自己玩玩的一个国外服务器，也备不了案啊。</p><p>无奈，看网上很多人都是被回收了才知道自己的图片都访问不了。还好我习惯性的看这些推送邮件，给自己留了一周时间用来备份转移。既然免费的不好用了，微博之类的图床不好迁移，所以就买了一年阿里云的 OSS 服务。</p><p>虽然我的图片还算不是很多，但要是一张一张手动下载再上传到阿里云，也是不小的工作量，而且太浪费时间了。</p><a href=https://www.vimiix.com/posts/2018-10-24-move-qiniuyun-to-alioss/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-10-21-solution-of-pipenv-install-error/>pipenv错误解决:TypeError: "module" object is not callable</a></h1><b><time>2018.10.21 11:22</time></b>
@@ -67,17 +77,7 @@
 </span></span><span style=display:flex><span>    <span style=color:#66d9ef>else</span>:
 </span></span><span style=display:flex><span>        <span style=color:#75715e># 在函数中继续调用自己</span>
 </span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> foo(x<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>)
-</span></span></code></pre></div><a href=https://www.vimiix.com/posts/2018-05-27-grokking-algorithms-chapter-3/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-05-21-grokking-algorithms-chapter-1/>《算法图解》读书笔记1-二分和大O</a></h1><b><time>2018.05.23 23:20</time></b>
-<a href=/tags/algorithms>algorithms</a>
-<a href=/tags/linux>Linux</a><div><blockquote><p>算法是一组完成任务的指令</p></blockquote><h2 id=为什么要学习算法>为什么要学习算法</h2><p>这次是我第二次读《算法图解》，当我第一次看这本书的时候，我更兴奋于书中有什么内容，迫不及待的去过内容，学习那些算法概念。但当我第二次准备开始读这本书的时候，我脑海中出现的了一个问题：“为什么要学习算法？”，这个问题也许会有人和我一样，之前根本没有好好的去思考，只是知道，作为一个程序员我应该学习算法。当然，能够有这个觉悟，说明我们还算是个合格的程序员。</p><p>但是，不妨认真思考一下，为什么要学习算法？算法应该怎么学？</p><a href=https://www.vimiix.com/posts/2018-05-21-grokking-algorithms-chapter-1/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-05-18-tpli-io-extend/>TLPI笔记—深入文件I/O模型</a></h1><b><time>2018.05.18 09:20</time></b>
-<a href=/tags/tlpi>tlpi</a>
-<a href=/tags/linux>Linux</a>
-<a href=/tags/note>note</a>
-<a href=/tags/i/o>I/O</a><div><h2 id=原子操作和竞争操作>原子操作和竞争操作</h2><p>所有的系统调用都是以原子操作方式执行的。之所以这么说，是指内核保证了某系统调用中的所有步骤会作为地理操作而一次性加以执行，期间不会被其他进程或线程中断。原子性规避了<strong>竞争状态（race condition）</strong>，竞争状态指：操作共享资源的两个进程（或线程）其结果取决于一个无法预期的顺序，即这些进程或线程获得 CPU 使用权的先后相对顺序。</p><a href=https://www.vimiix.com/posts/2018-05-18-tpli-io-extend/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-05-11-tpli-common-io/>TLPI笔记—通用文件I/O模型</a></h1><b><time>2018.05.11 09:20</time></b>
-<a href=/tags/tlpi>tlpi</a>
-<a href=/tags/linux>Linux</a>
-<a href=/tags/note>note</a>
-<a href=/tags/i/o>I/O</a><div><h2 id=文件描述符>文件描述符</h2><p>所有执行 I/O 操作的系统调用都是以文件描述符，一个非负整数来指代打开的文件。文件描述符用以表示所有类型的已打开的文件，包括管道（pipe）、FIFO、socket、终端、设备和普通文件。每个进程都各自独立维护着一张文件描述符表。</p><h3 id=标准文件描述符>标准文件描述符</h3><table><thead><tr><th style=text-align:center>文件描述符</th><th style=text-align:center>用途</th><th style=text-align:center>POSIX 名称</th><th style=text-align:center>stdio 流</th></tr></thead><tbody><tr><td style=text-align:center>0</td><td style=text-align:center>标准输入</td><td style=text-align:center>STDIN_FILENO</td><td style=text-align:center>stdin</td></tr><tr><td style=text-align:center>1</td><td style=text-align:center>标准输出</td><td style=text-align:center>STDOUT_FILENO</td><td style=text-align:center>stdout</td></tr><tr><td style=text-align:center>2</td><td style=text-align:center>标准错误</td><td style=text-align:center>STDERR_FILENO</td><td style=text-align:center>stderr</td></tr></tbody></table><a href=https://www.vimiix.com/posts/2018-05-11-tpli-common-io/>Read more...</a></div></article><div><a href=/>上一页</a>
+</span></span></code></pre></div><a href=https://www.vimiix.com/posts/2018-05-27-grokking-algorithms-chapter-3/>Read more...</a></div></article><div><a href=/>上一页</a>
 2 of 5
 <a href=/page/3/>下一页</a></div></main><footer><p>Social Links:
 <a href=https://github.com/vimiix><b>Github</b></a>.

@@ -1,4 +1,24 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Hi, I'm Vimiix</title><link>https://www.vimiix.com/posts/</link><description>Recent content in Posts on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 12 Aug 2024 08:35:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Python中的弱引用</title><link>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</link><pubDate>Mon, 12 Aug 2024 08:35:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Hi, I'm Vimiix</title><link>https://www.vimiix.com/posts/</link><description>Recent content in Posts on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 20 Sep 2024 08:54:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>如何做code review</title><link>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</link><pubDate>Fri, 20 Sep 2024 08:54:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</guid><description>&lt;h2 id="为什么要做code-review">为什么要做code review&lt;/h2>
+&lt;p>从一个需求开发的完整生命周期来看，大约会包含以下过程:&lt;/p>
+&lt;ol>
+&lt;li>需求分析，考虑人员情况、功能预期上线时间、技术难度等诸多因素，与 PM 讨论合理调整需求，分配资源；&lt;/li>
+&lt;li>整体设计，对设计进行 review；&lt;/li>
+&lt;li>代码开发；&lt;/li>
+&lt;li>开发自我 review，观察、思考与整体设计的出入，保证代码遵循团队规范（至少得通过静态代码检查）；&lt;/li>
+&lt;li>添加相应的单元测试，并保证已有的单元测试不受影响；&lt;/li>
+&lt;li>&lt;strong>code review，请相关同事对代码进行 review，修复 review 中发现的问题&lt;/strong>；&lt;/li>
+&lt;li>提交代码给 QA 测试，QA 会进行功能测试、集成测试、性能测试、压力测试等；&lt;/li>
+&lt;li>修复测试发现的 bug 后功能上线。&lt;/li>
+&lt;/ol>
+&lt;p>从上属流程可以看出，代码写完了会有专业的测试同事来进行全方位的测试，那么为什么还要 code review 呢？其次，合格的程序员理论上都会 review 自己的代码，还有没有必要请同事来 review 呢？&lt;/p>
+&lt;p>一个 bug，可能在代码 review 的时候被发现；也可能在测试的时候被发现；最坏的情况下，被用户发现，当然，此时很可能给用户、产品带来损失。越早发现问题，受影响的人员越少，修复成本就越小。&lt;/p>
+&lt;p>开发人员有时也有一个误区，觉得自己完成 “代码开发” 这一步就万事大吉了，测试的事情就应交给 QA 去执行。但很多时候，QA 更多从功能角度去验证代码，有时候黑箱测试也很难覆盖到全部情况，比如异常、安全性问题、版本依赖。况且现在很多公司都逐渐去掉专门的 Test，开发得自己测试，但思维定势导致很难发现自己的问题，对自己代码的 review 也是如此。另外，知道自己的代码也被人“拿着放大镜仔细观察”，自然写代码的时候也认真一些。&lt;/p>
+&lt;p>另外，从上述流程可以看出：&lt;/p>
+&lt;ul>
+&lt;li>其实应该有两次定位不同的 review：对整体设计的 review，主要目的是从大方向上保证设计确实能满足需求；其次是 code review，保证代码实现符合设计约束，且编码没有明显的缺陷。&lt;/li>
+&lt;li>用来 code review 的代码，应该既满足团队代码规范，又基本保证功能的正确。&lt;/li>
+&lt;/ul>
+&lt;p>在我们的实践中，对于复杂的系统，会要求现先设计 review。而对于简单的、或者开发比较有把握的功能，则是将设计 review 与代码 review 合并。本文讨论的 code review 其实就是后者：既关注设计，又关注核心代码。&lt;/p></description></item><item><title>Python中的弱引用</title><link>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</link><pubDate>Mon, 12 Aug 2024 08:35:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-08-12-weakref-in-python/</guid><description>&lt;h2 id="前言">前言&lt;/h2>
 &lt;p>在理解弱引用之前，我们需要先了解 python 中的对象引用和垃圾回收的基本概念，这样更有助于对弱引用的理解。&lt;/p>
 &lt;h3 id="对象引用">对象引用&lt;/h3>
 &lt;p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 &lt;code>a = 1&lt;/code>，这里 &lt;code>a&lt;/code> 就是对象 &lt;code>1&lt;/code> 的引用。每个引用的所指向的对象都可以通过 &lt;code>id()&lt;/code> 函数来查看，两个引用是否相同可以通过 &lt;code>is&lt;/code> 运算符来比较。&lt;/p>
@@ -12,7 +32,88 @@
 &lt;li>仅在第一次登录时询问我密码，后续使用无需再提供密码&lt;/li>
 &lt;li>可以给服务器它任意的标签，这样我就可以自由地通过IP 或者标签来登录&lt;/li>
 &lt;/ul>
-&lt;p>于是乎，近期我在业余时间就设计并编写了 &lt;a href="https://github.com/vimiix/ssx">ssx&lt;/a> 这个轻量级的具有记忆的 ssh 客户端。它完美的实现了上面我所需要的功能，也已经被我愉快的应用到了日常的开发中。&lt;/p></description></item><item><title>Shell 函数实现Go语言多版本管理轻量级方案</title><link>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</link><pubDate>Wed, 21 Jun 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</guid><description>&lt;h2 id="现有的工具方案">现有的工具方案&lt;/h2>
+&lt;p>于是乎，近期我在业余时间就设计并编写了 &lt;a href="https://github.com/vimiix/ssx">ssx&lt;/a> 这个轻量级的具有记忆的 ssh 客户端。它完美的实现了上面我所需要的功能，也已经被我愉快的应用到了日常的开发中。&lt;/p></description></item><item><title>psycopg2 基于 openGauss libpq 中 execPramasBatch 和 execPreparedBatch 接口批量操作性能测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
+&lt;p>如果要查看 Psycopg2 不同接口之间批量操作对比测试，请访问&lt;a href="https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/">这篇笔记&lt;/a>&lt;/p>
+&lt;/blockquote>
+&lt;h2 id="测试环境">测试环境&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>组件&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>客户端操作系统&lt;/td>
+&lt;td>Rocky Linux 8&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>服务端配置&lt;/td>
+&lt;td>2C6G, 40G HDD&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>CPU&lt;/td>
+&lt;td>Intel Xeon Processor (Icelake)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>数据库&lt;/td>
+&lt;td>MogDB 5.0&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>网络&lt;/td>
+&lt;td>300M宽带&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Python&lt;/td>
+&lt;td>3.6.8&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Psycopg2&lt;/td>
+&lt;td>&lt;a href="https://gitee.com/vimiix/openGauss-connector-python-psycopg2/tree/dev">vimiix/openGauss-connector-python-psycopg2&lt;/a>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;blockquote>
+&lt;p>注意：&lt;/p>
+&lt;ol>
+&lt;li>由于真正的性能和服务器的配置，网络情况相关性也比较大，本测试所有的测试用例环境条件一致，只有参数作为变量，所以请不要注重数值本身，重点关注不同情况下的性能比例&lt;/li>
+&lt;li>本测试只取了 100/1000/10000 这个page_size，具有一定的性能趋势，但不代表一味的增大 page_size 就可以提高性能，必然存在一个性能拐点的参数值，而且不同的场景存在不同的性能拐点，要找到性能拐点仍需根据实际情况进行更多的测试。&lt;/li>
+&lt;/ol>
+&lt;/blockquote></description></item><item><title>psycopg2 批量操作接口性能测试</title><link>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</link><pubDate>Wed, 12 Jul 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</guid><description>&lt;h2 id="测试版本">测试版本&lt;/h2>
+&lt;p>本测试基于 openGauss 版本的 psycopg2 驱动&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> psycopg2 &lt;span style="color:#66d9ef">as&lt;/span> pg
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__libpq_version__
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">90204&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__version__
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;2.8.6 (dt dec pq3 ext)&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="测试环境">测试环境&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>组件&lt;/th>
+&lt;th>说明&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>客户端&lt;/td>
+&lt;td>Rocky Linux 8 虚拟机&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>数据库&lt;/td>
+&lt;td>openGauss 3.0.3 in docker&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>网络&lt;/td>
+&lt;td>本地回路网卡&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Python&lt;/td>
+&lt;td>3.6.8&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table></description></item><item><title>Shell 函数实现Go语言多版本管理轻量级方案</title><link>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</link><pubDate>Wed, 21 Jun 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</guid><description>&lt;h2 id="现有的工具方案">现有的工具方案&lt;/h2>
 &lt;ul>
 &lt;li>gvm: &lt;a href="https://github.com/moovweb/gvm">https://github.com/moovweb/gvm&lt;/a>&lt;/li>
 &lt;li>g: &lt;a href="https://github.com/voidint/g">https://github.com/voidint/g&lt;/a>&lt;/li>

@@ -1,0 +1,144 @@
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>psycopg2 批量操作接口性能测试</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css><script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?7c24231917964240bae97e813810620c",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right;color:gray;font-size:x-large>Get hands dirty.</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/projects/><b>开源项目</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于我</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>psycopg2 批量操作接口性能测试</h1><b><time>2023.07.12 14:50</time></b>
+<a href=/tags/driver>driver</a>
+<a href=/tags/psycopg2>psycopg2</a>
+<a href=/tags/benchmark>benchmark</a><div><h2 id=测试版本>测试版本</h2><p>本测试基于 openGauss 版本的 psycopg2 驱动</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#f92672>import</span> psycopg2 <span style=color:#66d9ef>as</span> pg
+</span></span><span style=display:flex><span><span style=color:#f92672>&gt;&gt;&gt;</span> pg<span style=color:#f92672>.</span>__libpq_version__
+</span></span><span style=display:flex><span><span style=color:#ae81ff>90204</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>&gt;&gt;&gt;</span> pg<span style=color:#f92672>.</span>__version__
+</span></span><span style=display:flex><span><span style=color:#e6db74>&#39;2.8.6 (dt dec pq3 ext)&#39;</span>
+</span></span></code></pre></div><h2 id=测试环境>测试环境</h2><table><thead><tr><th>组件</th><th>说明</th></tr></thead><tbody><tr><td>客户端</td><td>Rocky Linux 8 虚拟机</td></tr><tr><td>数据库</td><td>openGauss 3.0.3 in docker</td></tr><tr><td>网络</td><td>本地回路网卡</td></tr><tr><td>Python</td><td>3.6.8</td></tr></tbody></table><h2 id=测试接口>测试接口</h2><table><thead><tr><th style=text-align:left>接口名</th><th>说明</th><th>备注</th></tr></thead><tbody><tr><td style=text-align:left><a href=https://www.psycopg.org/docs/cursor.html#cursor.executemany>cursor.executemany(query, vars_list)</a></td><td>执行一个数据库操作，vars_list 列表中的所有参数会逐个被应用到query 中，每组参数都会单独封包发送给服务端。</td><td>该函数主要用于更新数据库的命令，查询返回的任何结果集都将被丢弃。在其当前实现中，此方法并不比在循环中执行execute()快。</td></tr><tr><td style=text-align:left><a href=https://www.psycopg.org/docs/extras.html#psycopg2.extras.execute_batch>psycopg2.extras.execute_batch(cur, sql, argslist, page_size=100)</a></td><td>批量执行一个数据库操作，执行的SQL和 executemany 相同，只是单个数据包发送时会发送一批SQL，数量由page_size决定。这样可以减少和服务端的通信次数</td><td>execute_batch()也可以和预处理语句(PREPARE, EXECUTE, DEALLOCATE)一起使用。</td></tr><tr><td style=text-align:left>extras.execute_batch + 预处理语句</td><td>使用PREPARE提交创建一个statement，然后通过 execute_batch 提交</td><td></td></tr><tr><td style=text-align:left><a href=https://www.psycopg.org/docs/extras.html#psycopg2.extras.execute_values>psycopg2.extras.execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False)</a></td><td>将参数和SQL封装为一条SQL执行，单条SQL中参数的个数由 page_size 决定。</td><td></td></tr></tbody></table><h2 id=性能对比>性能对比</h2><h3 id=insert>INSERT</h3><h4 id=测试数据>测试数据</h4><table><thead><tr><th>rows</th><th>executemany</th><th>execute_batch</th><th style=text-align:left>prepare+execute_batch</th><th style=text-align:left>execute_values</th></tr></thead><tbody><tr><td>10,000</td><td>9.782</td><td>0.707</td><td style=text-align:left>0.501</td><td style=text-align:left>0.266</td></tr><tr><td>50,000</td><td>52.979</td><td>3.123</td><td style=text-align:left>2.637</td><td style=text-align:left>1.226</td></tr><tr><td>100,000</td><td>111.504</td><td>6.831</td><td style=text-align:left>4.557</td><td style=text-align:left>2.125</td></tr></tbody></table><h4 id=insert耗时对比图>INSERT耗时对比图</h4><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230712-5709755a-dafa-4096-858c-7301e5160cd2.jpg alt=batch-insert></figure></p><h4 id=insert-去除-executemany-对比>INSERT 去除 executemany 对比</h4><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230712-fa992e73-e08f-4e7e-8be3-79ea905a339e.jpg alt=batch-insert-exclude-executemany></figure></p><h3 id=update>UPDATE</h3><h4 id=测试数据-1>测试数据</h4><table><thead><tr><th>rows</th><th>executemany</th><th>execute_batch</th><th style=text-align:left>prepare+execute_batch</th><th style=text-align:left>execute_values</th></tr></thead><tbody><tr><td>10,000</td><td>5.015</td><td>0.617</td><td style=text-align:left>0.425</td><td style=text-align:left>0.356</td></tr><tr><td>50,000</td><td>24.639</td><td>3.467</td><td style=text-align:left>1.905</td><td style=text-align:left>5.237</td></tr><tr><td>100,000</td><td>52.095</td><td>6.927</td><td style=text-align:left>3.473</td><td style=text-align:left>21.102</td></tr></tbody></table><h4 id=update-耗时对比图>UPDATE 耗时对比图</h4><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230713-75ea074d-253a-4f82-a94c-eeb3e2280727.jpg alt=16892490588494.jpg></figure></p><h3 id=delete>DELETE</h3><h4 id=测试数据-2>测试数据</h4><p>(<em>100000 条数据组耗时太久不做展示</em>)</p><table><thead><tr><th>rows</th><th>executemany</th><th>execute_batch</th><th style=text-align:left>prepare+execute_batch</th><th style=text-align:left>execute_values</th></tr></thead><tbody><tr><td>10,000</td><td>15.020</td><td>8.699</td><td style=text-align:left>0.277</td><td style=text-align:left>6.204</td></tr><tr><td>50,000</td><td>248.154</td><td>227.958</td><td style=text-align:left>1.455</td><td style=text-align:left>142.732</td></tr></tbody></table><h4 id=delete-耗时对比图>DELETE 耗时对比图</h4><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230713-f2675fd6-8e22-4b0b-b08b-564932a60d60.jpg alt=16892491996399.jpg></figure></p><h2 id=性能分析>性能分析</h2><p>从耗时对比来看，插入、更新、删除在不同的数据量情况下性能是不同的，用户应该根据自己的业务场景来选择使用哪一种操作接口。</p><p>插入性能从低到高依次为：</p><p><code>executemany &lt; execute_batch &lt; prepare+execute_batch &lt; execute_values</code></p><p>更新性能从低到高依次为：</p><p><code>executemany &lt; execute_values &lt; execute_batch &lt; prepare+execute_batch</code></p><p>删除性能从低到高依次为：</p><p><code>executemany &lt; execute_batch &lt; execute_values &lt; prepare+execute_batch</code></p><p>性能的高低主要是由于在向服务端发送数据包时的方式不同导致，下面以插入的SQL为例，通过 wireshark 进行抓包可以看出 psycopg2 在通信过程中不同批处理接口的封包情况。</p><h3 id=executemany>executemany</h3><p><code>executemany</code> 提交SQL的时候是逐个应用给的参数，每个SQL都单独发送给服务端</p><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230712-1b04e125-3c1f-42bf-8760-fd9636479f4c.jpg alt=fd9636479f4c.jpg></figure></p><h3 id=execute_batch>execute_batch</h3><p><code>execute_batch</code> 接口区别于 <code>executemany</code> 的是，在发送给后端的单个请求包里的数据会一次性提交一批的SQL，这样可以减少和服务器之间通信的往返次数</p><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230712-52a6a6c0-4fcb-494e-84ea-54901fdb310d.jpg alt=54901fdb310d.jpg></figure></p><h3 id=prepareexecute_batch>prepare+execute_batch</h3><p><code>prepare</code> 可以提前在数据库里面创建一个预备语句对象，在执行 prepare 语句的时候，指定的SQL已经经了解析、分析、重写，这样在后续执行 EXECUTE 时就避免了重复解析分析的工作，从而起到优化性能的作用。</p><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230712-efca89b2-a99f-4c4e-8fce-8d8abc70246d.jpg alt=8d8abc70246d.jpg></figure></p><h3 id=execute_values>execute_values</h3><p>前面的三个接口，不管是单个提交还是批量提交，最终都是一行数据一个SQL发送到服务端的，所以服务端需要逐个执行，而 <code>execute_values</code> 接口是会按照 page_size 分组参数后，每组参数一次性组成一个SQL进行提交。</p><p><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230712-8fc8095f-6a20-4c01-b7d1-8031d10e389c.jpg alt=b7d1-8031d10e389c.jpg></figure><figure><img src=https://oss-emcsprod-public.modb.pro/image/editor/20230712-8fc8095f-6a20-4c01-b7d1-8031d10e389c.jpg alt=b7d1-8031d10e389c.jpg></figure></p><h2 id=测试代码>测试代码</h2><p>执行方式：<code>python test.py &lt;api> &lt;row> &lt;operation></code></p><ul><li><code>&lt;api></code> 支持： <code>executemany</code>, <code>execute_batch</code>, <code>prepare</code>, <code>execute_values</code></li><li><code>&lt;operation></code> 支持 <code>insert</code>, <code>update</code>, <code>delete</code></li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#75715e># coding: utf-8</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># Usage: python test.py &lt;api&gt; &lt;count&gt; &lt;operation&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> time
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> sys
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> psycopg2 <span style=color:#66d9ef>as</span> pg
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> psycopg2.extras <span style=color:#f92672>import</span> execute_batch, execute_values
+</span></span><span style=display:flex><span><span style=color:#f92672>from</span> contextlib <span style=color:#f92672>import</span> contextmanager
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;insert&#34;</span>:
+</span></span><span style=display:flex><span>    args <span style=color:#f92672>=</span> [[str(i), i] <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(int(sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>2</span>]))]
+</span></span><span style=display:flex><span><span style=color:#66d9ef>elif</span> sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;update&#34;</span>:
+</span></span><span style=display:flex><span>    args <span style=color:#f92672>=</span> [[i, str(i)] <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(int(sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>2</span>]))]
+</span></span><span style=display:flex><span><span style=color:#66d9ef>elif</span> sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;delete&#34;</span>:
+</span></span><span style=display:flex><span>    args <span style=color:#f92672>=</span> [[i] <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(int(sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>2</span>]))]
+</span></span><span style=display:flex><span><span style=color:#e6db74>&#39;&#39;&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- *dbname*: the database name
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- *database*: the database name (only as keyword argument)
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- *user*: user name used to authenticate
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- *password*: password used to authenticate
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- *host*: database host address (defaults to UNIX socket if not provided)
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>- *port*: connection port number (defaults to 5432 if not provided)
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>&#39;&#39;&#39;</span>
+</span></span><span style=display:flex><span>conf <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#39;dbname&#39;</span>: <span style=color:#e6db74>&#34;postgres&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#39;user&#39;</span>: <span style=color:#e6db74>&#39;gaussdb&#39;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#39;password&#39;</span>: <span style=color:#e6db74>&#39;&#39;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#39;host&#39;</span>: <span style=color:#e6db74>&#39;&#39;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#39;port&#39;</span>: <span style=color:#ae81ff>26000</span>,
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#39;sslmode&#39;</span>: <span style=color:#e6db74>&#39;disable&#39;</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>@contextmanager</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>calc_time</span>(s):
+</span></span><span style=display:flex><span>    start <span style=color:#f92672>=</span> time<span style=color:#f92672>.</span>time()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>yield</span>
+</span></span><span style=display:flex><span>    end <span style=color:#f92672>=</span> time<span style=color:#f92672>.</span>time()
+</span></span><span style=display:flex><span>    print(<span style=color:#e6db74>f</span><span style=color:#e6db74>&#34;</span><span style=color:#e6db74>{</span>s<span style=color:#e6db74>}</span><span style=color:#e6db74> of &#39;</span><span style=color:#e6db74>{</span>sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>]<span style=color:#e6db74>}</span><span style=color:#e6db74>&#39; cost: &#34;</span>, end <span style=color:#f92672>-</span> start)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>sql_map <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;insert&#34;</span>: {
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>1</span>: <span style=color:#e6db74>&#34;INSERT INTO t_psycopg2_benchmark VALUES (</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>, </span><span style=color:#e6db74>%s</span><span style=color:#e6db74>)&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>2</span>: <span style=color:#e6db74>&#34;INSERT INTO t_psycopg2_benchmark VALUES ($1, $2)&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>3</span>: <span style=color:#e6db74>&#34;INSERT INTO t_psycopg2_benchmark VALUES </span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;update&#34;</span>: {
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>1</span>: <span style=color:#e6db74>&#34;UPDATE t_psycopg2_benchmark as t SET f_value = </span><span style=color:#e6db74>%s</span><span style=color:#e6db74> WHERE t.f_key = </span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>2</span>: <span style=color:#e6db74>&#34;UPDATE t_psycopg2_benchmark as t SET f_value = $1 WHERE t.f_key = $2&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>3</span>: <span style=color:#e6db74>&#34;UPDATE t_psycopg2_benchmark as t SET f_value = data.v1 FROM (VALUES </span><span style=color:#e6db74>%s</span><span style=color:#e6db74>) AS data (id, v1) WHERE t.f_key = data.id&#34;</span>,
+</span></span><span style=display:flex><span>    },
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;delete&#34;</span>: {
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>1</span>: <span style=color:#e6db74>&#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key=</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>2</span>: <span style=color:#e6db74>&#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key=$1&#34;</span>,
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>3</span>: <span style=color:#e6db74>&#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key IN (</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>)&#34;</span>,
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>insert_data</span>(conn):
+</span></span><span style=display:flex><span>    print(<span style=color:#e6db74>&#34;* preparing data ...&#34;</span>)
+</span></span><span style=display:flex><span>    args <span style=color:#f92672>=</span> [[str(i), i] <span style=color:#66d9ef>for</span> i <span style=color:#f92672>in</span> range(int(sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>2</span>]))]
+</span></span><span style=display:flex><span>    cursor <span style=color:#f92672>=</span> conn<span style=color:#f92672>.</span>cursor()
+</span></span><span style=display:flex><span>    sql <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;insert into t_psycopg2_benchmark values </span><span style=color:#e6db74>%s</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    execute_values(cursor, sql, args)
+</span></span><span style=display:flex><span>    conn<span style=color:#f92672>.</span>commit()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>def</span> <span style=color:#a6e22e>main</span>():
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>try</span>:
+</span></span><span style=display:flex><span>        conn <span style=color:#f92672>=</span> pg<span style=color:#f92672>.</span>connect(<span style=color:#f92672>**</span>conf)
+</span></span><span style=display:flex><span>        print(<span style=color:#e6db74>&#34;* connect success&#34;</span>)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>except</span> <span style=color:#a6e22e>Exception</span> <span style=color:#66d9ef>as</span> e:
+</span></span><span style=display:flex><span>        print(<span style=color:#e6db74>f</span><span style=color:#e6db74>&#34;connect failed: </span><span style=color:#e6db74>{</span>e<span style=color:#e6db74>}</span><span style=color:#e6db74>&#34;</span>)
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    cursor <span style=color:#f92672>=</span> conn<span style=color:#f92672>.</span>cursor()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    sql <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;drop table if exists t_psycopg2_benchmark&#34;</span>
+</span></span><span style=display:flex><span>    cursor<span style=color:#f92672>.</span>execute(sql)
+</span></span><span style=display:flex><span>    sql <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;create table t_psycopg2_benchmark (f_key text primary key, f_value numeric)&#34;</span>
+</span></span><span style=display:flex><span>    cursor<span style=color:#f92672>.</span>execute(sql)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    api <span style=color:#f92672>=</span> sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>1</span>]
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>!=</span> <span style=color:#e6db74>&#34;insert&#34;</span>:
+</span></span><span style=display:flex><span>        insert_data(conn)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    print(<span style=color:#e6db74>&#34;* benchmarking ...&#34;</span>)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> api <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;executemany&#34;</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>with</span> calc_time(<span style=color:#e6db74>&#34;executemany&#34;</span>):
+</span></span><span style=display:flex><span>            sql <span style=color:#f92672>=</span> sql_map[sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>]][<span style=color:#ae81ff>1</span>]
+</span></span><span style=display:flex><span>            cursor<span style=color:#f92672>.</span>executemany(sql, args)
+</span></span><span style=display:flex><span>            conn<span style=color:#f92672>.</span>commit()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> api <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;execute_batch&#34;</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>with</span> calc_time(<span style=color:#e6db74>&#34;execute_batch&#34;</span>):
+</span></span><span style=display:flex><span>            sql <span style=color:#f92672>=</span> sql_map[sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>]][<span style=color:#ae81ff>1</span>]
+</span></span><span style=display:flex><span>            execute_batch(cursor, sql, args)
+</span></span><span style=display:flex><span>            conn<span style=color:#f92672>.</span>commit()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> api <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;prepare&#34;</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>with</span> calc_time(<span style=color:#e6db74>&#34;execute_values&#34;</span>):
+</span></span><span style=display:flex><span>            cursor<span style=color:#f92672>.</span>execute(<span style=color:#e6db74>f</span><span style=color:#e6db74>&#34;PREPARE test_stmt AS </span><span style=color:#e6db74>{</span>sql_map[sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>]][<span style=color:#ae81ff>2</span>]<span style=color:#e6db74>}</span><span style=color:#e6db74>&#34;</span>)
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>if</span> sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;delete&#34;</span>:
+</span></span><span style=display:flex><span>                execute_batch(cursor, <span style=color:#e6db74>&#34;EXECUTE test_stmt (</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>)&#34;</span>, args)
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>else</span>:
+</span></span><span style=display:flex><span>                execute_batch(cursor, <span style=color:#e6db74>&#34;EXECUTE test_stmt (</span><span style=color:#e6db74>%s</span><span style=color:#e6db74>, </span><span style=color:#e6db74>%s</span><span style=color:#e6db74>)&#34;</span>, args)
+</span></span><span style=display:flex><span>            cursor<span style=color:#f92672>.</span>execute(<span style=color:#e6db74>&#34;DEALLOCATE test_stmt&#34;</span>)
+</span></span><span style=display:flex><span>            conn<span style=color:#f92672>.</span>commit()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>elif</span> api <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;execute_values&#34;</span>:
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>with</span> calc_time(<span style=color:#e6db74>&#34;execute_values&#34;</span>):
+</span></span><span style=display:flex><span>            sql <span style=color:#f92672>=</span> sql_map[sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>]][<span style=color:#ae81ff>3</span>]
+</span></span><span style=display:flex><span>            execute_values(cursor, sql, args)
+</span></span><span style=display:flex><span>            conn<span style=color:#f92672>.</span>commit()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>else</span>:
+</span></span><span style=display:flex><span>        print(<span style=color:#e6db74>f</span><span style=color:#e6db74>&#34;unknow api: </span><span style=color:#e6db74>{</span>api<span style=color:#e6db74>}</span><span style=color:#e6db74>&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span> sys<span style=color:#f92672>.</span>argv[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>!=</span> <span style=color:#e6db74>&#34;delete&#34;</span>:
+</span></span><span style=display:flex><span>        cursor<span style=color:#f92672>.</span>execute(<span style=color:#e6db74>&#34;delete from t_psycopg2_benchmark&#34;</span>)
+</span></span><span style=display:flex><span>        conn<span style=color:#f92672>.</span>commit()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> __name__ <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;__main__&#34;</span>:
+</span></span><span style=display:flex><span>    main()
+</span></span></code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2024-09-20-how-to-code-review/>如何做code review</a></li><li><a href=/posts/2024-08-12-weakref-in-python/>Python中的弱引用</a></li><li><a href=/posts/2024-07-12-writing-custom-database-backends-in-django/>自定义 Django 中数据库的后端</a></li><li><a href=/posts/2024-06-05-working-mechanism-of-synchronous-standby-names-in-mogdb/>MogDB 中 synchronous_standby_names 参数的工作机制</a></li><li><a href=/posts/2024-02-20-be-a-better-developer-with-these-git-good-practices/>[译]做一个拥有 Git 好习惯的开发者</a></li></ul></div></div></aside><footer><p>Social Links:
+<a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br><hr>&copy; 2017-2024
+Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p><script src=https://l2dwidget.js.org/lib/L2Dwidget.min.js></script><script>L2Dwidget.init({model:{jsonPath:"https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json"}})</script></footer></body></html>

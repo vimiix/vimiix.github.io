@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Project on Hi, I'm Vimiix</title><link>https://www.vimiix.com/tags/project/</link><description>Recent content in Project on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 20 Sep 2024 08:54:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/tags/project/index.xml" rel="self" type="application/rss+xml"/><item><title>如何做code review</title><link>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</link><pubDate>Fri, 20 Sep 2024 08:54:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</guid><description>&lt;h2 id="为什么要做code-review">为什么要做code review&lt;/h2>
+&lt;p>从一个需求开发的完整生命周期来看，大约会包含以下过程:&lt;/p>
+&lt;ol>
+&lt;li>需求分析，考虑人员情况、功能预期上线时间、技术难度等诸多因素，与 PM 讨论合理调整需求，分配资源；&lt;/li>
+&lt;li>整体设计，对设计进行 review；&lt;/li>
+&lt;li>代码开发；&lt;/li>
+&lt;li>开发自我 review，观察、思考与整体设计的出入，保证代码遵循团队规范（至少得通过静态代码检查）；&lt;/li>
+&lt;li>添加相应的单元测试，并保证已有的单元测试不受影响；&lt;/li>
+&lt;li>&lt;strong>code review，请相关同事对代码进行 review，修复 review 中发现的问题&lt;/strong>；&lt;/li>
+&lt;li>提交代码给 QA 测试，QA 会进行功能测试、集成测试、性能测试、压力测试等；&lt;/li>
+&lt;li>修复测试发现的 bug 后功能上线。&lt;/li>
+&lt;/ol>
+&lt;p>从上属流程可以看出，代码写完了会有专业的测试同事来进行全方位的测试，那么为什么还要 code review 呢？其次，合格的程序员理论上都会 review 自己的代码，还有没有必要请同事来 review 呢？&lt;/p>
+&lt;p>一个 bug，可能在代码 review 的时候被发现；也可能在测试的时候被发现；最坏的情况下，被用户发现，当然，此时很可能给用户、产品带来损失。越早发现问题，受影响的人员越少，修复成本就越小。&lt;/p>
+&lt;p>开发人员有时也有一个误区，觉得自己完成 “代码开发” 这一步就万事大吉了，测试的事情就应交给 QA 去执行。但很多时候，QA 更多从功能角度去验证代码，有时候黑箱测试也很难覆盖到全部情况，比如异常、安全性问题、版本依赖。况且现在很多公司都逐渐去掉专门的 Test，开发得自己测试，但思维定势导致很难发现自己的问题，对自己代码的 review 也是如此。另外，知道自己的代码也被人“拿着放大镜仔细观察”，自然写代码的时候也认真一些。&lt;/p>
+&lt;p>另外，从上述流程可以看出：&lt;/p>
+&lt;ul>
+&lt;li>其实应该有两次定位不同的 review：对整体设计的 review，主要目的是从大方向上保证设计确实能满足需求；其次是 code review，保证代码实现符合设计约束，且编码没有明显的缺陷。&lt;/li>
+&lt;li>用来 code review 的代码，应该既满足团队代码规范，又基本保证功能的正确。&lt;/li>
+&lt;/ul>
+&lt;p>在我们的实践中，对于复杂的系统，会要求现先设计 review。而对于简单的、或者开发比较有把握的功能，则是将设计 review 与代码 review 合并。本文讨论的 code review 其实就是后者：既关注设计，又关注核心代码。&lt;/p></description></item></channel></rss>
