@@ -32,7 +32,7 @@
 &lt;li>仅在第一次登录时询问我密码，后续使用无需再提供密码&lt;/li>
 &lt;li>可以给服务器它任意的标签，这样我就可以自由地通过IP 或者标签来登录&lt;/li>
 &lt;/ul>
-&lt;p>于是乎，近期我在业余时间就设计并编写了 &lt;a href="https://github.com/vimiix/ssx">ssx&lt;/a> 这个轻量级的具有记忆的 ssh 客户端。它完美的实现了上面我所需要的功能，也已经被我愉快的应用到了日常的开发中。&lt;/p></description></item><item><title>psycopg2 基于 openGauss libpq 中 execPramasBatch 和 execPreparedBatch 接口批量操作性能测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
+&lt;p>于是乎，近期我在业余时间就设计并编写了 &lt;a href="https://github.com/vimiix/ssx">ssx&lt;/a> 这个轻量级的具有记忆的 ssh 客户端。它完美的实现了上面我所需要的功能，也已经被我愉快的应用到了日常的开发中。&lt;/p></description></item><item><title>psycopg2基于openGauss中execPramasBatch和execPreparedBatch接口测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
 &lt;p>如果要查看 Psycopg2 不同接口之间批量操作对比测试，请访问&lt;a href="https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/">这篇笔记&lt;/a>&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="测试环境">测试环境&lt;/h2>

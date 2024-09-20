@@ -580,7 +580,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;/figure>
 
 
-&lt;/p></description></item><item><title>psycopg2 基于 openGauss libpq 中 execPramasBatch 和 execPreparedBatch 接口批量操作性能测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
+&lt;/p></description></item><item><title>psycopg2基于openGauss中execPramasBatch和execPreparedBatch接口测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
 &lt;p>如果要查看 Psycopg2 不同接口之间批量操作对比测试，请访问&lt;a href="https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/">这篇笔记&lt;/a>&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="测试环境">测试环境&lt;/h2>
@@ -663,13 +663,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;/table>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-516c5469-88d8-49a9-aa26-f2f9f1ec1613.png" alt="image.png" />
-&lt;/figure>
-
-
-
-&lt;figure>
- &lt;img src="media/16911146554324/16911308769356.jpg" alt="" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/iNwbLv.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -707,13 +701,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;/table>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-fd681e08-7363-4db5-8e1d-754b8bdfb3da.png" alt="image.png" />
-&lt;/figure>
-
-
-
-&lt;figure>
- &lt;img src="media/16911146554324/16911308253116.jpg" alt="" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/748CoC.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -751,7 +739,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;/table>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-518f41ab-9c6c-4e57-9d94-f98ae68ba36d.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/yeQRc8.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -759,14 +747,14 @@ Update unit tests. ❌;&lt;/p>
 &lt;h3 id="相同行数时不同-page_size-的接口性能对比">相同行数时，不同 page_size 的接口性能对比&lt;/h3>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-02bacd93-c5a3-4ec4-a954-89d4f03fe802.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/OQynhS.png" alt="image.png" />
 &lt;/figure>
 
 
 
 
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-9f236784-0b64-477b-8f70-ac8b79747c70.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/PXguIq.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -808,7 +796,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;/table>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-213bda25-3da2-4b23-abba-e67879979e27.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/roeISI.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -846,7 +834,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;/table>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-f4e32c61-474f-4aa1-b6b2-fda119fb873d.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/iPGUHF.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -884,7 +872,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;/table>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-cf3056f0-470e-498d-8726-8b299722076f.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/c64pUD.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -892,14 +880,14 @@ Update unit tests. ❌;&lt;/p>
 &lt;h2 id="相同行数时不同-page_size-的接口性能对比-1">相同行数时，不同 page_size 的接口性能对比&lt;/h2>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-1b57b5fe-da83-41de-b6be-e567d7a401dd.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/pFengW.png" alt="image.png" />
 &lt;/figure>
 
 
 
 
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230804-798f7b69-bf8b-409f-8060-18f29491a66d.png" alt="image.png" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/cWneQ2.png" alt="image.png" />
 &lt;/figure>
 
 
@@ -1020,7 +1008,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;h4 id="insert耗时对比图">INSERT耗时对比图&lt;/h4>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-5709755a-dafa-4096-858c-7301e5160cd2.jpg" alt="batch-insert" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/p0A6g8.png" alt="batch-insert" />
 &lt;/figure>
 
 
@@ -1028,7 +1016,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;h4 id="insert-去除-executemany-对比">INSERT 去除 executemany 对比&lt;/h4>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-fa992e73-e08f-4e7e-8be3-79ea905a339e.jpg" alt="batch-insert-exclude-executemany" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/naIaPn.png" alt="batch-insert-exclude-executemany" />
 &lt;/figure>
 
 
@@ -1072,7 +1060,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;h4 id="update-耗时对比图">UPDATE 耗时对比图&lt;/h4>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230713-75ea074d-253a-4f82-a94c-eeb3e2280727.jpg" alt="16892490588494.jpg" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/Nmf5Lh.png" alt="16892490588494.jpg" />
 &lt;/figure>
 
 
@@ -1110,7 +1098,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;h4 id="delete-耗时对比图">DELETE 耗时对比图&lt;/h4>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230713-f2675fd6-8e22-4b0b-b08b-564932a60d60.jpg" alt="16892491996399.jpg" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/oHjdjO.png" alt="16892491996399.jpg" />
 &lt;/figure>
 
 
@@ -1128,7 +1116,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;p>&lt;code>executemany&lt;/code> 提交SQL的时候是逐个应用给的参数，每个SQL都单独发送给服务端&lt;/p>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-1b04e125-3c1f-42bf-8760-fd9636479f4c.jpg" alt="fd9636479f4c.jpg" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/qA6EA5.png" alt="fd9636479f4c.jpg" />
 &lt;/figure>
 
 
@@ -1137,7 +1125,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;p>&lt;code>execute_batch&lt;/code> 接口区别于 &lt;code>executemany&lt;/code> 的是，在发送给后端的单个请求包里的数据会一次性提交一批的SQL，这样可以减少和服务器之间通信的往返次数&lt;/p>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-52a6a6c0-4fcb-494e-84ea-54901fdb310d.jpg" alt="54901fdb310d.jpg" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/w0ZLEa.png" alt="54901fdb310d.jpg" />
 &lt;/figure>
 
 
@@ -1146,7 +1134,7 @@ Update unit tests. ❌;&lt;/p>
 &lt;p>&lt;code>prepare&lt;/code> 可以提前在数据库里面创建一个预备语句对象，在执行 prepare 语句的时候，指定的SQL已经经了解析、分析、重写，这样在后续执行 EXECUTE 时就避免了重复解析分析的工作，从而起到优化性能的作用。&lt;/p>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-efca89b2-a99f-4c4e-8fce-8d8abc70246d.jpg" alt="8d8abc70246d.jpg" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/61XBDU.png" alt="8d8abc70246d.jpg" />
 &lt;/figure>
 
 
@@ -1155,14 +1143,14 @@ Update unit tests. ❌;&lt;/p>
 &lt;p>前面的三个接口，不管是单个提交还是批量提交，最终都是一行数据一个SQL发送到服务端的，所以服务端需要逐个执行，而 &lt;code>execute_values&lt;/code> 接口是会按照 page_size 分组参数后，每组参数一次性组成一个SQL进行提交。&lt;/p>
 &lt;p>
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-8fc8095f-6a20-4c01-b7d1-8031d10e389c.jpg" alt="b7d1-8031d10e389c.jpg" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/pXWVrW.png" alt="b7d1-8031d10e389c.jpg" />
 &lt;/figure>
 
 
 
 
 &lt;figure>
- &lt;img src="https://oss-emcsprod-public.modb.pro/image/editor/20230712-8fc8095f-6a20-4c01-b7d1-8031d10e389c.jpg" alt="b7d1-8031d10e389c.jpg" />
+ &lt;img src="https://static.vimiix.com/upic/2024-09-20/0lQpxV.png" alt="b7d1-8031d10e389c.jpg" />
 &lt;/figure>
 
 

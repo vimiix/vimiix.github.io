@@ -4,7 +4,7 @@
 &lt;p>在 Python 中，一切皆为对象，包括变量、函数、类以及其实例化的对象。我们要是有对象就必须通过赋值语句来创建一个引用（可以理解为标签），比如 &lt;code>a = 1&lt;/code>，这里 &lt;code>a&lt;/code> 就是对象 &lt;code>1&lt;/code> 的引用。每个引用的所指向的对象都可以通过 &lt;code>id()&lt;/code> 函数来查看，两个引用是否相同可以通过 &lt;code>is&lt;/code> 运算符来比较。&lt;/p>
 &lt;p>&lt;em>(&lt;code>==&lt;/code>和 &lt;code>is&lt;/code> 的区别：&lt;code>==&lt;/code> 运算符比较对象的值（对象中保存的数据），而 &lt;code>is&lt;/code> 比较引用的对象是否为同一个。)&lt;/em>&lt;/p>
 &lt;p>如果想要查看一个对象的内引用次数，可以通过 &lt;code>sys.getrefcount(a) -1&lt;/code> 查看（&lt;em>减1是因为调用 sys.getrefcount 函数传递参数时会增加一次引用&lt;/em>）。&lt;/p>
-&lt;p>&lt;strong>为了说明后面的弱引用，我们将计数的引用成为强引用。&lt;/strong>&lt;/p></description></item><item><title>psycopg2 基于 openGauss libpq 中 execPramasBatch 和 execPreparedBatch 接口批量操作性能测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
+&lt;p>&lt;strong>为了说明后面的弱引用，我们将计数的引用成为强引用。&lt;/strong>&lt;/p></description></item><item><title>psycopg2基于openGauss中execPramasBatch和execPreparedBatch接口测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
 &lt;p>如果要查看 Psycopg2 不同接口之间批量操作对比测试，请访问&lt;a href="https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/">这篇笔记&lt;/a>&lt;/p>
 &lt;/blockquote>
 &lt;h2 id="测试环境">测试环境&lt;/h2>
