@@ -1,0 +1,237 @@
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>使用 kubeadm 搭建 kubernetes 集群</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css><script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?7c24231917964240bae97e813810620c",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right;color:gray;font-size:x-large>Get hands dirty.</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/projects/><b>开源项目</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于我</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>使用 kubeadm 搭建 kubernetes 集群</h1><b><time>2024.12.16 15:23</time></b>
+<a href=/tags/kubernetes>kubernetes</a>
+<a href=/tags/notes>notes</a><div><p>准备4台虚拟机，拓扑为一个 master, 3 个 node 节点，操作系统均为 CentOS 7.9，网络采用桥接模式，设置静态IP。</p><table><thead><tr><th>机器名</th><th>IP</th></tr></thead><tbody><tr><td>master</td><td>192.168.3.200</td></tr><tr><td>node1</td><td>192.168.3.201</td></tr><tr><td>node2</td><td>192.168.3.202</td></tr><tr><td>node3</td><td>192.168.3.203</td></tr></tbody></table><h2 id=安装前环境准备>安装前环境准备</h2><ol><li>YUM 源修改</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#75715e># 1. 修改 yum 源到国内</span>
+</span></span><span style=display:flex><span>curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 2. 安装部分依赖包</span>
+</span></span><span style=display:flex><span>yum install -y yum-utils device-mapper-persistent-data lvm2
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 3. 增加 docker yum 源</span>
+</span></span><span style=display:flex><span>yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 4. 增加 kubernetes yum 源</span>
+</span></span><span style=display:flex><span>cat <span style=color:#e6db74>&lt;&lt;EOF &gt; /etc/yum.repos.d/kubernetes.repo
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[kubernetes]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>name=Kubernetes
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>enabled=1
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>gpgcheck=1
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>repo_gpgcheck=1
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>       https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span></code></pre></div><ol start=2><li>安装一些常用工具</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>yum install wget jq psmisc vim net-tools telnet git -y
+</span></span></code></pre></div><ol start=3><li>关闭防火墙，SELinux，DNSmasq(配置DNS和DHCP的轻量级工具)，swap</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>systemctl disable --now firewalld
+</span></span><span style=display:flex><span>systemctl disable --now dnsmasq
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>swapoff -a <span style=color:#f92672>&amp;&amp;</span> sysctl -w vm.swappiness<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>
+</span></span><span style=display:flex><span>sed -ri <span style=color:#e6db74>&#39;/^[^#]*swap/s@^@#@&#39;</span> /etc/fstab
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 修改 /etc/selinux/config 文件中的配置为 disabled，然后重启生效</span>
+</span></span><span style=display:flex><span>sed -i <span style=color:#e6db74>&#39;s#SELINUX=enforcing#SELINUX=disabled#g&#39;</span> /etc/selinux/config
+</span></span></code></pre></div><ol start=4><li>安装 ntpdate，同步时钟 (如果已经配置了时钟同步服务器，则跳过)</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>rpm -ivh http://mirrors.wlnmp.com/centos/wlnmp-release-centos.noarch.rpm <span style=color:#f92672>&amp;&amp;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  yum install ntpdate -y <span style=color:#f92672>&amp;&amp;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime <span style=color:#f92672>&amp;&amp;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  echo <span style=color:#e6db74>&#39;Asia/Shanghai&#39;</span> &gt; /etc/timezone <span style=color:#f92672>&amp;&amp;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  ntpdate time2.aliyun.com
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 设置定时任务每5分钟同步一下时钟</span>
+</span></span><span style=display:flex><span>crontab -e
+</span></span><span style=display:flex><span><span style=color:#75715e># 配置如下规则</span>
+</span></span><span style=display:flex><span>*/5 * * * * /usr/sbin/ntpdate time2.aliyun.com
+</span></span></code></pre></div><ol start=5><li>默认 limit 配置</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>ulimit -SHn <span style=color:#ae81ff>65535</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>vim /etc/security/limits.conf
+</span></span><span style=display:flex><span><span style=color:#75715e># 末尾追加如下内容</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>* soft nofile <span style=color:#ae81ff>65536</span>
+</span></span><span style=display:flex><span>* hard nofile <span style=color:#ae81ff>131072</span>
+</span></span><span style=display:flex><span>* soft nproc <span style=color:#ae81ff>65535</span>
+</span></span><span style=display:flex><span>* hard nproc <span style=color:#ae81ff>655350</span>
+</span></span><span style=display:flex><span>* soft memlock unlimited
+</span></span><span style=display:flex><span>* hard memlock unlimited
+</span></span></code></pre></div><ol start=6><li>在master 生成ssh秘钥，拷贝到其他节点，实现master免密登录其他节点</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>ssh-keygen -t rsa
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span> i in node1 node2 node3; <span style=color:#66d9ef>do</span> ssh-copy-id -i .ssh/id_rsa.pub $i; <span style=color:#66d9ef>done</span>
+</span></span></code></pre></div><h2 id=安装-k8s-集群>安装 k8s 集群</h2><blockquote><p>1.24版本以后默认使用containerd 作为runtime，所以安装 containerd</p></blockquote><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#75715e># 修改必要系统配置</span>
+</span></span><span style=display:flex><span>modprobe br_netfilter
+</span></span><span style=display:flex><span>echo <span style=color:#ae81ff>1</span> &gt; /proc/sys/net/bridge/bridge-nf-call-iptables
+</span></span><span style=display:flex><span>echo <span style=color:#ae81ff>1</span> &gt; /proc/sys/net/ipv4/ip_forward
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>yum install -y containerd kubelet kubeadm kubectl --disableexcludes<span style=color:#f92672>=</span>kubernetes
+</span></span><span style=display:flex><span><span style=color:#75715e># 启动 containerd</span>
+</span></span><span style=display:flex><span>systemctl daemon-reload
+</span></span><span style=display:flex><span>systemctl enable containerd
+</span></span><span style=display:flex><span>systemctl enable kubelet
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 把 containerd 默认配置写到配置文件中</span>
+</span></span><span style=display:flex><span>containerd config default &gt; /etc/containerd/config.toml
+</span></span><span style=display:flex><span><span style=color:#75715e># 编辑 /etc/containerd/config.toml 文件，</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 如果存在 disabled_plugins = [&#34;cri&#34;]，把列表中的cri 去掉，或者注释掉这一行</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 否则 kubeadm init 的时候会报错 &#34;CRI v1 image API is not implemented for endpoint&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 另外把 containerd 的 cgroup 驱动改为 systemd，找到如下行，把SystemdCgroup 改为true</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>[</span>plugins.<span style=color:#e6db74>&#34;io.containerd.grpc.v1.cri&#34;</span>.containerd.runtimes.runc.options<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>    SystemdCgroup <span style=color:#f92672>=</span> true
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 国内配置一下国内源，修改配置文件中 config_path 的值</span>
+</span></span><span style=display:flex><span>  config_path <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;/etc/containerd/certs.d&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 保存配置文件退出，然后创建/etc/containerd/certs.d/目录，在这个目录下创建不同站点的代理</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># hosts.toml中可以配置多个镜像仓库，containerd下载镜像时会根据配置的顺序使用镜像仓库，</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 只有当上一个仓库下载失败才会使用下一个镜像仓库。</span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 因此，镜像仓库的配置原则就是镜像仓库下载速度越快，那么这个仓库就应该放在最前面。</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># docker hub镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/docker.io
+</span></span><span style=display:flex><span>cat &gt; /etc/containerd/certs.d/docker.io/hosts.toml <span style=color:#e6db74>&lt;&lt; EOF
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://docker.io&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://dockerproxy.com&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://docker.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://reg-mirror.qiniu.com&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://registry.docker-cn.com&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;http://hub-mirror.c.163.com&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># registry.k8s.io镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/registry.k8s.io
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/registry.k8s.io/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://registry.k8s.io&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://k8s.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># docker.elastic.co镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/docker.elastic.co
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/docker.elastic.co/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://docker.elastic.co&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://elastic.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># gcr.io镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/gcr.io
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/gcr.io/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://gcr.io&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://gcr.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># ghcr.io镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/ghcr.io
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/ghcr.io/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://ghcr.io&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://ghcr.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># k8s.gcr.io镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/k8s.gcr.io
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/k8s.gcr.io/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://k8s.gcr.io&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://k8s-gcr.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># mcr.m.daocloud.io镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/mcr.microsoft.com
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/mcr.microsoft.com/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://mcr.microsoft.com&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://mcr.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># nvcr.io镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/nvcr.io
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/nvcr.io/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://nvcr.io&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://nvcr.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># quay.io镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/quay.io
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/quay.io/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://quay.io&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://quay.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># registry.jujucharms.com镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/registry.jujucharms.com
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/registry.jujucharms.com/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://registry.jujucharms.com&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://jujucharms.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># rocks.canonical.com镜像加速</span>
+</span></span><span style=display:flex><span>mkdir -p /etc/containerd/certs.d/rocks.canonical.com
+</span></span><span style=display:flex><span>tee /etc/containerd/certs.d/rocks.canonical.com/hosts.toml <span style=color:#e6db74>&lt;&lt; &#39;EOF&#39;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>server = &#34;https://rocks.canonical.com&#34;
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>[host.&#34;https://rocks-canonical.m.daocloud.io&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>  capabilities = [&#34;pull&#34;, &#34;resolve&#34;, &#34;push&#34;]
+</span></span></span><span style=display:flex><span><span style=color:#e6db74>EOF</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 重启 containerd 服务</span>
+</span></span><span style=display:flex><span>systemctl restart containerd
+</span></span></code></pre></div><p>为了加快集群部署速度，预先下载kubeadm 所需的全部镜像</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#75715e># （optional） 查看 kubeadm 所需的全部镜像</span>
+</span></span><span style=display:flex><span>kubeadm config  images list
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 拉去所需镜像</span>
+</span></span><span style=display:flex><span>kubeadm config  images pull
+</span></span></code></pre></div><p>在master 上通过kubeadm一键安装 master节点</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>kubeadm init
+</span></span></code></pre></div><p>在所有 node 节点上执行 <code>kubeadm init</code> 日志最后的 join 命令</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#75715e># 这个命令根据实际的输出内容执行</span>
+</span></span><span style=display:flex><span>kubeadm join 192.168.3.200:6443 --token 9unwvu.jogfdub8buf3y2os <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>        --discovery-token-ca-cert-hash sha256:cad35b01dc5094aa82456e2d166393f5d790e4a452ebbd3df39801cd8997a241
+</span></span></code></pre></div><p>设置kubectl 要加载的配置，可以通过把配置文件放到 ~/.kube/config 或者设置 KUBECONFIG 环境变量</p><p>这里我使用环境变量的方式，将设置环境变量的命令放到 ~/.bashrc 里</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#75715e># master 节点</span>
+</span></span><span style=display:flex><span>echo <span style=color:#e6db74>&#39;export KUBECONFIG=/etc/kubernetes/admin.conf&#39;</span> &gt;&gt; ~/.bashrc
+</span></span><span style=display:flex><span><span style=color:#75715e># node 节点</span>
+</span></span><span style=display:flex><span>echo <span style=color:#e6db74>&#39;export KUBECONFIG=/etc/kubernetes/kubelet.conf&#39;</span> &gt;&gt; ~/.bashrc
+</span></span><span style=display:flex><span>source ~/.bashrc
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e># 测试</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>[</span>root@master ~<span style=color:#f92672>]</span><span style=color:#75715e># kubectl get nodes</span>
+</span></span><span style=display:flex><span>NAME     STATUS     ROLES           AGE   VERSION
+</span></span><span style=display:flex><span>master   NotReady   control-plane   19m   v1.28.2
+</span></span><span style=display:flex><span>node1    NotReady   &lt;none&gt;          12m   v1.28.2
+</span></span><span style=display:flex><span>node2    NotReady   &lt;none&gt;          12m   v1.28.2
+</span></span><span style=display:flex><span>node3    NotReady   &lt;none&gt;          12m   v1.28.2
+</span></span></code></pre></div><h2 id=安装--calico-网络插件>安装 calico 网络插件</h2><p>此时所以得节点还是处于 <code>NotReady</code> 状态，因为还没有安装 CNI 网络插件</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>kubectl apply -f <span style=color:#e6db74>&#34;https://docs.projectcalico.org/manifests/calico.yaml&#34;</span>
+</span></span></code></pre></div><p>(Optional) 安装 nerdctl 用于手动下载镜像</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>wget https://github.com/containerd/nerdctl/releases/download/v2.0.2/nerdctl-2.0.2-linux-amd64.tar.gz
+</span></span><span style=display:flex><span>mkdir -p /usr/local/containerd/bin/ <span style=color:#f92672>&amp;&amp;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  tar -zxvf nerdctl-2.0.2-linux-amd64.tar.gz -C /usr/local/containerd/bin/ <span style=color:#f92672>&amp;&amp;</span> <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>  ln -s /usr/local/containerd/bin/nerdctl /usr/local/bin/nerdctl
+</span></span></code></pre></div></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2024-12-16-deploy-kubernetes-by-kubeadm/>使用 kubeadm 搭建 kubernetes 集群</a></li><li><a href=/posts/2024-09-20-how-to-code-review/>如何做code review</a></li><li><a href=/posts/2024-08-12-weakref-in-python/>Python中的弱引用</a></li><li><a href=/posts/2024-07-12-writing-custom-database-backends-in-django/>自定义 Django 中数据库的后端</a></li><li><a href=/posts/2024-06-05-working-mechanism-of-synchronous-standby-names-in-mogdb/>MogDB 中 synchronous_standby_names 参数的工作机制</a></li></ul></div></div></aside><footer><p>Social Links:
+<a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br><hr>&copy; 2017-2024
+Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p><script src=https://l2dwidget.js.org/lib/L2Dwidget.min.js></script><script>L2Dwidget.init({model:{jsonPath:"https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json"}})</script></footer></body></html>

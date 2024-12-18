@@ -1,4 +1,30 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Notes on Hi, I'm Vimiix</title><link>https://www.vimiix.com/tags/notes/</link><description>Recent content in Notes on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Fri, 20 Sep 2024 08:54:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/tags/notes/index.xml" rel="self" type="application/rss+xml"/><item><title>如何做code review</title><link>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</link><pubDate>Fri, 20 Sep 2024 08:54:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</guid><description>&lt;h2 id="为什么要做code-review">为什么要做code review&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Notes on Hi, I'm Vimiix</title><link>https://www.vimiix.com/tags/notes/</link><description>Recent content in Notes on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 16 Dec 2024 15:23:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/tags/notes/index.xml" rel="self" type="application/rss+xml"/><item><title>使用 kubeadm 搭建 kubernetes 集群</title><link>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</link><pubDate>Mon, 16 Dec 2024 15:23:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</guid><description>&lt;p>准备4台虚拟机，拓扑为一个 master, 3 个 node 节点，操作系统均为 CentOS 7.9，网络采用桥接模式，设置静态IP。&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>机器名&lt;/th>
+&lt;th>IP&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>master&lt;/td>
+&lt;td>192.168.3.200&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>node1&lt;/td>
+&lt;td>192.168.3.201&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>node2&lt;/td>
+&lt;td>192.168.3.202&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>node3&lt;/td>
+&lt;td>192.168.3.203&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table></description></item><item><title>如何做code review</title><link>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</link><pubDate>Fri, 20 Sep 2024 08:54:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-09-20-how-to-code-review/</guid><description>&lt;h2 id="为什么要做code-review">为什么要做code review&lt;/h2>
 &lt;p>从一个需求开发的完整生命周期来看，大约会包含以下过程:&lt;/p>
 &lt;ol>
 &lt;li>需求分析，考虑人员情况、功能预期上线时间、技术难度等诸多因素，与 PM 讨论合理调整需求，分配资源；&lt;/li>

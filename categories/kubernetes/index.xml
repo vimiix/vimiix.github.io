@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kubernetes on Hi, I'm Vimiix</title><link>https://www.vimiix.com/categories/kubernetes/</link><description>Recent content in Kubernetes on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 16 Dec 2024 15:23:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/categories/kubernetes/index.xml" rel="self" type="application/rss+xml"/><item><title>使用 kubeadm 搭建 kubernetes 集群</title><link>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</link><pubDate>Mon, 16 Dec 2024 15:23:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</guid><description>&lt;p>准备4台虚拟机，拓扑为一个 master, 3 个 node 节点，操作系统均为 CentOS 7.9，网络采用桥接模式，设置静态IP。&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>机器名&lt;/th>
+&lt;th>IP&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>master&lt;/td>
+&lt;td>192.168.3.200&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>node1&lt;/td>
+&lt;td>192.168.3.201&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>node2&lt;/td>
+&lt;td>192.168.3.202&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>node3&lt;/td>
+&lt;td>192.168.3.203&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table></description></item></channel></rss>
