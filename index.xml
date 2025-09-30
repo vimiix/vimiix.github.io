@@ -1,4 +1,258 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Mon, 16 Dec 2024 15:23:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>使用 kubeadm 搭建 kubernetes 集群</title><link>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</link><pubDate>Mon, 16 Dec 2024 15:23:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</guid><description>&lt;p>准备4台虚拟机，拓扑为一个 master, 3 个 node 节点，操作系统均为 CentOS 7.9，网络采用桥接模式，设置静态IP。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Tue, 30 Sep 2025 08:55:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes APIServer 认证机制</title><link>https://www.vimiix.com/posts/2025-09-30-kubernetes-apiserver-authentication-mechanism/</link><pubDate>Tue, 30 Sep 2025 08:55:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2025-09-30-kubernetes-apiserver-authentication-mechanism/</guid><description>&lt;p>Kubernetes 作为一个分布式系统，其 API Server 是所有组件交互的核心枢纽。为了保证集群的安全，所有访问 API Server 的请求都必须经过认证（Authentication）、鉴权（Authorization）和准入控制（Admission Control）等步骤。其中，认证是安全的第一道大门，它负责确认请求者的身份。&lt;/p>
+&lt;p>Kubernetes 支持多种认证机制（称为 &lt;strong>Authenticator&lt;/strong>），以适应不同的部署环境和安全需求。这些机制可以同时启用，API Server 会逐一尝试，直到有一个机制成功认证该请求。&lt;/p>
+&lt;h2 id="一认证流程总览">一、认证流程总览&lt;/h2>
+&lt;p>任何访问 API Server 的请求（来自 &lt;code>kubectl&lt;/code>、 Dashboard、 节点上的 kubelet 或其他控制器）都需要携带认证信息。API Server 接收到请求后，会依次尝试配置的认证策略。如果认证成功，请求者的用户名（&lt;code>username&lt;/code>）和用户组（&lt;code>groups&lt;/code>）信息会被嵌入到请求的上下文中，传递给后续的鉴权阶段。如果所有认证策略都失败，则请求以 &lt;code>401 Unauthorized&lt;/code> 错误被拒绝。&lt;/p>
+&lt;p>下图描绘了这个通用的认证决策流程：&lt;/p>
+&lt;div class="mermaid">
+ 
+flowchart TD
+ A[客户端请求&lt;br>携带认证信息] --> B[API Server]
+ 
+ subgraph B [API Server 认证环节]
+ direction LR
+ C[尝试认证策略 1&lt;br>（如: X509证书）] -->|失败| D[尝试认证策略 2&lt;br>（如: Bearer Token）]
+ D -->|失败| E[尝试认证策略 N...&lt;br>（如: ServiceAccount Token）]
+ E -->|失败| F[认证失败]
+ C -->|成功| G[认证成功]
+ D -->|成功| G
+ E -->|成功| G
+ end
+
+ F --> H[返回 401 Unauthorized]
+ G --> I[将身份信息嵌入请求上下文&lt;br>（username, groups, uid等）]
+ I --> J[进入鉴权 Authorization 阶段]
+
+&lt;/div>
+&lt;h2 id="二各种认证机制">二、各种认证机制&lt;/h2>
+&lt;h3 id="1-x509-客户端证书认证-tls">1. X509 客户端证书认证 (TLS)&lt;/h3>
+&lt;p>这是集群间组件通信最常用和最安全的机制之一，尤其适用于集群内部组件（如 kubelet、scheduler、controller-manager）与 API Server 的通信。&lt;/p>
+&lt;h4 id="原理">原理：&lt;/h4>
+&lt;p>API Server 启动时需要配置一个 Certificate Authority (CA) 根证书（通常由 &lt;code>--client-ca-file=SOMEFILE&lt;/code> 参数指定）。客户端需要持有一张由该 CA 签名的客户端证书。在建立 TLS 连接时，客户端会出示此证书。API Server 会验证证书的有效性（是否由信任的 CA 签发、是否在有效期内、CN 和 O 字段等）。&lt;/p>
+&lt;p>适用于集群组件身份认证、为外部用户或系统签发长期有效的证书。&lt;/p>
+&lt;h4 id="身份信息提取">身份信息提取：&lt;/h4>
+&lt;ul>
+&lt;li>&lt;strong>用户名 (username)&lt;/strong>： 取自证书的 &lt;code>CN&lt;/code> (Common Name) 字段。&lt;/li>
+&lt;li>&lt;strong>用户组 (group)&lt;/strong>： 取自证书的 &lt;code>O&lt;/code> (Organization) 字段。&lt;/li>
+&lt;/ul>
+&lt;h4 id="时序图">时序图：&lt;/h4>
+&lt;div class="mermaid">
+ 
+sequenceDiagram
+ participant C as Client (持有客户端证书)
+ participant A as API Server&lt;br>(持有CA根证书)
+
+ C->>A: 1. HTTPS Request (Client Hello + 客户端证书)
+ Note right of C: 证书由集群CA签发
+ A->>A: 2. 使用 --client-ca-file 验证证书
+ Note right of A: a. 验证CA签名&lt;br>b. 验证有效期/吊销状态等&lt;br>c. 提取 CN 和 O 字段
+ alt 验证成功
+ A-->>C: 3. TLS连接建立成功
+ A->>A: 4. 认证身份: username=CN, groups=O
+ A->>A: 5. 进入鉴权阶段
+ else 验证失败
+ A-->>C: 3. TLS握手失败 (证书无效)
+ end
+
+&lt;/div>
+&lt;h3 id="2-静态令牌文件-static-token-file">2. 静态令牌文件 (Static Token File)&lt;/h3>
+&lt;p>一种简单的认证方式，通过一个静态文件来管理令牌（Token）。&lt;/p>
+&lt;h4 id="原理-1">原理：&lt;/h4>
+&lt;p>API Server 通过 &lt;code>--token-auth-file=SOMEFILE&lt;/code> 参数指定一个包含预定义令牌的 CSV 文件。文件格式为：&lt;code>token,username,uid,&amp;quot;group1,group2,group3&amp;quot;&lt;/code>。客户端在请求头中携带 &lt;code>Authorization: Bearer &amp;lt;TOKEN&amp;gt;&lt;/code>。API Server 会在文件中查找匹配的令牌。&lt;/p>
+&lt;p>这种认证方式的缺点是，令牌是静态的，修改需要重启 API Server，非常不灵活且不安全。一般用于临时测试或学习，&lt;strong>不推荐在生产环境中使用&lt;/strong>。&lt;/p>
+&lt;h3 id="时序图-1">时序图：&lt;/h3>
+&lt;div class="mermaid">
+ 
+sequenceDiagram
+ participant C as Client
+ participant A as API Server&lt;br>(--token-auth-file=tokens.csv)
+
+ C->>A: 1. HTTP Request&lt;br>Authorization: Bearer abc123
+ A->>A: 2. 在 tokens.csv 中查找令牌 'abc123'
+ alt 找到匹配项
+ A->>A: 3. 认证身份: 提取文件中对应用户名和组
+ A->>A: 4. 进入鉴权阶段
+ else 未找到
+ A-->>C: 5. 返回 401 Unauthorized
+ end
+
+&lt;/div>
+&lt;h3 id="3-serviceaccount-令牌-bearer-tokens">3. ServiceAccount 令牌 (Bearer Tokens)&lt;/h3>
+&lt;p>这是 &lt;strong>Kubernetes Pod 内部应用访问 API Server 最主要和推荐的方式&lt;/strong>。&lt;/p>
+&lt;h4 id="原理-2">原理：&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>ServiceAccount (SA)&lt;/strong>： 一个命名空间内的资源，代表一个应用身份。&lt;/li>
+&lt;li>&lt;strong>Secret&lt;/strong>： 当创建 SA（或由控制器自动创建）时，Kubernetes 会自动生成一个对应的 Secret。该 Secret 包含三个关键信息：&lt;code>ca.crt&lt;/code> (API Server 的 CA)、&lt;code>namespace&lt;/code> (当前命名空间)、&lt;code>token&lt;/code> (一个签名的 JWT 令牌)。&lt;/li>
+&lt;li>&lt;strong>令牌挂载&lt;/strong>： Pod 通过 &lt;code>spec.serviceAccountName&lt;/code> 指定 SA，对应的 Secret 会自动挂载到 Pod 内的 &lt;code>/var/run/secrets/kubernetes.io/serviceaccount/&lt;/code>。&lt;/li>
+&lt;li>&lt;strong>JWT 验证&lt;/strong>： 客户端（Pod 内的进程）使用此令牌在请求头中设置 &lt;code>Authorization: Bearer &amp;lt;JWT_TOKEN&amp;gt;&lt;/code>。API Server 使用其持有的密钥（通过 &lt;code>--service-account-key-file&lt;/code> 指定，默认为自身 TLS 私钥）来验证 JWT 的签名。&lt;/li>
+&lt;/ol>
+&lt;h4 id="时序图-2">时序图：&lt;/h4>
+&lt;div class="mermaid">
+ 
+sequenceDiagram
+ participant P as Pod中的应用程序
+ participant A as API Server
+ participant S as Secret
+
+ Note over P, S: Pod 启动前
+ A->>S: 1. 为 default SA 创建 Secret&lt;br>(包含 token JWT, ca.crt)
+
+ Note over P, A: Pod 运行时
+ P->>P: 2. 从挂载卷读取 token 和 ca.crt
+ P->>A: 3. HTTPS Request&lt;br>Authorization: Bearer {JWT}
+ A->>A: 4. 使用自身密钥验证JWT签名&lt;br>并解析载荷（payload）
+ alt JWT有效
+ A->>A: 5. 认证身份: system:serviceaccount:{ns}:{sa-name}&lt;br>用户组: system:serviceaccounts
+ A->>A: 6. 进入鉴权阶段
+ else JWT无效
+ A-->>P: 7. 返回 401 Unauthorized
+ end
+
+&lt;/div>
+&lt;h3 id="4-bootstrap-令牌-bootstrap-tokens">4. Bootstrap 令牌 (Bootstrap Tokens)&lt;/h3>
+&lt;p>这是一种为了简化节点加入集群流程而设计的&lt;strong>短期&lt;/strong>令牌机制，是静态令牌的“动态”方案，推荐 worker 节点首次加入集群时使用。&lt;/p>
+&lt;h4 id="原理-3">原理：&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>令牌格式&lt;/strong>： 格式为 &lt;code>[a-z0-9]{6}.[a-z0-9]{16}&lt;/code> (例如 &lt;code>abcdef.0123456789abcdef&lt;/code>)。&lt;/li>
+&lt;li>&lt;strong>Secret 资源&lt;/strong>： Bootstrap 令牌实际上对应着 &lt;code>kube-system&lt;/code> 命名空间中的一个特定 Secret，其类型为 &lt;code>bootstrap.kubernetes.io/token&lt;/code>。这使得令牌可以通过 API 动态管理，无需重启 API Server。&lt;/li>
+&lt;li>&lt;strong>用途&lt;/strong>： 新节点使用此令牌发起 TLS 引导请求，API Server 的 Bootstrap Token Authenticator 会验证 Secret 是否存在且未过期。认证成功后，节点随后会申请正式的证书用于长期通信。&lt;/li>
+&lt;/ol>
+&lt;h4 id="时序图-3">时序图：&lt;/h4>
+&lt;div class="mermaid">
+ 
+sequenceDiagram
+ participant N as New Node (新节点)
+ participant A as API Server
+ participant C as Controller Manager&lt;br>(TokenCleaner)
+
+ N->>A: 1. 证书签名请求(CSR)&lt;br>Authorization: Bearer bootstrap-token-abcdef
+ A->>A: 2. 检查 kube-system 中是否存在&lt;br>对应的 bootstrap-token Secret
+ alt Secret 存在且有效
+ A->>A: 3. 认证成功
+ A->>A: 4. 批准CSR（可能需要手动）
+ A-->>N: 5. 颁发正式客户端证书
+ N->>A: 6. 使用新证书进行后续通信
+ C->>C: 7. (稍后) 自动清理过期的bootstrap Secret
+ else Secret 无效或不存在
+ A-->>N: 8. 返回 401，加入集群失败
+ end
+
+&lt;/div>
+&lt;h3 id="5-openid-connect-oidc-令牌">5. OpenID Connect (OIDC) 令牌&lt;/h3>
+&lt;p>这是一种连接企业现有身份系统（如 Google、Azure AD、Keycloak、Dex 等）的&lt;strong>标准协议&lt;/strong>，用于集成外部用户认证系统。适用于&lt;strong>开发者、管理员等人类用户通过企业单点登录（SSO）系统访问集群&lt;/strong>。&lt;/p>
+&lt;h4 id="原理-4">原理：&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>三方协作&lt;/strong>： 涉及客户端（&lt;code>kubectl&lt;/code>）、API Server 和外部身份提供商（IdP）。&lt;/li>
+&lt;li>&lt;strong>用户登录&lt;/strong>： 用户首先通过 &lt;code>kubectl&lt;/code> 在 &lt;strong>外部&lt;/strong> IdP 完成认证，获取一个 IdP 签名的 JWT 令牌（ID Token）。&lt;/li>
+&lt;li>&lt;strong>传递令牌&lt;/strong>： &lt;code>kubectl&lt;/code> 在请求 API Server 时，在 &lt;code>Authorization&lt;/code> 头中携带此 ID Token。&lt;/li>
+&lt;li>&lt;strong>API Server 验证&lt;/strong>： API Server 不直接与 IdP 通信，而是通过配置（&lt;code>--oidc-issuer-url&lt;/code>, &lt;code>--oidc-client-id&lt;/code>）获取 IdP 的公钥，来验证 JWT 令牌的签名。它还会验证令牌的受众（&lt;code>aud&lt;/code> Claim）是否与 &lt;code>--oidc-client-id&lt;/code> 匹配。&lt;/li>
+&lt;/ol>
+&lt;h4 id="时序图-4">时序图：&lt;/h4>
+&lt;div class="mermaid">
+ 
+sequenceDiagram
+ participant U as User (kubectl)
+ participant A as APIServer
+ participant I as OIDC Identity Provider (IdP)
+
+ U->>I: 1. 用户登录 (获取ID Token)
+ I-->>U: 2. 返回签名的 JWT ID Token
+ U->>A: 3. API Request&lt;br>Authorization: Bearer {IDToken}
+ A->>A: 4. 从配置的issuer-url获取JWKS公钥
+ A->>A: 5. 使用公钥验证JWT签名&lt;br>并检查audience/issuer/有效期
+ alt 验证成功
+ A->>A: 6. 认证身份: 提取JWT中的preferred_username/groups等字段
+ A->>A: 7. 进入鉴权阶段
+ else 验证失败
+ A-->>U: 8. 返回 401 Unauthorized
+ end
+
+&lt;/div>
+&lt;h3 id="6-webhook-令牌认证">6. Webhook 令牌认证&lt;/h3>
+&lt;p>这是一种&lt;strong>扩展机制&lt;/strong>，当 Kubernetes 内置的认证方式都无法满足需求时，可以将认证决策委托给一个外部的 RESTful 服务，适用于集成自定义的认证系统、私有身份存储等。&lt;/p>
+&lt;h4 id="原理-5">原理：&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>配置&lt;/strong>： API Server 启动时配置 &lt;code>--authentication-token-webhook-config-file&lt;/code>，该文件指向一个外部服务的配置（URL、CA 等）。&lt;/li>
+&lt;li>&lt;strong>委托验证&lt;/strong>： 当客户端携带 Bearer Token 请求时，API Server 会将一个 &lt;code>TokenReview&lt;/code> 对象发送给外部 Webhook 服务。&lt;/li>
+&lt;li>&lt;strong>外部决策&lt;/strong>： Webhook 服务验证令牌的有效性，并将结果（认证成功与否，以及用户信息）封装在 &lt;code>TokenReview&lt;/code> 对象的 &lt;code>status&lt;/code> 字段中返回。&lt;/li>
+&lt;li>&lt;strong>API Server 决策&lt;/strong>： API Server 根据 Webhook 的响应决定是否认证通过。&lt;/li>
+&lt;/ol>
+&lt;h4 id="时序图-5">时序图：&lt;/h4>
+&lt;div class="mermaid">
+ 
+sequenceDiagram
+ participant C as Client
+ participant A as APIServer
+ participant W as External Webhook Service
+
+ C->>A: 1. API Request&lt;br>Authorization: Bearer {TOKEN}
+ A->>W: 2. 构造并发送 TokenReview Request&lt;br>{apiVersion: authentication.k8s.io/v1, kind: TokenReview, spec: {token: "TOKEN"}}
+ W->>W: 3. 根据自定义逻辑验证Token&lt;br>（查数据库、调用其他API等）
+ W-->>A: 4. 返回 TokenReview Response&lt;br>{status: {authenticated: true, user: {username: "foo", groups: ["bar"]}}}
+ alt authenticated: true
+ A->>A: 5. 认证成功，使用返回的用户信息
+ A->>A: 6. 进入鉴权阶段
+ else authenticated: false
+ A-->>C: 7. 返回 401 Unauthorized
+ end
+
+&lt;/div>
+&lt;h2 id="三总结对比">三、总结对比&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th style="text-align:center">认证机制&lt;/th>
+&lt;th style="text-align:center">主要用途&lt;/th>
+&lt;th style="text-align:center">管理方式&lt;/th>
+&lt;th style="text-align:center">安全性&lt;/th>
+&lt;th style="text-align:center">生产环境推荐&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td style="text-align:center">&lt;strong>X509 证书&lt;/strong>&lt;/td>
+&lt;td style="text-align:center">组件间通信，系统级访问&lt;/td>
+&lt;td style="text-align:center">动态（CA签发）&lt;/td>
+&lt;td style="text-align:center">非常高&lt;/td>
+&lt;td style="text-align:center">&lt;strong>推荐&lt;/strong>（用于组件）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:center">&lt;strong>ServiceAccount&lt;/strong>&lt;/td>
+&lt;td style="text-align:center">&lt;strong>Pod内应用&lt;/strong>访问API&lt;/td>
+&lt;td style="text-align:center">动态（K8s自动管理）&lt;/td>
+&lt;td style="text-align:center">高&lt;/td>
+&lt;td style="text-align:center">&lt;strong>必须使用&lt;/strong>（用于Pod）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:center">&lt;strong>Bootstrap Token&lt;/strong>&lt;/td>
+&lt;td style="text-align:center">&lt;strong>新节点加入&lt;/strong>集群&lt;/td>
+&lt;td style="text-align:center">动态（Secret资源）&lt;/td>
+&lt;td style="text-align:center">中（短期）&lt;/td>
+&lt;td style="text-align:center">&lt;strong>推荐&lt;/strong>（用于节点引导）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:center">&lt;strong>OIDC&lt;/strong>&lt;/td>
+&lt;td style="text-align:center">&lt;strong>人类用户&lt;/strong>单点登录&lt;/td>
+&lt;td style="text-align:center">外部IdP管理&lt;/td>
+&lt;td style="text-align:center">高&lt;/td>
+&lt;td style="text-align:center">&lt;strong>推荐&lt;/strong>（用于用户）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:center">&lt;strong>Webhook&lt;/strong>&lt;/td>
+&lt;td style="text-align:center">集成自定义认证系统&lt;/td>
+&lt;td style="text-align:center">外部服务管理&lt;/td>
+&lt;td style="text-align:center">取决于实现&lt;/td>
+&lt;td style="text-align:center">按需使用&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td style="text-align:center">&lt;strong>静态Token文件&lt;/strong>&lt;/td>
+&lt;td style="text-align:center">测试&lt;/td>
+&lt;td style="text-align:center">静态文件，需重启&lt;/td>
+&lt;td style="text-align:center">低&lt;/td>
+&lt;td style="text-align:center">&lt;strong>不推荐&lt;/strong>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>理解这些认证机制的原理和适用场景，是构建和维护一个安全、可靠的 Kubernetes 集群的基石。&lt;/p></description></item><item><title>使用 kubeadm 搭建 kubernetes 集群</title><link>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</link><pubDate>Mon, 16 Dec 2024 15:23:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2024-12-16-deploy-kubernetes-by-kubeadm/</guid><description>&lt;p>准备4台虚拟机，拓扑为一个 master, 3 个 node 节点，操作系统均为 CentOS 7.9，网络采用桥接模式，设置静态IP。&lt;/p>
 &lt;table>
 &lt;thead>
 &lt;tr>
@@ -1564,73 +1818,4 @@ Update unit tests. ❌;&lt;/p>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> __name__ &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;__main__&amp;#34;&lt;/span>:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> main()
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>Shell 函数实现Go语言多版本管理轻量级方案</title><link>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</link><pubDate>Wed, 21 Jun 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-06-21-manage-go-multiple-versions/</guid><description>&lt;h2 id="现有的工具方案">现有的工具方案&lt;/h2>
-&lt;ul>
-&lt;li>gvm: &lt;a href="https://github.com/moovweb/gvm">https://github.com/moovweb/gvm&lt;/a>&lt;/li>
-&lt;li>g: &lt;a href="https://github.com/voidint/g">https://github.com/voidint/g&lt;/a>&lt;/li>
-&lt;/ul>
-&lt;h2 id="我的方案">我的方案&lt;/h2>
-&lt;p>优点：&lt;/p>
-&lt;ul>
-&lt;li>原生：基于 go 语言本身支持多版本的能力实现，可以下载任何官方发布的版本&lt;/li>
-&lt;li>简单：shell 函数实现，直接集成到 bashrc 或 zshrc 中即可使用，无需额外配置&lt;/li>
-&lt;li>可定制化：代码简单可根据自身需求定制&lt;/li>
-&lt;/ul>
-&lt;h2 id="代码实现">代码实现&lt;/h2>
-&lt;p>gist地址：&lt;a href="https://gist.github.com/vimiix/0927fdfbea926e869a2c631db9eeae8b">https://gist.github.com/vimiix/0927fdfbea926e869a2c631db9eeae8b&lt;/a>&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">####### GOLANG VERSION MANAGE FUNCTIONS ######&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># ref: https://go.dev/doc/manage-install&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">function&lt;/span> goinstall&lt;span style="color:#f92672">()&lt;/span> &lt;span style="color:#f92672">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;Downloading go&lt;/span>$1&lt;span style="color:#e6db74"> ...&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> go install golang.org/dl/go$1@latest &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> go$1 download
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">function&lt;/span> gouse&lt;span style="color:#f92672">()&lt;/span> &lt;span style="color:#f92672">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> gopath&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>go env GOPATH&lt;span style="color:#66d9ef">)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> test -x &lt;span style="color:#e6db74">${&lt;/span>gopath&lt;span style="color:#e6db74">}&lt;/span>/bin/go$1; &lt;span style="color:#66d9ef">then&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> rm -f &lt;span style="color:#e6db74">${&lt;/span>gopath&lt;span style="color:#e6db74">}&lt;/span>/bin/go
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;Relink go with go&lt;/span>$1&lt;span style="color:#e6db74"> ...&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ln -s &lt;span style="color:#e6db74">${&lt;/span>gopath&lt;span style="color:#e6db74">}&lt;/span>/bin/go$1 &lt;span style="color:#e6db74">${&lt;/span>gopath&lt;span style="color:#e6db74">}&lt;/span>/bin/go
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;Done&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;Version &lt;/span>$1&lt;span style="color:#e6db74"> not installed&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fi&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">function&lt;/span> golist&lt;span style="color:#f92672">()&lt;/span> &lt;span style="color:#f92672">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> current&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>go version | awk &lt;span style="color:#e6db74">&amp;#39;{print $3}&amp;#39;&lt;/span> | cut -c3-&lt;span style="color:#66d9ef">)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> v in &lt;span style="color:#66d9ef">$(&lt;/span>ls &lt;span style="color:#66d9ef">$(&lt;/span>go env GOPATH&lt;span style="color:#66d9ef">)&lt;/span>/bin | grep -E &lt;span style="color:#e6db74">&amp;#39;go(\d.*)&amp;#39;&lt;/span> | cut -c3-&lt;span style="color:#66d9ef">)&lt;/span>;
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">do&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#f92672">[&lt;/span> $v &lt;span style="color:#f92672">=&lt;/span> $current &lt;span style="color:#f92672">]&lt;/span>; &lt;span style="color:#66d9ef">then&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$v&lt;span style="color:#e6db74"> (⇦ current)&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo $v
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fi&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">done&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">}&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">function&lt;/span> gouninstall&lt;span style="color:#f92672">()&lt;/span> &lt;span style="color:#f92672">{&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> current&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>go version | awk &lt;span style="color:#e6db74">&amp;#39;{print $3}&amp;#39;&lt;/span> | cut -c3-&lt;span style="color:#66d9ef">)&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#f92672">[&lt;/span> $1 &lt;span style="color:#f92672">=&lt;/span> $current &lt;span style="color:#f92672">]&lt;/span>; &lt;span style="color:#66d9ef">then&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;version &lt;/span>$1&lt;span style="color:#e6db74"> is actived, please change to another version first&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fi&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;Removing binary...&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> rm -f &lt;span style="color:#66d9ef">$(&lt;/span>go env GOPATH&lt;span style="color:#66d9ef">)&lt;/span>/bin/go$1
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;Removing sdk ...&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> rm -r ~/sdk/go$1
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;Done&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">}&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="使用方式">使用方式&lt;/h2>
-&lt;ol>
-&lt;li>将上面的代码粘贴到 &lt;code>~/.bashrc&lt;/code> （如果是zsh，则是 &lt;code>~/.zshrc&lt;/code>） 末尾，保存退出&lt;/li>
-&lt;li>&lt;code>source ~/.bashrc&lt;/code> 激活即可&lt;/li>
-&lt;/ol>
-&lt;h2 id="使用演示">使用演示&lt;/h2>
-&lt;p>&lt;a href="https://asciinema.org/a/592495">
-&lt;figure>
- &lt;img src="https://asciinema.org/a/592495.svg" alt="asciicast" />
-&lt;/figure>
-
-
-&lt;/a>&lt;/p></description></item></channel></rss>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
