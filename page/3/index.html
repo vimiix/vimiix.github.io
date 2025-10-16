@@ -5,7 +5,9 @@
 <a href=/tags/><b>标签</b></a>.
 <a href=/friends/><b>友链</b></a>.
 <a href=/about/><b>关于我</b></a>.
-<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2018-05-25-grokking-algorithms-chapter-2/>《算法图解》读书笔记2-数组链表和选择排序</a></h1><b><time>2018.05.25 19:20</time></b>
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1><a href=https://www.vimiix.com/posts/2018-05-30-grokking-algorithms-chapter-4/>《算法图解》读书笔记4-分治思想和快排</a></h1><b><time>2018.05.30 16:20</time></b>
+<a href=/tags/algorithms>algorithms</a>
+<a href=/tags/linux>Linux</a><div><h2 id=分而治之divide-and-conquer>分而治之（Divide and Conquer）</h2><p>所谓分而治之，分为分解问题，但我们目的是解决大问题，所有还有将分解后得到的结果贡献回大问题，最终使得我们解决大问题。</p><p>分而治之的思想是采用了递归的思想，将原问题分成几个规模较小但是<strong>类似</strong>于原问题的子问题， 通过递归的方式来求解这些小问题，最后将子问题的解合并来得到原问题的解。分治思想的本质是我们中学时候学的数学归纳法。</p><p>书上提到，使用分治思想解决问题的过程包括两个步骤，其实应该是三个步骤：</p><ol><li>找出基线条件，这种条件必须尽可能简单。</li><li>不断将问题分解为子问题（或者说缩小规模），直达符合基线条件。</li><li>合并子问题的结果，得到最终问题的解（利用系统栈的特性实现过程状态的记录）</li></ol><a href=https://www.vimiix.com/posts/2018-05-30-grokking-algorithms-chapter-4/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-05-25-grokking-algorithms-chapter-2/>《算法图解》读书笔记2-数组链表和选择排序</a></h1><b><time>2018.05.25 19:20</time></b>
 <a href=/tags/algorithms>algorithms</a>
 <a href=/tags/linux>linux</a>
 <a href=/tags/sort>sort</a><div><h2 id=理解数组和链表>理解数组和链表</h2><p>链表和数组是两种基本的数据结构，他们的区别在于数据在内存中的存储方式不同。</p><h3 id=数组>数组</h3><p>数组在内存中是用一块连续的内存来存储数据的，数组中的每个数据地址是连续的。数组中的每个元素所占用的内存是相同的，所以，我们可以通过下标索引在常数数量级的时间内，迅速访问数组中的任何一个元素。但是要在数组中任意位置添加一个元素，就需要移动大量的元素，使得内存中空出一个位置来存放新插入的元素。同理，当删除一个元素的时候，也需要移动大量的元素，来使得删除元素以后的数组数据在内存中仍旧是连续的。</p><p>由此可见：当对于一组数据，读取操作频繁，写操作少的情况，应该使用数组数据结构。</p><a href=https://www.vimiix.com/posts/2018-05-25-grokking-algorithms-chapter-2/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2018-05-27-grokking-algorithms-chapter-3/>《算法图解》读书笔记3-递归</a></h1><b><time>2018.05.25 19:20</time></b>
@@ -87,10 +89,7 @@
 <a href=/tags/python>python</a>
 <a href=/tags/translation>translation</a>
 <a href=/tags/global>global</a>
-<a href=/tags/nonlocal>nonlocal</a><div><blockquote><p>今天的博文翻译是关于 python 中 global 和 nonlocal 两个关键字的用法，原文的作者是来自孟加拉国的<a href=https://twitter.com/subeen>Tamim Shahriar</a>，他的<a href="http://love-python.blogspot.com.br/?view=classic">博客</a>非常适合新手朋友去阅读，都是简短而有意义的 python 实践。</p></blockquote><p>我们大多数人都对 Python 中的全局变量很熟悉了。如果我们在一个模块中声明全局变量，模块内部的任何函数都可以访问这个全局变量。（模块可以理解为一个<code>python</code>文件或<code>.py</code>文件）</p><a href=https://www.vimiix.com/posts/2017-12-14-global-and-nonlocal-variable-in-python/>Read more...</a></div></article><article><h1><a href=https://www.vimiix.com/posts/2017-12-13-pythons-enumerate-function-demystified/>[译]Python的enumerate()函数揭秘</a></h1><b><time>2017.12.13 19:51</time></b>
-<a href=/tags/python>python</a>
-<a href=/tags/translation>translation</a>
-<a href=/tags/enumerate>enumerate</a><div><blockquote><p>今天的原文的作者是来自国外的一位 Python“布道师”<a href=https://dbader.org>Dan Bader</a>，他的博客完全就是一个个人品牌的学校。有跟多 Python 技巧，有很多他录制的 Youtube 视频，国内的 Pythonista 们，不妨订阅一下他的每周邮件推送。<a href=https://www.getdrip.com/forms/80014959/submissions/new>订阅链接</a></p><p>今天的译文是他博客中的一篇，点击<a href=https://dbader.org/blog/python-enumerate>查看原文</a></p></blockquote><p>如何以去写以及为什么你应该使用 Python 中的内置枚举函数来编写更干净更加 Pythonic 的循环语句？</p><a href=https://www.vimiix.com/posts/2017-12-13-pythons-enumerate-function-demystified/>Read more...</a></div></article><div><a href=/page/2/>上一页</a>
+<a href=/tags/nonlocal>nonlocal</a><div><blockquote><p>今天的博文翻译是关于 python 中 global 和 nonlocal 两个关键字的用法，原文的作者是来自孟加拉国的<a href=https://twitter.com/subeen>Tamim Shahriar</a>，他的<a href="http://love-python.blogspot.com.br/?view=classic">博客</a>非常适合新手朋友去阅读，都是简短而有意义的 python 实践。</p></blockquote><p>我们大多数人都对 Python 中的全局变量很熟悉了。如果我们在一个模块中声明全局变量，模块内部的任何函数都可以访问这个全局变量。（模块可以理解为一个<code>python</code>文件或<code>.py</code>文件）</p><a href=https://www.vimiix.com/posts/2017-12-14-global-and-nonlocal-variable-in-python/>Read more...</a></div></article><div><a href=/page/2/>上一页</a>
 3 of 5
 <a href=/page/4/>下一页</a></div></main><footer><p>Social Links:
 <a href=https://github.com/vimiix><b>Github</b></a>.

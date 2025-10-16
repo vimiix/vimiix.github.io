@@ -1,4 +1,222 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Tue, 30 Sep 2025 08:55:48 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes APIServer 认证机制</title><link>https://www.vimiix.com/posts/2025-09-30-kubernetes-apiserver-authentication-mechanism/</link><pubDate>Tue, 30 Sep 2025 08:55:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2025-09-30-kubernetes-apiserver-authentication-mechanism/</guid><description>&lt;p>Kubernetes 作为一个分布式系统，其 API Server 是所有组件交互的核心枢纽。为了保证集群的安全，所有访问 API Server 的请求都必须经过认证（Authentication）、鉴权（Authorization）和准入控制（Admission Control）等步骤。其中，认证是安全的第一道大门，它负责确认请求者的身份。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 16 Oct 2025 07:54:28 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes APIServer 鉴权机制</title><link>https://www.vimiix.com/posts/2025-10-16-kubernetes-apiserver-authorization-mechanism/</link><pubDate>Thu, 16 Oct 2025 07:54:28 +0000</pubDate><guid>https://www.vimiix.com/posts/2025-10-16-kubernetes-apiserver-authorization-mechanism/</guid><description>&lt;h2 id="1-引言">1. 引言&lt;/h2>
+&lt;p>在 Kubernetes 集群中，&lt;a href="./2025-09-30-kubernetes-apiserver-authentication-mechanism.md">认证（Authentication）&lt;/a>解决了“你是谁”的问题，而鉴权（Authorization）则解决了“你能做什么”的问题。鉴权是 Kubernetes 安全框架的核心支柱之一，它位于认证之后，用于确定一个已经通过身份认证的用户或服务账户（ServiceAccount）是否拥有对特定资源执行特定操作的权限。Kubernetes 采用了一种声明式的、基于属性的访问控制（ABAC）和基于角色的访问控制（RBAC）等模型来实现精细化的权限管理。本文将简单介绍 Kubernetes 的鉴权机制，包括其架构、工作流程、核心模型及详细实现原理。&lt;/p>
+&lt;h2 id="2-鉴权架构">2. 鉴权架构&lt;/h2>
+&lt;p>Kubernetes API Server 是集群所有操作的唯一入口，它也是鉴权决策的中心。当一个请求通过认证后，API Server 会将该请求传递给鉴权模块进行处理。&lt;/p>
+&lt;p>Kubernetes 支持多种鉴权模块，例如：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Node&lt;/strong>： 用于授权 kubelet 对节点和 Pod 等资源的访问。&lt;/li>
+&lt;li>&lt;strong>ABAC（Attribute-Based Access Control）&lt;/strong>： 基于属性的访问控制，策略存储在静态文件中。&lt;/li>
+&lt;li>&lt;strong>RBAC（Role-Based Access Control）&lt;/strong>： 基于角色的访问控制，是当前最主流和推荐的方式。&lt;/li>
+&lt;li>&lt;strong>Webhook&lt;/strong>： 通过调用外部 RESTful 服务来做出鉴权决策。&lt;/li>
+&lt;/ul>
+&lt;p>这些模块可以同时配置多个。如果配置了多个模块，请求必须被至少一个模块允许，且不能被任何模块拒绝，整个请求才会被授权。API Server 默认允许一个匿名请求，除非被认证层或鉴权层拒绝。&lt;/p>
+&lt;p>下图是请求经过认证与鉴权的核心流程：&lt;/p>
+&lt;div class="mermaid">
+ 
+flowchart TD
+ A[客户端请求&lt;br>（User/ServiceAccount）] --> B[API Server]
+ B --> C{认证}
+ C -- 携带合法令牌/证书 --> D[认证成功&lt;br>获取请求者身份信息]
+ C -- 令牌/证书无效 --> E[认证失败&lt;br>返回401 Unauthorized]
+ D --> F[鉴权模块链]
+ 
+ subgraph F [鉴权模块链]
+ direction LR
+ F1[Node Authorizer] --> F2[ABAC Authorizer] --> F3[RBAC Authorizer] --> F4[Webhook Authorizer]
+ end
+
+ F -- 任一模块显式拒绝 --> G[鉴权拒绝&lt;br>返回403 Forbidden]
+ F -- 所有模块未通过&lt;br>（包括默认匿名允许） --> H[鉴权拒绝&lt;br>返回403 Forbidden]
+ F -- 任一模块允许&lt;br>且无模块拒绝 --> I[鉴权通过]
+ 
+ I --> J[准入控制&lt;br>（Mutating/Validating）]
+ J --> K[持久化存储&lt;br>（etcd）]
+
+&lt;/div>
+&lt;h2 id="3-鉴权核心流程">3. 鉴权核心流程&lt;/h2>
+&lt;p>一个请求的鉴权过程涉及以下几个关键步骤和对象：&lt;/p>
+&lt;h3 id="31-请求上下文的构建">3.1. 请求上下文的构建&lt;/h3>
+&lt;p>在认证成功后，API Server 会构建一个包含请求者身份和请求详细信息的上下文对象，该对象将作为输入传递给鉴权模块。这个上下文主要包括：&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>用户（User）&lt;/strong>： 认证后得到的用户名。&lt;/li>
+&lt;li>&lt;strong>用户组（Groups）&lt;/strong>： 用户所属的组。例如，&lt;code>system:authenticated&lt;/code> 组包含所有已认证用户。&lt;/li>
+&lt;li>&lt;strong>额外信息（Extra）&lt;/strong>： 包含一些额外的键值对信息，通常由认证器提供。&lt;/li>
+&lt;li>&lt;strong>API 请求信息&lt;/strong>：
+&lt;ul>
+&lt;li>&lt;strong>API Verb&lt;/strong>： 请求的操作类型，如 &lt;code>get&lt;/code>, &lt;code>list&lt;/code>, &lt;code>create&lt;/code>, &lt;code>update&lt;/code>, &lt;code>delete&lt;/code>, &lt;code>patch&lt;/code>, &lt;code>watch&lt;/code>。&lt;/li>
+&lt;li>&lt;strong>Resource&lt;/strong>： 请求的 Kubernetes 资源，如 &lt;code>pods&lt;/code>, &lt;code>services&lt;/code>, &lt;code>deployments&lt;/code>。&lt;/li>
+&lt;li>&lt;strong>Namespace&lt;/strong>： 如果资源是命名空间范围的，则包含其命名空间。&lt;/li>
+&lt;li>&lt;strong>API Group&lt;/strong>： 资源所属的 API 组，如 &lt;code>apps&lt;/code>（对应 &lt;code>deployments&lt;/code>）、&lt;code>”&lt;/code>（核心组，对应 &lt;code>pods&lt;/code>, &lt;code>services&lt;/code>）。&lt;/li>
+&lt;li>&lt;strong>子资源（Subresource）&lt;/strong>： 如 &lt;code>pods/exec&lt;/code>, &lt;code>pods/log&lt;/code>, &lt;code>pods/status&lt;/code>。&lt;/li>
+&lt;li>&lt;strong>请求路径（Request Path）&lt;/strong>： 对于非资源请求（如 &lt;code>/api&lt;/code>, &lt;code>/healthz&lt;/code>），使用完整路径进行鉴权。&lt;/li>
+&lt;li>&lt;strong>资源名称（Resource Name）&lt;/strong>： 某些鉴权模式（如 ABAC）可以支持基于特定资源实例名称的授权。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h3 id="32-多模块决策机制">3.2. 多模块决策机制&lt;/h3>
+&lt;p>API Server 会按照配置顺序，依次将请求上下文传递给每个已启用的鉴权模块。每个模块独立做出决策，决策结果有三种：&lt;/p>
+&lt;pre tabindex="0">&lt;code>const (
+	// DecisionDeny means that an authorizer decided to deny the action.
+	DecisionDeny Decision = iota
+	// DecisionAllow means that an authorizer decided to allow the action.
+	DecisionAllow
+	// DecisionNoOpinion means that an authorizer has no opinion on whether
+	// to allow or deny an action.
+	DecisionNoOpinion
+)
+&lt;/code>&lt;/pre>&lt;ul>
+&lt;li>&lt;strong>拒绝（Deny）&lt;/strong>： 该模块明确拒绝此请求。&lt;/li>
+&lt;li>&lt;strong>允许（Allow）&lt;/strong>： 该模块允许此请求。&lt;/li>
+&lt;li>&lt;strong>无意见（No Opinion）&lt;/strong>： 该模块对此请求没有匹配的策略，不作决定。&lt;/li>
+&lt;/ul>
+&lt;p>最终的鉴权结果遵循以下规则：&lt;/p>
+&lt;ol>
+&lt;li>如果&lt;strong>任何一个&lt;/strong>模块的决策是 &lt;strong>“拒绝”&lt;/strong>，则整个请求被&lt;strong>拒绝&lt;/strong>，API Server 返回 &lt;code>403 Forbidden&lt;/code>。&lt;/li>
+&lt;li>如果&lt;strong>至少一个&lt;/strong>模块的决策是 &lt;strong>“允许”&lt;/strong>，并且&lt;strong>没有任何&lt;/strong>模块的决策是 &lt;strong>“拒绝”&lt;/strong>，则整个请求被&lt;strong>允许&lt;/strong>。&lt;/li>
+&lt;li>如果&lt;strong>所有&lt;/strong>模块的决策都是 &lt;strong>“无意见”&lt;/strong>，则请求被&lt;strong>拒绝&lt;/strong>。这是一种“默认拒绝”的安全策略。&lt;/li>
+&lt;/ol>
+&lt;h2 id="4-鉴权模型">4. 鉴权模型&lt;/h2>
+&lt;h3 id="41-rbac基于角色的访问控制">4.1. RBAC（基于角色的访问控制）&lt;/h3>
+&lt;p>RBAC 是 Kubernetes 中事实上的标准鉴权模型，它使用 &lt;code>Role&lt;/code> / &lt;code>ClusterRole&lt;/code> 和 &lt;code>RoleBinding&lt;/code> / &lt;code>ClusterRoleBinding&lt;/code> 这四种资源来定义和分配权限。&lt;/p>
+&lt;h4 id="411-核心资源对象">4.1.1. 核心资源对象&lt;/h4>
+&lt;ol>
+&lt;li>&lt;strong>Role 与 ClusterRole&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;ul>
+&lt;li>&lt;strong>Role&lt;/strong>： 定义在&lt;strong>特定命名空间&lt;/strong>内的一组权限规则。它指定了可以对哪些资源（如 &lt;code>pods&lt;/code>）执行哪些操作（如 &lt;code>get&lt;/code>, &lt;code>list&lt;/code>, &lt;code>create&lt;/code>）。&lt;/li>
+&lt;li>&lt;strong>ClusterRole&lt;/strong>： 定义在&lt;strong>集群范围&lt;/strong>内的一组权限规则。用于定义：
+&lt;ul>
+&lt;li>集群级别的资源权限（如 &lt;code>nodes&lt;/code>, &lt;code>persistentvolumes&lt;/code>）。&lt;/li>
+&lt;li>非资源端点权限（如 &lt;code>/healthz&lt;/code>）。&lt;/li>
+&lt;li>跨所有命名空间的命名空间资源权限（需要与 &lt;code>ClusterRoleBinding&lt;/code> 配合）。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Role 示例：&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io/v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Role&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">pod-reader&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">rules&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">apiGroups&lt;/span>: [&lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span>] &lt;span style="color:#75715e"># 核心 API 组&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resources&lt;/span>: [&lt;span style="color:#e6db74">&amp;#34;pods&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">verbs&lt;/span>: [&lt;span style="color:#e6db74">&amp;#34;get&amp;#34;&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;list&amp;#34;&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;watch&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;strong>ClusterRole 示例：&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io/v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">ClusterRole&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e"># 不需要 &amp;#34;namespace&amp;#34;，因为 ClusterRole 是集群范围的&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">cluster-node-viewer&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">rules&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">apiGroups&lt;/span>: [&lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">resources&lt;/span>: [&lt;span style="color:#e6db74">&amp;#34;nodes&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">verbs&lt;/span>: [&lt;span style="color:#e6db74">&amp;#34;get&amp;#34;&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;list&amp;#34;&lt;/span>, &lt;span style="color:#e6db74">&amp;#34;watch&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;strong>RoleBinding 与 ClusterRoleBinding&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>RoleBinding&lt;/strong>： 将 &lt;code>Role&lt;/code> 或 &lt;code>ClusterRole&lt;/code> 中定义的权限授予一个或多个用户或服务账户。&lt;code>RoleBinding&lt;/code> 在特定命名空间中生效。如果它引用的是一个 &lt;code>ClusterRole&lt;/code>，那么被授权者只能在 &lt;code>RoleBinding&lt;/code> 所在的命名空间内行使该 &lt;code>ClusterRole&lt;/code> 的权限。&lt;/li>
+&lt;li>&lt;strong>ClusterRoleBinding&lt;/strong>： 将 &lt;code>ClusterRole&lt;/code> 中定义的权限授予一个或多个用户或服务账户，授权范围是&lt;strong>整个集群&lt;/strong>。&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>RoleBinding 示例（将 &lt;code>pod-reader&lt;/code> Role 授予用户 &lt;code>vimiix&lt;/code>）：&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io/v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">RoleBinding&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">read-pods&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">namespace&lt;/span>: &lt;span style="color:#ae81ff">default&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">subjects&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">User&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">vimiix&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">apiGroup&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">roleRef&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Role&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">pod-reader&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">apiGroup&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;strong>ClusterRoleBinding 示例（将 &lt;code>cluster-node-viewer&lt;/code> ClusterRole 授予组 &lt;code>system:authenticated&lt;/code>）：&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">apiVersion&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io/v1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">ClusterRoleBinding&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">metadata&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">read-nodes-global&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">subjects&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>- &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">Group&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">system:authenticated&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">apiGroup&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">roleRef&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">kind&lt;/span>: &lt;span style="color:#ae81ff">ClusterRole&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">name&lt;/span>: &lt;span style="color:#ae81ff">cluster-node-viewer&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">apiGroup&lt;/span>: &lt;span style="color:#ae81ff">rbac.authorization.k8s.io&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="412-rbac-鉴权器工作流程">4.1.2. RBAC 鉴权器工作流程&lt;/h4>
+&lt;p>RBAC 鉴权器接收到请求上下文后，会执行以下逻辑：&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>识别主体（Subject）&lt;/strong>： 从上下文中提取用户和用户组。&lt;/li>
+&lt;li>&lt;strong>查找绑定关系&lt;/strong>：
+&lt;ul>
+&lt;li>列出所有与当前用户及所属用户组匹配的 &lt;code>RoleBinding&lt;/code> 和 &lt;code>ClusterRoleBinding&lt;/code>。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>获取角色规则&lt;/strong>：
+&lt;ul>
+&lt;li>对于找到的每个 &lt;code>RoleBinding&lt;/code>，获取其引用的 &lt;code>Role&lt;/code> 或 &lt;code>ClusterRole&lt;/code> 中定义的规则。&lt;/li>
+&lt;li>对于找到的每个 &lt;code>ClusterRoleBinding&lt;/code>，获取其引用的 &lt;code>ClusterRole&lt;/code> 中定义的规则。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>规则匹配&lt;/strong>：
+&lt;ul>
+&lt;li>遍历所有收集到的规则，检查是否有任何一条规则与当前请求的 Verb、API Group、Resource、Namespace 和 Resource Name（如果指定）相匹配。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>做出决策&lt;/strong>：
+&lt;ul>
+&lt;li>如果找到匹配的规则，则返回**“允许”**。&lt;/li>
+&lt;li>如果未找到任何匹配的规则，则返回**“无意见”**。&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h3 id="42-abac基于属性的访问控制">4.2. ABAC（基于属性的访问控制）&lt;/h3>
+&lt;p>ABAC 允许基于资源、用户或请求环境的任意属性组合来定义复杂的策略。策略以每行一个 JSON 对象的形式存储在策略文件（如 &lt;code>--authorization-policy-file=/etc/kubernetes/abac.json&lt;/code>）中。API Server 需要重启才能加载策略文件的变更，这在动态性上不如 RBAC。&lt;/p>
+&lt;p>&lt;strong>ABAC 策略文件示例：&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;apiVersion&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;abac.authorization.kubernetes.io/v1beta1&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;kind&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;Policy&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;spec&amp;#34;: &lt;/span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;user&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;alice&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;namespace&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;project1&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;resource&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;pods&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;readonly&amp;#34;: &lt;/span>&lt;span style="color:#66d9ef">true&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;apiVersion&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;abac.authorization.kubernetes.io/v1beta1&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;kind&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;Policy&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;spec&amp;#34;: &lt;/span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;user&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;kubelet&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;resource&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;pods&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;readonly&amp;#34;: &lt;/span>&lt;span style="color:#66d9ef">false&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;apiVersion&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;abac.authorization.kubernetes.io/v1beta1&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;kind&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;Policy&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;spec&amp;#34;: &lt;/span>{
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;group&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;system:authenticated&amp;#34;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;readonly&amp;#34;: &lt;/span>&lt;span style="color:#66d9ef">true&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">&amp;#34;nonResourcePath&amp;#34;: &lt;/span>&lt;span style="color:#e6db74">&amp;#34;*&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>ABAC 鉴权器将请求的属性与策略文件中的每条策略进行匹配，如果请求属性是某条策略属性的超集，则该策略匹配，请求被允许。&lt;/p>
+&lt;h3 id="43-node-鉴权">4.3. Node 鉴权&lt;/h3>
+&lt;p>Node 鉴权是专门授权给 kubelet 访问 Node、Pod、Service、Endpoints 等资源的模块。它自动将 &lt;code>system:nodes&lt;/code> 组中的用户（由 kubelet 的客户端证书中的 &lt;code>CN=system:node:&amp;lt;nodeName&amp;gt;&lt;/code> 标识）与名为 &lt;code>system:node&lt;/code> 的 &lt;code>ClusterRole&lt;/code> 的权限关联起来，该 &lt;code>ClusterRole&lt;/code> 预定义了 kubelet 运行所需的最小权限集。&lt;/p>
+&lt;h3 id="44-webhook-鉴权">4.4. Webhook 鉴权&lt;/h3>
+&lt;p>Webhook 鉴权将鉴权决策外包给外部 HTTP(S) 服务。当配置了 Webhook 模式（&lt;code>--authorization-webhook-config-file&lt;/code>）后，API Server 会向指定的外部服务发送一个 &lt;code>SubjectAccessReview&lt;/code> 对象，该对象包含了完整的请求上下文。外部服务返回的响应指示是否允许该请求。&lt;/p>
+&lt;p>这种方式允许集成企业现有的权限管理系统，例如 Open Policy Agent (OPA)。&lt;/p>
+&lt;h2 id="5-最佳实践">5. 最佳实践&lt;/h2>
+&lt;ol>
+&lt;li>&lt;strong>遵循最小权限原则&lt;/strong>： 只授予执行任务所必需的最小权限。&lt;/li>
+&lt;li>&lt;strong>优先使用 RBAC&lt;/strong>： RBAC 资源是声明式的，可以通过 &lt;code>kubectl&lt;/code> 和 YAML 文件轻松管理，无需重启 API Server，是当前的最佳实践。&lt;/li>
+&lt;li>&lt;strong>定期审计权限&lt;/strong>： 使用 &lt;code>kubectl auth can-i&lt;/code> 命令或进行定期 RBAC 评审，确保权限分配符合预期。&lt;/li>
+&lt;li>&lt;strong>谨慎使用 &lt;code>cluster-admin&lt;/code>&lt;/strong>： &lt;code>cluster-admin&lt;/code> ClusterRole 拥有集群最高权限，应严格控制其分配。&lt;/li>
+&lt;li>&lt;strong>利用命名空间进行隔离&lt;/strong>： 为不同的团队或项目创建独立的命名空间，并结合 RBAC 实现逻辑隔离。&lt;/li>
+&lt;li>&lt;strong>为服务账户分配明确的权限&lt;/strong>： 运行在 Pod 中的应用程序通过服务账户进行身份认证，务必为其绑定精确的 Role 或 ClusterRole，避免使用默认的 &lt;code>default&lt;/code> 服务账户或过宽的权限。&lt;/li>
+&lt;/ol></description></item><item><title>Kubernetes APIServer 认证机制</title><link>https://www.vimiix.com/posts/2025-09-30-kubernetes-apiserver-authentication-mechanism/</link><pubDate>Tue, 30 Sep 2025 08:55:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2025-09-30-kubernetes-apiserver-authentication-mechanism/</guid><description>&lt;p>Kubernetes 作为一个分布式系统，其 API Server 是所有组件交互的核心枢纽。为了保证集群的安全，所有访问 API Server 的请求都必须经过认证（Authentication）、鉴权（Authorization）和准入控制（Admission Control）等步骤。其中，认证是安全的第一道大门，它负责确认请求者的身份。&lt;/p>
 &lt;p>Kubernetes 支持多种认证机制（称为 &lt;strong>Authenticator&lt;/strong>），以适应不同的部署环境和安全需求。这些机制可以同时启用，API Server 会逐一尝试，直到有一个机制成功认证该请求。&lt;/p>
 &lt;h2 id="一认证流程总览">一、认证流程总览&lt;/h2>
 &lt;p>任何访问 API Server 的请求（来自 &lt;code>kubectl&lt;/code>、 Dashboard、 节点上的 kubelet 或其他控制器）都需要携带认证信息。API Server 接收到请求后，会依次尝试配置的认证策略。如果认证成功，请求者的用户名（&lt;code>username&lt;/code>）和用户组（&lt;code>groups&lt;/code>）信息会被嵌入到请求的上下文中，传递给后续的鉴权阶段。如果所有认证策略都失败，则请求以 &lt;code>401 Unauthorized&lt;/code> 错误被拒绝。&lt;/p>
@@ -1436,386 +1654,4 @@ Update unit tests. ❌;&lt;/p>
 &lt;li>其他两个：&lt;code>UPDATE t3 SET j=$1 WHERE t3.i=$2&lt;/code>&lt;/li>
 &lt;/ul>
 &lt;/li>
-&lt;/ol></description></item><item><title>psycopg2 批量操作接口性能测试</title><link>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</link><pubDate>Wed, 12 Jul 2023 14:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/</guid><description>&lt;h2 id="测试版本">测试版本&lt;/h2>
-&lt;p>本测试基于 openGauss 版本的 psycopg2 驱动&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> psycopg2 &lt;span style="color:#66d9ef">as&lt;/span> pg
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__libpq_version__
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">90204&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">&amp;gt;&amp;gt;&amp;gt;&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>__version__
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;2.8.6 (dt dec pq3 ext)&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="测试环境">测试环境&lt;/h2>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>组件&lt;/th>
-&lt;th>说明&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>客户端&lt;/td>
-&lt;td>Rocky Linux 8 虚拟机&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>数据库&lt;/td>
-&lt;td>openGauss 3.0.3 in docker&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>网络&lt;/td>
-&lt;td>本地回路网卡&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>Python&lt;/td>
-&lt;td>3.6.8&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;h2 id="测试接口">测试接口&lt;/h2>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th style="text-align:left">接口名&lt;/th>
-&lt;th>说明&lt;/th>
-&lt;th>备注&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td style="text-align:left">&lt;a href="https://www.psycopg.org/docs/cursor.html#cursor.executemany">cursor.executemany(query, vars_list)&lt;/a>&lt;/td>
-&lt;td>执行一个数据库操作，vars_list 列表中的所有参数会逐个被应用到query 中，每组参数都会单独封包发送给服务端。&lt;/td>
-&lt;td>该函数主要用于更新数据库的命令，查询返回的任何结果集都将被丢弃。在其当前实现中，此方法并不比在循环中执行execute()快。&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td style="text-align:left">&lt;a href="https://www.psycopg.org/docs/extras.html#psycopg2.extras.execute_batch">psycopg2.extras.execute_batch(cur, sql, argslist, page_size=100)&lt;/a>&lt;/td>
-&lt;td>批量执行一个数据库操作，执行的SQL和 executemany 相同，只是单个数据包发送时会发送一批SQL，数量由page_size决定。这样可以减少和服务端的通信次数&lt;/td>
-&lt;td>execute_batch()也可以和预处理语句(PREPARE, EXECUTE, DEALLOCATE)一起使用。&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td style="text-align:left">extras.execute_batch + 预处理语句&lt;/td>
-&lt;td>使用PREPARE提交创建一个statement，然后通过 execute_batch 提交&lt;/td>
-&lt;td>&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td style="text-align:left">&lt;a href="https://www.psycopg.org/docs/extras.html#psycopg2.extras.execute_values">psycopg2.extras.execute_values(cur, sql, argslist, template=None, page_size=100, fetch=False)&lt;/a>&lt;/td>
-&lt;td>将参数和SQL封装为一条SQL执行，单条SQL中参数的个数由 page_size 决定。&lt;/td>
-&lt;td>&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;h2 id="性能对比">性能对比&lt;/h2>
-&lt;h3 id="insert">INSERT&lt;/h3>
-&lt;h4 id="测试数据">测试数据&lt;/h4>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows&lt;/th>
-&lt;th>executemany&lt;/th>
-&lt;th>execute_batch&lt;/th>
-&lt;th style="text-align:left">prepare+execute_batch&lt;/th>
-&lt;th style="text-align:left">execute_values&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>9.782&lt;/td>
-&lt;td>0.707&lt;/td>
-&lt;td style="text-align:left">0.501&lt;/td>
-&lt;td style="text-align:left">0.266&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>52.979&lt;/td>
-&lt;td>3.123&lt;/td>
-&lt;td style="text-align:left">2.637&lt;/td>
-&lt;td style="text-align:left">1.226&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>111.504&lt;/td>
-&lt;td>6.831&lt;/td>
-&lt;td style="text-align:left">4.557&lt;/td>
-&lt;td style="text-align:left">2.125&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;h4 id="insert耗时对比图">INSERT耗时对比图&lt;/h4>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/p0A6g8.png" alt="batch-insert" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h4 id="insert-去除-executemany-对比">INSERT 去除 executemany 对比&lt;/h4>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/naIaPn.png" alt="batch-insert-exclude-executemany" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="update">UPDATE&lt;/h3>
-&lt;h4 id="测试数据-1">测试数据&lt;/h4>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows&lt;/th>
-&lt;th>executemany&lt;/th>
-&lt;th>execute_batch&lt;/th>
-&lt;th style="text-align:left">prepare+execute_batch&lt;/th>
-&lt;th style="text-align:left">execute_values&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>5.015&lt;/td>
-&lt;td>0.617&lt;/td>
-&lt;td style="text-align:left">0.425&lt;/td>
-&lt;td style="text-align:left">0.356&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>24.639&lt;/td>
-&lt;td>3.467&lt;/td>
-&lt;td style="text-align:left">1.905&lt;/td>
-&lt;td style="text-align:left">5.237&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>52.095&lt;/td>
-&lt;td>6.927&lt;/td>
-&lt;td style="text-align:left">3.473&lt;/td>
-&lt;td style="text-align:left">21.102&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;h4 id="update-耗时对比图">UPDATE 耗时对比图&lt;/h4>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/Nmf5Lh.png" alt="16892490588494.jpg" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="delete">DELETE&lt;/h3>
-&lt;h4 id="测试数据-2">测试数据&lt;/h4>
-&lt;p>(&lt;em>100000 条数据组耗时太久不做展示&lt;/em>)&lt;/p>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows&lt;/th>
-&lt;th>executemany&lt;/th>
-&lt;th>execute_batch&lt;/th>
-&lt;th style="text-align:left">prepare+execute_batch&lt;/th>
-&lt;th style="text-align:left">execute_values&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>15.020&lt;/td>
-&lt;td>8.699&lt;/td>
-&lt;td style="text-align:left">0.277&lt;/td>
-&lt;td style="text-align:left">6.204&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>248.154&lt;/td>
-&lt;td>227.958&lt;/td>
-&lt;td style="text-align:left">1.455&lt;/td>
-&lt;td style="text-align:left">142.732&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;h4 id="delete-耗时对比图">DELETE 耗时对比图&lt;/h4>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/oHjdjO.png" alt="16892491996399.jpg" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h2 id="性能分析">性能分析&lt;/h2>
-&lt;p>从耗时对比来看，插入、更新、删除在不同的数据量情况下性能是不同的，用户应该根据自己的业务场景来选择使用哪一种操作接口。&lt;/p>
-&lt;p>插入性能从低到高依次为：&lt;/p>
-&lt;p>&lt;code>executemany &amp;lt; execute_batch &amp;lt; prepare+execute_batch &amp;lt; execute_values&lt;/code>&lt;/p>
-&lt;p>更新性能从低到高依次为：&lt;/p>
-&lt;p>&lt;code>executemany &amp;lt; execute_values &amp;lt; execute_batch &amp;lt; prepare+execute_batch&lt;/code>&lt;/p>
-&lt;p>删除性能从低到高依次为：&lt;/p>
-&lt;p>&lt;code>executemany &amp;lt; execute_batch &amp;lt; execute_values &amp;lt; prepare+execute_batch&lt;/code>&lt;/p>
-&lt;p>性能的高低主要是由于在向服务端发送数据包时的方式不同导致，下面以插入的SQL为例，通过 wireshark 进行抓包可以看出 psycopg2 在通信过程中不同批处理接口的封包情况。&lt;/p>
-&lt;h3 id="executemany">executemany&lt;/h3>
-&lt;p>&lt;code>executemany&lt;/code> 提交SQL的时候是逐个应用给的参数，每个SQL都单独发送给服务端&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/qA6EA5.png" alt="fd9636479f4c.jpg" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="execute_batch">execute_batch&lt;/h3>
-&lt;p>&lt;code>execute_batch&lt;/code> 接口区别于 &lt;code>executemany&lt;/code> 的是，在发送给后端的单个请求包里的数据会一次性提交一批的SQL，这样可以减少和服务器之间通信的往返次数&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/w0ZLEa.png" alt="54901fdb310d.jpg" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="prepareexecute_batch">prepare+execute_batch&lt;/h3>
-&lt;p>&lt;code>prepare&lt;/code> 可以提前在数据库里面创建一个预备语句对象，在执行 prepare 语句的时候，指定的SQL已经经了解析、分析、重写，这样在后续执行 EXECUTE 时就避免了重复解析分析的工作，从而起到优化性能的作用。&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/61XBDU.png" alt="8d8abc70246d.jpg" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="execute_values">execute_values&lt;/h3>
-&lt;p>前面的三个接口，不管是单个提交还是批量提交，最终都是一行数据一个SQL发送到服务端的，所以服务端需要逐个执行，而 &lt;code>execute_values&lt;/code> 接口是会按照 page_size 分组参数后，每组参数一次性组成一个SQL进行提交。&lt;/p>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/pXWVrW.png" alt="b7d1-8031d10e389c.jpg" />
-&lt;/figure>
-
-
-
-
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/0lQpxV.png" alt="b7d1-8031d10e389c.jpg" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h2 id="测试代码">测试代码&lt;/h2>
-&lt;p>执行方式：&lt;code>python test.py &amp;lt;api&amp;gt; &amp;lt;row&amp;gt; &amp;lt;operation&amp;gt;&lt;/code>&lt;/p>
-&lt;ul>
-&lt;li>&lt;code>&amp;lt;api&amp;gt;&lt;/code> 支持： &lt;code>executemany&lt;/code>, &lt;code>execute_batch&lt;/code>, &lt;code>prepare&lt;/code>, &lt;code>execute_values&lt;/code>&lt;/li>
-&lt;li>&lt;code>&amp;lt;operation&amp;gt;&lt;/code> 支持 &lt;code>insert&lt;/code>, &lt;code>update&lt;/code>, &lt;code>delete&lt;/code>&lt;/li>
-&lt;/ul>
-&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># coding: utf-8&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># Usage: python test.py &amp;lt;api&amp;gt; &amp;lt;count&amp;gt; &amp;lt;operation&amp;gt;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> time
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> sys
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">import&lt;/span> psycopg2 &lt;span style="color:#66d9ef">as&lt;/span> pg
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> psycopg2.extras &lt;span style="color:#f92672">import&lt;/span> execute_batch, execute_values
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> contextlib &lt;span style="color:#f92672">import&lt;/span> contextmanager
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;insert&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[str(i), i] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">elif&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;update&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[i, str(i)] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">elif&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[i] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;&amp;#39;&amp;#39;
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *dbname*: the database name
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *database*: the database name (only as keyword argument)
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *user*: user name used to authenticate
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *password*: password used to authenticate
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *host*: database host address (defaults to UNIX socket if not provided)
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">- *port*: connection port number (defaults to 5432 if not provided)
-&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#e6db74">&amp;#39;&amp;#39;&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>conf &lt;span style="color:#f92672">=&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;dbname&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;postgres&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;user&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;gaussdb&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;password&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;host&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;&amp;#39;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;port&amp;#39;&lt;/span>: &lt;span style="color:#ae81ff">26000&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#39;sslmode&amp;#39;&lt;/span>: &lt;span style="color:#e6db74">&amp;#39;disable&amp;#39;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@contextmanager&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">calc_time&lt;/span>(s):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> start &lt;span style="color:#f92672">=&lt;/span> time&lt;span style="color:#f92672">.&lt;/span>time()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">yield&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> end &lt;span style="color:#f92672">=&lt;/span> time&lt;span style="color:#f92672">.&lt;/span>time()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>&lt;span style="color:#e6db74">{&lt;/span>s&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74"> of &amp;#39;&lt;/span>&lt;span style="color:#e6db74">{&lt;/span>sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#39; cost: &amp;#34;&lt;/span>, end &lt;span style="color:#f92672">-&lt;/span> start)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>sql_map &lt;span style="color:#f92672">=&lt;/span> {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;insert&amp;#34;&lt;/span>: {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">1&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;INSERT INTO t_psycopg2_benchmark VALUES (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">, &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">2&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;INSERT INTO t_psycopg2_benchmark VALUES ($1, $2)&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">3&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;INSERT INTO t_psycopg2_benchmark VALUES &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;update&amp;#34;&lt;/span>: {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">1&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;UPDATE t_psycopg2_benchmark as t SET f_value = &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74"> WHERE t.f_key = &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">2&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;UPDATE t_psycopg2_benchmark as t SET f_value = $1 WHERE t.f_key = $2&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">3&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;UPDATE t_psycopg2_benchmark as t SET f_value = data.v1 FROM (VALUES &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">) AS data (id, v1) WHERE t.f_key = data.id&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> },
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>: {
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">1&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key=&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">2&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key=$1&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#ae81ff">3&lt;/span>: &lt;span style="color:#e6db74">&amp;#34;DELETE FROM t_psycopg2_benchmark as t WHERE t.f_key IN (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>,
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">insert_data&lt;/span>(conn):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">&amp;#34;* preparing data ...&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> args &lt;span style="color:#f92672">=&lt;/span> [[str(i), i] &lt;span style="color:#66d9ef">for&lt;/span> i &lt;span style="color:#f92672">in&lt;/span> range(int(sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">2&lt;/span>]))]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor &lt;span style="color:#f92672">=&lt;/span> conn&lt;span style="color:#f92672">.&lt;/span>cursor()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;insert into t_psycopg2_benchmark values &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_values(cursor, sql, args)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">def&lt;/span> &lt;span style="color:#a6e22e">main&lt;/span>():
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">try&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn &lt;span style="color:#f92672">=&lt;/span> pg&lt;span style="color:#f92672">.&lt;/span>connect(&lt;span style="color:#f92672">**&lt;/span>conf)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">&amp;#34;* connect success&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">except&lt;/span> &lt;span style="color:#a6e22e">Exception&lt;/span> &lt;span style="color:#66d9ef">as&lt;/span> e:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;connect failed: &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>e&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor &lt;span style="color:#f92672">=&lt;/span> conn&lt;span style="color:#f92672">.&lt;/span>cursor()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;drop table if exists t_psycopg2_benchmark&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(sql)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;create table t_psycopg2_benchmark (f_key text primary key, f_value numeric)&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(sql)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> api &lt;span style="color:#f92672">=&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">1&lt;/span>]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;insert&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> insert_data(conn)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">&amp;#34;* benchmarking ...&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;executemany&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;executemany&amp;#34;&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">1&lt;/span>]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>executemany(sql, args)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">elif&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;execute_batch&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;execute_batch&amp;#34;&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">1&lt;/span>]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_batch(cursor, sql, args)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">elif&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;prepare&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;execute_values&amp;#34;&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;PREPARE test_stmt AS &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">2&lt;/span>]&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_batch(cursor, &lt;span style="color:#e6db74">&amp;#34;EXECUTE test_stmt (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>, args)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_batch(cursor, &lt;span style="color:#e6db74">&amp;#34;EXECUTE test_stmt (&lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">, &lt;/span>&lt;span style="color:#e6db74">%s&lt;/span>&lt;span style="color:#e6db74">)&amp;#34;&lt;/span>, args)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(&lt;span style="color:#e6db74">&amp;#34;DEALLOCATE test_stmt&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">elif&lt;/span> api &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;execute_values&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">with&lt;/span> calc_time(&lt;span style="color:#e6db74">&amp;#34;execute_values&amp;#34;&lt;/span>):
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sql &lt;span style="color:#f92672">=&lt;/span> sql_map[sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>]][&lt;span style="color:#ae81ff">3&lt;/span>]
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> execute_values(cursor, sql, args)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">else&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> print(&lt;span style="color:#e6db74">f&lt;/span>&lt;span style="color:#e6db74">&amp;#34;unknow api: &lt;/span>&lt;span style="color:#e6db74">{&lt;/span>api&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> sys&lt;span style="color:#f92672">.&lt;/span>argv[&lt;span style="color:#ae81ff">3&lt;/span>] &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;delete&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cursor&lt;span style="color:#f92672">.&lt;/span>execute(&lt;span style="color:#e6db74">&amp;#34;delete from t_psycopg2_benchmark&amp;#34;&lt;/span>)
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> conn&lt;span style="color:#f92672">.&lt;/span>commit()
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">if&lt;/span> __name__ &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#e6db74">&amp;#34;__main__&amp;#34;&lt;/span>:
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> main()
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item></channel></rss>
+&lt;/ol></description></item></channel></rss>

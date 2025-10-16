@@ -1,0 +1,110 @@
+<!doctype html><html lang=cn-zh><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta http-equiv=X-UA-Compatible content="IE=edge"><style type=text/css>body{font-family:monospace}</style><title>Kubernetes APIServer 鉴权机制</title>
+<meta name=description content="A blog maintained by Vimiix."><link rel=stylesheet href=/css/style.css><script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?7c24231917964240bae97e813810620c",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script></head><body><header>====================<br>== Hi, I'm Vimiix ==<br>====================<div style=float:right;color:gray;font-size:x-large>Get hands dirty.</div><br><p><nav><a href=https://www.vimiix.com/><b>首页</b></a>.
+<a href=/posts/><b>文章列表</b></a>.
+<a href=/projects/><b>开源项目</b></a>.
+<a href=/tags/><b>标签</b></a>.
+<a href=/friends/><b>友链</b></a>.
+<a href=/about/><b>关于我</b></a>.
+<a href=/index.xml><b>RSS</b></a>.</nav></p></header><main><article><h1>Kubernetes APIServer 鉴权机制</h1><b><time>2025.10.16 07:54</time></b>
+<a href=/tags/kubernetes>kubernetes</a>
+<a href=/tags/notes>notes</a>
+<a href=/tags/k8s>k8s</a><div><h2 id=1-引言>1. 引言</h2><p>在 Kubernetes 集群中，<a href=./2025-09-30-kubernetes-apiserver-authentication-mechanism.md>认证（Authentication）</a>解决了“你是谁”的问题，而鉴权（Authorization）则解决了“你能做什么”的问题。鉴权是 Kubernetes 安全框架的核心支柱之一，它位于认证之后，用于确定一个已经通过身份认证的用户或服务账户（ServiceAccount）是否拥有对特定资源执行特定操作的权限。Kubernetes 采用了一种声明式的、基于属性的访问控制（ABAC）和基于角色的访问控制（RBAC）等模型来实现精细化的权限管理。本文将简单介绍 Kubernetes 的鉴权机制，包括其架构、工作流程、核心模型及详细实现原理。</p><h2 id=2-鉴权架构>2. 鉴权架构</h2><p>Kubernetes API Server 是集群所有操作的唯一入口，它也是鉴权决策的中心。当一个请求通过认证后，API Server 会将该请求传递给鉴权模块进行处理。</p><p>Kubernetes 支持多种鉴权模块，例如：</p><ul><li><strong>Node</strong>： 用于授权 kubelet 对节点和 Pod 等资源的访问。</li><li><strong>ABAC（Attribute-Based Access Control）</strong>： 基于属性的访问控制，策略存储在静态文件中。</li><li><strong>RBAC（Role-Based Access Control）</strong>： 基于角色的访问控制，是当前最主流和推荐的方式。</li><li><strong>Webhook</strong>： 通过调用外部 RESTful 服务来做出鉴权决策。</li></ul><p>这些模块可以同时配置多个。如果配置了多个模块，请求必须被至少一个模块允许，且不能被任何模块拒绝，整个请求才会被授权。API Server 默认允许一个匿名请求，除非被认证层或鉴权层拒绝。</p><p>下图是请求经过认证与鉴权的核心流程：</p><div class=mermaid>flowchart TD
+A[客户端请求<br>（User/ServiceAccount）] --> B[API Server]
+B --> C{认证}
+C -- 携带合法令牌/证书 --> D[认证成功<br>获取请求者身份信息]
+C -- 令牌/证书无效 --> E[认证失败<br>返回401 Unauthorized]
+D --> F[鉴权模块链]
+subgraph F [鉴权模块链]
+direction LR
+F1[Node Authorizer] --> F2[ABAC Authorizer] --> F3[RBAC Authorizer] --> F4[Webhook Authorizer]
+end
+F -- 任一模块显式拒绝 --> G[鉴权拒绝<br>返回403 Forbidden]
+F -- 所有模块未通过<br>（包括默认匿名允许） --> H[鉴权拒绝<br>返回403 Forbidden]
+F -- 任一模块允许<br>且无模块拒绝 --> I[鉴权通过]
+I --> J[准入控制<br>（Mutating/Validating）]
+J --> K[持久化存储<br>（etcd）]</div><h2 id=3-鉴权核心流程>3. 鉴权核心流程</h2><p>一个请求的鉴权过程涉及以下几个关键步骤和对象：</p><h3 id=31-请求上下文的构建>3.1. 请求上下文的构建</h3><p>在认证成功后，API Server 会构建一个包含请求者身份和请求详细信息的上下文对象，该对象将作为输入传递给鉴权模块。这个上下文主要包括：</p><ol><li><strong>用户（User）</strong>： 认证后得到的用户名。</li><li><strong>用户组（Groups）</strong>： 用户所属的组。例如，<code>system:authenticated</code> 组包含所有已认证用户。</li><li><strong>额外信息（Extra）</strong>： 包含一些额外的键值对信息，通常由认证器提供。</li><li><strong>API 请求信息</strong>：<ul><li><strong>API Verb</strong>： 请求的操作类型，如 <code>get</code>, <code>list</code>, <code>create</code>, <code>update</code>, <code>delete</code>, <code>patch</code>, <code>watch</code>。</li><li><strong>Resource</strong>： 请求的 Kubernetes 资源，如 <code>pods</code>, <code>services</code>, <code>deployments</code>。</li><li><strong>Namespace</strong>： 如果资源是命名空间范围的，则包含其命名空间。</li><li><strong>API Group</strong>： 资源所属的 API 组，如 <code>apps</code>（对应 <code>deployments</code>）、<code>”</code>（核心组，对应 <code>pods</code>, <code>services</code>）。</li><li><strong>子资源（Subresource）</strong>： 如 <code>pods/exec</code>, <code>pods/log</code>, <code>pods/status</code>。</li><li><strong>请求路径（Request Path）</strong>： 对于非资源请求（如 <code>/api</code>, <code>/healthz</code>），使用完整路径进行鉴权。</li><li><strong>资源名称（Resource Name）</strong>： 某些鉴权模式（如 ABAC）可以支持基于特定资源实例名称的授权。</li></ul></li></ol><h3 id=32-多模块决策机制>3.2. 多模块决策机制</h3><p>API Server 会按照配置顺序，依次将请求上下文传递给每个已启用的鉴权模块。每个模块独立做出决策，决策结果有三种：</p><pre tabindex=0><code>const (
+	// DecisionDeny means that an authorizer decided to deny the action.
+	DecisionDeny Decision = iota
+	// DecisionAllow means that an authorizer decided to allow the action.
+	DecisionAllow
+	// DecisionNoOpinion means that an authorizer has no opinion on whether
+	// to allow or deny an action.
+	DecisionNoOpinion
+)
+</code></pre><ul><li><strong>拒绝（Deny）</strong>： 该模块明确拒绝此请求。</li><li><strong>允许（Allow）</strong>： 该模块允许此请求。</li><li><strong>无意见（No Opinion）</strong>： 该模块对此请求没有匹配的策略，不作决定。</li></ul><p>最终的鉴权结果遵循以下规则：</p><ol><li>如果<strong>任何一个</strong>模块的决策是 <strong>“拒绝”</strong>，则整个请求被<strong>拒绝</strong>，API Server 返回 <code>403 Forbidden</code>。</li><li>如果<strong>至少一个</strong>模块的决策是 <strong>“允许”</strong>，并且<strong>没有任何</strong>模块的决策是 <strong>“拒绝”</strong>，则整个请求被<strong>允许</strong>。</li><li>如果<strong>所有</strong>模块的决策都是 <strong>“无意见”</strong>，则请求被<strong>拒绝</strong>。这是一种“默认拒绝”的安全策略。</li></ol><h2 id=4-鉴权模型>4. 鉴权模型</h2><h3 id=41-rbac基于角色的访问控制>4.1. RBAC（基于角色的访问控制）</h3><p>RBAC 是 Kubernetes 中事实上的标准鉴权模型，它使用 <code>Role</code> / <code>ClusterRole</code> 和 <code>RoleBinding</code> / <code>ClusterRoleBinding</code> 这四种资源来定义和分配权限。</p><h4 id=411-核心资源对象>4.1.1. 核心资源对象</h4><ol><li><strong>Role 与 ClusterRole</strong></li></ol><ul><li><strong>Role</strong>： 定义在<strong>特定命名空间</strong>内的一组权限规则。它指定了可以对哪些资源（如 <code>pods</code>）执行哪些操作（如 <code>get</code>, <code>list</code>, <code>create</code>）。</li><li><strong>ClusterRole</strong>： 定义在<strong>集群范围</strong>内的一组权限规则。用于定义：<ul><li>集群级别的资源权限（如 <code>nodes</code>, <code>persistentvolumes</code>）。</li><li>非资源端点权限（如 <code>/healthz</code>）。</li><li>跨所有命名空间的命名空间资源权限（需要与 <code>ClusterRoleBinding</code> 配合）。</li></ul></li></ul><p><strong>Role 示例：</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io/v1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Role</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>default</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>pod-reader</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>rules</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>apiGroups</span>: [<span style=color:#e6db74>&#34;&#34;</span>] <span style=color:#75715e># 核心 API 组</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>resources</span>: [<span style=color:#e6db74>&#34;pods&#34;</span>]
+</span></span><span style=display:flex><span>  <span style=color:#f92672>verbs</span>: [<span style=color:#e6db74>&#34;get&#34;</span>, <span style=color:#e6db74>&#34;list&#34;</span>, <span style=color:#e6db74>&#34;watch&#34;</span>]
+</span></span></code></pre></div><p><strong>ClusterRole 示例：</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io/v1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>ClusterRole</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#75715e># 不需要 &#34;namespace&#34;，因为 ClusterRole 是集群范围的</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>cluster-node-viewer</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>rules</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>apiGroups</span>: [<span style=color:#e6db74>&#34;&#34;</span>]
+</span></span><span style=display:flex><span>  <span style=color:#f92672>resources</span>: [<span style=color:#e6db74>&#34;nodes&#34;</span>]
+</span></span><span style=display:flex><span>  <span style=color:#f92672>verbs</span>: [<span style=color:#e6db74>&#34;get&#34;</span>, <span style=color:#e6db74>&#34;list&#34;</span>, <span style=color:#e6db74>&#34;watch&#34;</span>]
+</span></span></code></pre></div><p><strong>RoleBinding 与 ClusterRoleBinding</strong></p><ul><li><strong>RoleBinding</strong>： 将 <code>Role</code> 或 <code>ClusterRole</code> 中定义的权限授予一个或多个用户或服务账户。<code>RoleBinding</code> 在特定命名空间中生效。如果它引用的是一个 <code>ClusterRole</code>，那么被授权者只能在 <code>RoleBinding</code> 所在的命名空间内行使该 <code>ClusterRole</code> 的权限。</li><li><strong>ClusterRoleBinding</strong>： 将 <code>ClusterRole</code> 中定义的权限授予一个或多个用户或服务账户，授权范围是<strong>整个集群</strong>。</li></ul><p><strong>RoleBinding 示例（将 <code>pod-reader</code> Role 授予用户 <code>vimiix</code>）：</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io/v1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>RoleBinding</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>read-pods</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>default</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>subjects</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>kind</span>: <span style=color:#ae81ff>User</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>vimiix</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>apiGroup</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>roleRef</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Role</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>pod-reader</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>apiGroup</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io</span>
+</span></span></code></pre></div><p><strong>ClusterRoleBinding 示例（将 <code>cluster-node-viewer</code> ClusterRole 授予组 <code>system:authenticated</code>）：</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io/v1</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>ClusterRoleBinding</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>metadata</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>read-nodes-global</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>subjects</span>:
+</span></span><span style=display:flex><span>- <span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Group</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>system:authenticated</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>apiGroup</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>roleRef</span>:
+</span></span><span style=display:flex><span>  <span style=color:#f92672>kind</span>: <span style=color:#ae81ff>ClusterRole</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>cluster-node-viewer</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>apiGroup</span>: <span style=color:#ae81ff>rbac.authorization.k8s.io</span>
+</span></span></code></pre></div><h4 id=412-rbac-鉴权器工作流程>4.1.2. RBAC 鉴权器工作流程</h4><p>RBAC 鉴权器接收到请求上下文后，会执行以下逻辑：</p><ol><li><strong>识别主体（Subject）</strong>： 从上下文中提取用户和用户组。</li><li><strong>查找绑定关系</strong>：<ul><li>列出所有与当前用户及所属用户组匹配的 <code>RoleBinding</code> 和 <code>ClusterRoleBinding</code>。</li></ul></li><li><strong>获取角色规则</strong>：<ul><li>对于找到的每个 <code>RoleBinding</code>，获取其引用的 <code>Role</code> 或 <code>ClusterRole</code> 中定义的规则。</li><li>对于找到的每个 <code>ClusterRoleBinding</code>，获取其引用的 <code>ClusterRole</code> 中定义的规则。</li></ul></li><li><strong>规则匹配</strong>：<ul><li>遍历所有收集到的规则，检查是否有任何一条规则与当前请求的 Verb、API Group、Resource、Namespace 和 Resource Name（如果指定）相匹配。</li></ul></li><li><strong>做出决策</strong>：<ul><li>如果找到匹配的规则，则返回**“允许”**。</li><li>如果未找到任何匹配的规则，则返回**“无意见”**。</li></ul></li></ol><h3 id=42-abac基于属性的访问控制>4.2. ABAC（基于属性的访问控制）</h3><p>ABAC 允许基于资源、用户或请求环境的任意属性组合来定义复杂的策略。策略以每行一个 JSON 对象的形式存储在策略文件（如 <code>--authorization-policy-file=/etc/kubernetes/abac.json</code>）中。API Server 需要重启才能加载策略文件的变更，这在动态性上不如 RBAC。</p><p><strong>ABAC 策略文件示例：</strong></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;apiVersion&#34;: </span><span style=color:#e6db74>&#34;abac.authorization.kubernetes.io/v1beta1&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;kind&#34;: </span><span style=color:#e6db74>&#34;Policy&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;spec&#34;: </span>{
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;user&#34;: </span><span style=color:#e6db74>&#34;alice&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;namespace&#34;: </span><span style=color:#e6db74>&#34;project1&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;resource&#34;: </span><span style=color:#e6db74>&#34;pods&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;readonly&#34;: </span><span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;apiVersion&#34;: </span><span style=color:#e6db74>&#34;abac.authorization.kubernetes.io/v1beta1&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;kind&#34;: </span><span style=color:#e6db74>&#34;Policy&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;spec&#34;: </span>{
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;user&#34;: </span><span style=color:#e6db74>&#34;kubelet&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;resource&#34;: </span><span style=color:#e6db74>&#34;pods&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;readonly&#34;: </span><span style=color:#66d9ef>false</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;apiVersion&#34;: </span><span style=color:#e6db74>&#34;abac.authorization.kubernetes.io/v1beta1&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;kind&#34;: </span><span style=color:#e6db74>&#34;Policy&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#f92672>&#34;spec&#34;: </span>{
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;group&#34;: </span><span style=color:#e6db74>&#34;system:authenticated&#34;</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;readonly&#34;: </span><span style=color:#66d9ef>true</span>,
+</span></span><span style=display:flex><span>    <span style=color:#f92672>&#34;nonResourcePath&#34;: </span><span style=color:#e6db74>&#34;*&#34;</span>
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>ABAC 鉴权器将请求的属性与策略文件中的每条策略进行匹配，如果请求属性是某条策略属性的超集，则该策略匹配，请求被允许。</p><h3 id=43-node-鉴权>4.3. Node 鉴权</h3><p>Node 鉴权是专门授权给 kubelet 访问 Node、Pod、Service、Endpoints 等资源的模块。它自动将 <code>system:nodes</code> 组中的用户（由 kubelet 的客户端证书中的 <code>CN=system:node:&lt;nodeName></code> 标识）与名为 <code>system:node</code> 的 <code>ClusterRole</code> 的权限关联起来，该 <code>ClusterRole</code> 预定义了 kubelet 运行所需的最小权限集。</p><h3 id=44-webhook-鉴权>4.4. Webhook 鉴权</h3><p>Webhook 鉴权将鉴权决策外包给外部 HTTP(S) 服务。当配置了 Webhook 模式（<code>--authorization-webhook-config-file</code>）后，API Server 会向指定的外部服务发送一个 <code>SubjectAccessReview</code> 对象，该对象包含了完整的请求上下文。外部服务返回的响应指示是否允许该请求。</p><p>这种方式允许集成企业现有的权限管理系统，例如 Open Policy Agent (OPA)。</p><h2 id=5-最佳实践>5. 最佳实践</h2><ol><li><strong>遵循最小权限原则</strong>： 只授予执行任务所必需的最小权限。</li><li><strong>优先使用 RBAC</strong>： RBAC 资源是声明式的，可以通过 <code>kubectl</code> 和 YAML 文件轻松管理，无需重启 API Server，是当前的最佳实践。</li><li><strong>定期审计权限</strong>： 使用 <code>kubectl auth can-i</code> 命令或进行定期 RBAC 评审，确保权限分配符合预期。</li><li><strong>谨慎使用 <code>cluster-admin</code></strong>： <code>cluster-admin</code> ClusterRole 拥有集群最高权限，应严格控制其分配。</li><li><strong>利用命名空间进行隔离</strong>： 为不同的团队或项目创建独立的命名空间，并结合 RBAC 实现逻辑隔离。</li><li><strong>为服务账户分配明确的权限</strong>： 运行在 Pod 中的应用程序通过服务账户进行身份认证，务必为其绑定精确的 Role 或 ClusterRole，避免使用默认的 <code>default</code> 服务账户或过宽的权限。</li></ol></div></article></main><aside><div><div><h3>LATEST POSTS</h3></div><div><ul><li><a href=/posts/2025-10-16-kubernetes-apiserver-authorization-mechanism/>Kubernetes APIServer 鉴权机制</a></li><li><a href=/posts/2025-09-30-kubernetes-apiserver-authentication-mechanism/>Kubernetes APIServer 认证机制</a></li><li><a href=/posts/2024-12-16-deploy-kubernetes-by-kubeadm/>使用 kubeadm 搭建 kubernetes 集群</a></li><li><a href=/posts/2024-09-20-how-to-code-review/>如何做code review</a></li><li><a href=/posts/2024-08-12-weakref-in-python/>Python中的弱引用</a></li></ul></div></div></aside><footer><p>Social Links:
+<a href=https://github.com/vimiix><b>Github</b></a>.
+<a href=https://www.douban.com/people/vimiix/><b>Douban</b></a>.
+<a href=mailto:i@vimiix.com><b>Email</b></a>.<br><hr>&copy; 2017-2025
+Vimiix Yao; All rights reserved.
+<a href=https://beian.miit.gov.cn/>京ICP备19015214号-1</a></p><script src=https://l2dwidget.js.org/lib/L2Dwidget.min.js></script><script>L2Dwidget.init({model:{jsonPath:"https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json"}})</script><script async src=https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js></script></footer></body></html>
