@@ -1,4 +1,778 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 16 Oct 2025 07:54:28 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>Kubernetes APIServer 鉴权机制</title><link>https://www.vimiix.com/posts/2025-10-16-kubernetes-apiserver-authorization-mechanism/</link><pubDate>Thu, 16 Oct 2025 07:54:28 +0000</pubDate><guid>https://www.vimiix.com/posts/2025-10-16-kubernetes-apiserver-authorization-mechanism/</guid><description>&lt;h2 id="1-引言">1. 引言&lt;/h2>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Hi, I'm Vimiix</title><link>https://www.vimiix.com/</link><description>Recent content on Hi, I'm Vimiix</description><generator>Hugo</generator><language>cn-zh</language><copyright>Vimiix Yao; All rights reserved</copyright><lastBuildDate>Thu, 30 Apr 2026 12:04:28 +0000</lastBuildDate><atom:link href="https://www.vimiix.com/index.xml" rel="self" type="application/rss+xml"/><item><title>NPD 容器持续 OOM，Pod 重建时引发节点高负载根因分析</title><link>https://www.vimiix.com/posts/2026-04-30-npd-pod-delete-cause-cpu-high-load/</link><pubDate>Thu, 30 Apr 2026 12:04:28 +0000</pubDate><guid>https://www.vimiix.com/posts/2026-04-30-npd-pod-delete-cause-cpu-high-load/</guid><description>&lt;h2 id="摘要">摘要&lt;/h2>
+&lt;p>K8S 生产集群的 worker 节点在 NPD（Node Problem Detector）Pod 被重建时，出现 CPU sys% 飙升、load 暴涨、同节点其他 Pod 延迟明显变大的现象。经过完整排查，根因定位为：NPD 的 memory limit 配置过小（200Mi），导致容器频繁触发 memcg OOM；OOM 后 containerd 通过 cleanupAfterDeadShim 路径调用 runc delete 清理容器，而 runc 1.1.12 中存在两处错误丢弃缺陷以及 RemovePaths 重试窗口过短的问题，致使每次容器退出后其 cgroup 目录均未被正确清理；经过约一个月的累积，单个 NPD Pod 下残留了 8147 个子 cgroup 目录；当该 Pod 被删除重建时，kubelet 的 PodContainerManager.Destroy 对全部残留子 cgroup 进行递归遍历和 rmdir 操作，在 cgroup v1 的全局锁 cgroup_mutex 上形成严重争抢，最终导致节点 sys% 飙高并波及同节点所有 Pod。本文完整记录从现象到根因的排查过程，并结合源码分析给出修复方案。&lt;/p>
+&lt;hr>
+&lt;h2 id="1-故障现象">1 故障现象&lt;/h2>
+&lt;h3 id="11-排查起点节点-cpu-高负载">1.1 排查起点：节点 CPU 高负载&lt;/h3>
+&lt;p>本次排查的直接触发点是：节点在 NPD Pod 被重建时出现瞬时高负载，具体表现为：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>top&lt;/code> 观察到 sys%（内核态 CPU 占用）飙升至 30% 以上，而 us%（用户态）相对正常；&lt;/li>
+&lt;li>&lt;code>vmstat 1&lt;/code> 观察到 &lt;code>cs&lt;/code>（上下文切换次数）和 &lt;code>in&lt;/code>（中断次数）同时大幅上升；&lt;/li>
+&lt;li>同节点上其他正在运行的 Pod 出现明显的调度延迟和 I/O 抖动。&lt;/li>
+&lt;/ul>
+&lt;p>进一步向下定位，发现高负载的源头是 NPD Pod 对应的 cgroup 目录下累积了&lt;strong>大量残留的容器子 cgroup 目录&lt;/strong>。继续深入排查，才追溯到 NPD 反复 OOM 与 runc 清理时序缺陷之间的连锁反应。&lt;/p>
+&lt;h3 id="12-现象特征">1.2 现象特征&lt;/h3>
+&lt;p>现场观察到的关键特征如下：&lt;/p>
+&lt;ul>
+&lt;li>NPD Pod &lt;code>node-problem-detector-z6bzz&lt;/code> 处于 CrashLoopBackOff 状态，&lt;code>restartCount=9115&lt;/code>，对应 Pod 自 3 月 24 日创建以来约一个月时间；&lt;/li>
+&lt;li>每次容器退出后，&lt;code>/sys/fs/cgroup/&amp;lt;subsystem&amp;gt;/kubepods/burstable/pod442613a5-.../&amp;lt;container-id&amp;gt;/&lt;/code> 路径下&lt;strong>全部 12 个 subsystem 的目录均未被删除&lt;/strong>；&lt;/li>
+&lt;li>累积到 &lt;strong>8147 个残留目录&lt;/strong>，所有目录的 &lt;code>cgroup.procs&lt;/code> 均为空，手动执行 &lt;code>rmdir&lt;/code> 可以瞬间成功；&lt;/li>
+&lt;li>containerd 和 kubelet 均未自动清理这些残留目录，且日志中没有任何相关错误记录。&lt;/li>
+&lt;/ul>
+&lt;h3 id="13-典型日志序列">1.3 典型日志序列&lt;/h3>
+&lt;p>以下是一条典型容器生命周期中的日志序列（容器 ID：&lt;code>092a70936d92...&lt;/code>，Attempt=8886）：&lt;/p>
+&lt;pre tabindex="0">&lt;code>Apr 25 12:19:07 CreateContainer ... Attempt:8886
+Apr 25 12:19:07 StartContainer
+Apr 25 12:19:08 StartContainer returns successfully
+Apr 25 12:19:10 – 12:19:11 TaskOOM × 10
+Apr 25 12:19:12 shim disconnected id=092a70936d92...
+Apr 25 12:19:12 cleaning up after shim disconnected
+&lt;/code>&lt;/pre>&lt;p>在该容器 ID 对应的所有日志中，自 &lt;code>shim disconnected&lt;/code> 之后便再无任何记录。containerd 从未报告容器清理失败，看似一切都很正常，但实际却有 cgroup 目录残留了下来。&lt;/p>
+&lt;hr>
+&lt;h2 id="2-环境信息">2 环境信息&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>组件&lt;/th>
+&lt;th>版本 / 配置值&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>OS 内核&lt;/td>
+&lt;td>5.4.241-19-0017.1_plus&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>cgroup 版本&lt;/td>
+&lt;td>v1&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>containerd&lt;/td>
+&lt;td>v1.6.9&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>runc&lt;/td>
+&lt;td>1.1.12&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>OCI runtime wrapper&lt;/td>
+&lt;td>nvidia-container-runtime 1.17.4&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>cgroup driver&lt;/td>
+&lt;td>cgroupfs（&lt;code>SystemdCgroup=false&lt;/code>）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>NPD memory limit&lt;/td>
+&lt;td>&lt;strong>200Mi&lt;/strong>（严重偏小）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>NPD 加载的 monitor plugin 数量&lt;/td>
+&lt;td>&lt;strong>23 个以上（包含一些自定义的 plugin）&lt;/strong>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>需要说明的是，本环境中 containerd 配置的 OCI runtime 名称为 &lt;code>nvidia-container-runtime&lt;/code>，该二进制作为 wrapper 在收到 delete 请求后会注入 GPU 相关 hooks，再转调底层 runc。在本文描述的故障路径中，wrapper 本身并未引入额外缺陷，根因仍在 runc 内部。&lt;/p>
+&lt;hr>
+&lt;h2 id="3-各组件在容器生命周期中的职责">3 各组件在容器生命周期中的职责&lt;/h2>
+&lt;p>在展开根因分析之前，有必要先建立对容器创建/销毁链路上各组件职责的全景认知。容器生命周期涉及 &lt;strong>kubelet → containerd → shim → runtime wrapper → runc → kernel&lt;/strong> 共六层协作，任何一层都可能存在缺陷。&lt;/p>
+&lt;pre tabindex="0">&lt;code>┌─────────────────────────────────────────────────────────────────────────┐
+│ kubelet │
+│ ├── PodContainerManager : 管理 pod 级 cgroup（创建/删除 pod 目录） │
+│ ├── cleanupOrphanedPodCgroups : 兜底清理孤儿 pod（仅当 pod 被删时） │
+│ └── cAdvisor : 周期扫描 cgroup 获取 stats │
+└────────────┬────────────────────────────────────────────────────────────┘
+ │ CRI gRPC
+ ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ containerd │
+│ ├── cri plugin : 生成 CgroupsPath 写入 OCI spec │
+│ ├── runtime/v2/manager : 管理 shim 进程生命周期 │
+│ └── cleanupAfterDeadShim : shim 异常退出 → fork 新 shim 执行 delete │
+└────────────┬────────────────────────────────────────────────────────────┘
+ │ ttrpc
+ ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ containerd-shim-runc-v2（常驻进程，1 容器 1 个 shim） │
+│ ├── task/service.go : 处理 Task.Create/Start/Delete 等 RPC │
+│ ├── processExits : 监听容器 init 退出（SIGCHLD reaper） │
+│ ├── OOM watcher : 监听 memory.oom_control eventfd │
+│ └── manager.Stop : 收到 delete 命令时，拉起 runc delete │
+└────────────┬────────────────────────────────────────────────────────────┘
+ │ exec
+ ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ nvidia-container-runtime（wrapper，本案例中配置的 BinaryName） │
+│ └── 注入 GPU 相关 hooks → 转调底层 runc │
+└────────────┬────────────────────────────────────────────────────────────┘
+ │ exec
+ ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ runc（1.1.12） │
+│ ├── delete.go : delete 子命令入口，status 决策分支 │
+│ ├── libcontainer.destroy : signalAllProcesses + cgroupManager.Destroy │
+│ └── cgroups/fs.Destroy : RemovePaths (5 次重试 = 310ms 窗口) │
+└────────────┬────────────────────────────────────────────────────────────┘
+ │ rmdir syscall
+ ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Linux kernel (5.4.241) │
+│ ├── cgroup v1 fs : rmdir 需持 cgroup_mutex（全局锁） │
+│ └── memcg OOM killer : 异步逐个 SIGKILL，清完 ~19 个进程需 ~2 秒 │
+└─────────────────────────────────────────────────────────────────────────┘
+&lt;/code>&lt;/pre>&lt;p>本案例中出问题的是链路的后四层，各层的具体问题将在后续章节逐一分析。&lt;/p>
+&lt;hr>
+&lt;h2 id="4-根因分析">4 根因分析&lt;/h2>
+&lt;h3 id="41-容器退出清理的两条路径">4.1 容器退出清理的两条路径&lt;/h3>
+&lt;p>理解整个 bug 的前提是看清 containerd 对容器退出的&lt;strong>两种清理路径&lt;/strong>。NPD 的 cgroup 残留发生在 Path B。&lt;/p>
+&lt;h4 id="path-a正常路径kubelet-主动删除运行中的容器">Path A：正常路径（kubelet 主动删除运行中的容器）&lt;/h4>
+&lt;pre tabindex="0">&lt;code>kubelet containerd shim runc
+────── ────────── ──── ────
+StopContainer ────&amp;gt; task.Delete ──ttrpc───&amp;gt; Init.delete
+ │ waitTimeout(2s)
+ │ runtime.Delete ──&amp;gt; runc delete
+ │ │ status=Running
+ │ │ killContainer
+ │ │ (100×100ms 轮询)
+ │ │ 进程退出
+ │ │ destroy(c)
+ │ │ cgroupManager.Destroy ✓
+ │ │ 清理 runc state
+ │ ▼ exit 0
+ │ UnmountAll
+ ▼
+ b.bundle.Delete()
+
+结果：cgroup 正常删除，bundle 删除，runc state 删除
+&lt;/code>&lt;/pre>&lt;h4 id="path-b异常路径shim-先于-containerd-发现-init-死亡ttrpc-断开">Path B：异常路径（shim 先于 containerd 发现 init 死亡，ttrpc 断开）&lt;/h4>
+&lt;pre tabindex="0">&lt;code>kubelet containerd shim runc
+────── ────────── ──── ────
+ [ttrpc OnClose 回调] ╳ shim 挂了
+ cleanupAfterDeadShim
+ │ binaryCall.Delete ──fork──&amp;gt; 新 shim binary(delete 子命令)
+ │ │ manager.Stop
+ │ │ r.Delete(Force:true) ──&amp;gt; runc delete --force
+ │ │ │ status=Stopped（init 已死）
+ │ │ │ destroy(container) ◄── 问题点
+ │ │ │ signalAllProcesses
+ │ │ │ (p.Wait → ECHILD, 不等待)
+ │ │ │ cgroupManager.Destroy
+ │ │ │ RemovePaths: 5×retry = 310ms
+ │ │ │ ✗ EBUSY（cgroup 里还有进程）
+ │ │ │ 错误 → log.json（即将被删）
+ │ │ ▼ exit 0（bug #1: destroy 无返回值）
+ │ │ UnmountAll
+ │ ▼ bundle.Delete()（连带 log.json 一起删）
+ ▼ Warn 也不打（Force-Delete 看 exit 0 = 成功）
+
+结果：cgroup 残留，bundle 删除，runc state 删除，containerd 日志无任何错误
+&lt;/code>&lt;/pre>&lt;p>NPD 必然走 Path B 的原因：NPD 稳态下有 19 个进程，memcg OOM 时 kernel 并发发送 SIGKILL，init 进程通常最先死亡；shim 感知到 init 退出，在完成 TaskExit 事件上报前 ttrpc 连接已经断开；containerd 观察到的是 &lt;code>shim disconnected&lt;/code> → 进入 &lt;code>cleanupAfterDeadShim&lt;/code>。&lt;/p>
+&lt;h3 id="42-runc-delete-的决策树与三个缺陷">4.2 runc delete 的决策树与三个缺陷&lt;/h3>
+&lt;p>&lt;code>runc delete&lt;/code> 根据 &lt;code>container.Status()&lt;/code> 的返回值进入不同分支，不同分支中&amp;quot;是否等待进程退出&amp;quot;的行为差异极大。NPD 命中的正是&lt;strong>没有等待&lt;/strong>的那条分支。&lt;/p>
+&lt;pre tabindex="0">&lt;code> runc delete --force &amp;lt;id&amp;gt;
+ │
+ ▼
+ s = container.Status()
+ │
+ ┌───────────────────────┼───────────────────────────┐
+ ▼ ▼ ▼
+ Stopped (init 已死) Created Running / Paused (+ force)
+ │ │ │
+ │ (NPD 走此分支) │ │
+ │ │ │
+ │ killContainer() killContainer()
+ │ │ │
+ │ ┌──────────────┴──────────────┐ │
+ │ │ send SIGKILL to init │◄───────────┘
+ │ │ for i in 0..100: │
+ │ │ sleep 100ms │
+ │ │ if signal(0) err: break │ ← 只等 init 死
+ │ │ │ 不等其他子进程
+ │ │ destroy(container) │
+ │ └──────────────┬───────────────┘
+ │ │
+ └───────────────────────▼───────────────────┐
+ destroy(container) ★
+ │
+ ▼
+ container.Destroy()
+ │
+ ▼
+ signalAllProcesses(SIGKILL)
+ │
+ │ Freeze cgroup
+ │ 列出 pids
+ │ 发 SIGKILL
+ │ Thaw cgroup
+ │ for p in procs:
+ │ p.Wait() ← ECHILD, 立即返回 ◄── BUG: 不真正等进程退出
+ ▼
+ cgroupManager.Destroy()
+ │
+ │ RemovePaths(5 次重试=310ms)
+ │ 第 1 次 rmdir → EBUSY
+ │ ...
+ │ 第 5 次 rmdir → EBUSY ◄── BUG: 重试窗口太短
+ │ return &amp;#34;Failed to remove...&amp;#34;
+ ▼
+ destroy 函数签名无返回值，仅 logrus.Error ◄── BUG #1
+ │
+ ▼
+ delete.go return nil → exit 0 ◄── BUG #2
+&lt;/code>&lt;/pre>&lt;h4 id="缺陷-1runcdeletego-中-destroy-的返回值被丢弃">缺陷 1：&lt;code>runc/delete.go&lt;/code> 中 &lt;code>destroy()&lt;/code> 的返回值被丢弃&lt;/h4>
+&lt;p>&lt;code>runc/delete.go:73-85&lt;/code>：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">s&lt;/span>, &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">container&lt;/span>.&lt;span style="color:#a6e22e">Status&lt;/span>()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">switch&lt;/span> &lt;span style="color:#a6e22e">s&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">case&lt;/span> &lt;span style="color:#a6e22e">libcontainer&lt;/span>.&lt;span style="color:#a6e22e">Stopped&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">destroy&lt;/span>(&lt;span style="color:#a6e22e">container&lt;/span>) &lt;span style="color:#75715e">// ← NPD 走这条：init 已死，status = Stopped
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">case&lt;/span> &lt;span style="color:#a6e22e">libcontainer&lt;/span>.&lt;span style="color:#a6e22e">Created&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">killContainer&lt;/span>(&lt;span style="color:#a6e22e">container&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">default&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">force&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">killContainer&lt;/span>(&lt;span style="color:#a6e22e">container&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">fmt&lt;/span>.&lt;span style="color:#a6e22e">Errorf&lt;/span>(&lt;span style="color:#f92672">...&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> &lt;span style="color:#75715e">// ← 无论 destroy 内部发生什么，这里都返回 nil
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>注意：即使加了 &lt;code>--force&lt;/code>，只要 init 已死（status=Stopped），&lt;code>runc delete&lt;/code> &lt;strong>不会走 &lt;code>killContainer&lt;/code>&lt;/strong>（该函数内有 100 次 × 100ms 的轮询等待），而是直接调 &lt;code>destroy&lt;/code>。而 &lt;code>destroy(container)&lt;/code> 的返回值被完全忽略。&lt;/p>
+&lt;h4 id="缺陷-2runcutils_linuxgo-中-destroy-函数无返回值">缺陷 2：&lt;code>runc/utils_linux.go&lt;/code> 中 &lt;code>destroy()&lt;/code> 函数无返回值&lt;/h4>
+&lt;p>&lt;code>runc/utils_linux.go:115-119&lt;/code>：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">destroy&lt;/span>(&lt;span style="color:#a6e22e">container&lt;/span> &lt;span style="color:#a6e22e">libcontainer&lt;/span>.&lt;span style="color:#a6e22e">Container&lt;/span>) { &lt;span style="color:#75715e">// ← 无返回值
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">container&lt;/span>.&lt;span style="color:#a6e22e">Destroy&lt;/span>(); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">logrus&lt;/span>.&lt;span style="color:#a6e22e">Error&lt;/span>(&lt;span style="color:#a6e22e">err&lt;/span>) &lt;span style="color:#75715e">// 只打 log 到 &amp;lt;bundle&amp;gt;/log.json
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>container.Destroy()&lt;/code> 返回的错误只被写进了 bundle 目录下的 &lt;code>log.json&lt;/code> 文件。而 &lt;code>destroy()&lt;/code> 的函数签名决定了这个错误无法向上传递。&lt;/p>
+&lt;h4 id="缺陷-3removepaths-重试窗口远小于实际-oom-清理所需时间">缺陷 3：&lt;code>RemovePaths&lt;/code> 重试窗口远小于实际 OOM 清理所需时间&lt;/h4>
+&lt;p>&lt;code>runc/libcontainer/cgroups/utils.go:272-312&lt;/code>：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">RemovePaths&lt;/span>(&lt;span style="color:#a6e22e">paths&lt;/span> &lt;span style="color:#66d9ef">map&lt;/span>[&lt;span style="color:#66d9ef">string&lt;/span>]&lt;span style="color:#66d9ef">string&lt;/span>) (&lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#66d9ef">error&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">retries&lt;/span> = &lt;span style="color:#ae81ff">5&lt;/span> &lt;span style="color:#75715e">// ← 只有 5 次重试
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">delay&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#ae81ff">10&lt;/span> &lt;span style="color:#f92672">*&lt;/span> &lt;span style="color:#a6e22e">time&lt;/span>.&lt;span style="color:#a6e22e">Millisecond&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">i&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>; &lt;span style="color:#a6e22e">i&lt;/span> &amp;lt; &lt;span style="color:#a6e22e">retries&lt;/span>; &lt;span style="color:#a6e22e">i&lt;/span>&lt;span style="color:#f92672">++&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">i&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">time&lt;/span>.&lt;span style="color:#a6e22e">Sleep&lt;/span>(&lt;span style="color:#a6e22e">delay&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">delay&lt;/span> &lt;span style="color:#f92672">*=&lt;/span> &lt;span style="color:#ae81ff">2&lt;/span> &lt;span style="color:#75715e">// 指数退避：10 → 20 → 40 → 80 → 160ms
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">s&lt;/span>, &lt;span style="color:#a6e22e">p&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">paths&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">RemovePath&lt;/span>(&lt;span style="color:#a6e22e">p&lt;/span>); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> { &lt;span style="color:#f92672">...&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">os&lt;/span>.&lt;span style="color:#a6e22e">Stat&lt;/span>(&lt;span style="color:#a6e22e">p&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">os&lt;/span>.&lt;span style="color:#a6e22e">IsNotExist&lt;/span>(&lt;span style="color:#a6e22e">err&lt;/span>) { delete(&lt;span style="color:#a6e22e">paths&lt;/span>, &lt;span style="color:#a6e22e">s&lt;/span>) }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">fmt&lt;/span>.&lt;span style="color:#a6e22e">Errorf&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;Failed to remove paths: %v&amp;#34;&lt;/span>, &lt;span style="color:#a6e22e">paths&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>总重试窗口 = 10+20+40+80+160 = &lt;strong>310ms&lt;/strong>。&lt;/p>
+&lt;p>而 Linux memcg OOM killer 的行为是&lt;strong>异步 + 逐个&lt;/strong>给 cgroup 内所有进程发送 SIGKILL。在 NPD 场景下，cgroup 内共有 19 个进程，kernel 完成全部清理实测需要约 &lt;strong>2000ms&lt;/strong>。runc 的 310ms 重试窗口对此远远不够。&lt;/p>
+&lt;h3 id="43-signalallprocesses-的等待失效问题">4.3 &lt;code>signalAllProcesses&lt;/code> 的等待失效问题&lt;/h3>
+&lt;p>&lt;code>runc/libcontainer/state_linux.go:38-60&lt;/code> 中的 &lt;code>destroy&lt;/code> 函数：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">destroy&lt;/span>(&lt;span style="color:#a6e22e">c&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">linuxContainer&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> !&lt;span style="color:#a6e22e">c&lt;/span>.&lt;span style="color:#a6e22e">config&lt;/span>.&lt;span style="color:#a6e22e">Namespaces&lt;/span>.&lt;span style="color:#a6e22e">Contains&lt;/span>(&lt;span style="color:#a6e22e">configs&lt;/span>.&lt;span style="color:#a6e22e">NEWPID&lt;/span>) &lt;span style="color:#f92672">||&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">c&lt;/span>.&lt;span style="color:#a6e22e">config&lt;/span>.&lt;span style="color:#a6e22e">Namespaces&lt;/span>.&lt;span style="color:#a6e22e">PathOf&lt;/span>(&lt;span style="color:#a6e22e">configs&lt;/span>.&lt;span style="color:#a6e22e">NEWPID&lt;/span>) &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">signalAllProcesses&lt;/span>(&lt;span style="color:#a6e22e">c&lt;/span>.&lt;span style="color:#a6e22e">cgroupManager&lt;/span>, &lt;span style="color:#a6e22e">unix&lt;/span>.&lt;span style="color:#a6e22e">SIGKILL&lt;/span>); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">logrus&lt;/span>.&lt;span style="color:#a6e22e">Warn&lt;/span>(&lt;span style="color:#a6e22e">err&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">c&lt;/span>.&lt;span style="color:#a6e22e">cgroupManager&lt;/span>.&lt;span style="color:#a6e22e">Destroy&lt;/span>()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>对于 NPD 容器（hostPID=true），OCI spec 里 &lt;code>pid&lt;/code> namespace 的 &lt;code>path&lt;/code> 指向 sandbox 的 pid ns，非空，因此上述条件满足，&lt;strong>会调用&lt;/strong> &lt;code>signalAllProcesses&lt;/code>。&lt;/p>
+&lt;p>但 &lt;code>signalAllProcesses&lt;/code> 的实现（&lt;code>runc/libcontainer/init_linux.go:597-621&lt;/code>）存在等待失效问题：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">p&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">procs&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">subreaper&lt;/span> &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">p&lt;/span>.&lt;span style="color:#a6e22e">Wait&lt;/span>(); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> !&lt;span style="color:#a6e22e">errors&lt;/span>.&lt;span style="color:#a6e22e">Is&lt;/span>(&lt;span style="color:#a6e22e">err&lt;/span>, &lt;span style="color:#a6e22e">unix&lt;/span>.&lt;span style="color:#a6e22e">ECHILD&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">logrus&lt;/span>.&lt;span style="color:#a6e22e">Warn&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;wait: &amp;#34;&lt;/span>, &lt;span style="color:#a6e22e">err&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>runc delete --force&lt;/code> 是 containerd 在 &lt;code>cleanupAfterDeadShim&lt;/code> 中 fork 出的&lt;strong>全新临时进程&lt;/strong>，和 NPD cgroup 里的 19 个进程&lt;strong>不是父子关系&lt;/strong>。&lt;code>p.Wait()&lt;/code> 对每一个非子进程都立刻返回 &lt;code>ECHILD&lt;/code>（&amp;ldquo;no child processes&amp;rdquo;），随后错误被跳过——&lt;code>signalAllProcesses&lt;/code> 事实上在发完 SIGKILL 之后&lt;strong>没有等待任何进程退出&lt;/strong>便返回了。&lt;/p>
+&lt;h3 id="44-关键时序矛盾">4.4 关键时序矛盾&lt;/h3>
+&lt;p>通过每 100ms 采样一次的脚本，从 NPD 启动到 OOM 清理完成，捕获到了决定性的时序证据。&lt;/p>
+&lt;p>采集 4 个状态字段（后文简写为 procs/cg/rs/bd）。字段含义如下：&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>简写&lt;/th>
+&lt;th>全名&lt;/th>
+&lt;th>含义&lt;/th>
+&lt;th>检查方式&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>procs&lt;/td>
+&lt;td>cgroup processes&lt;/td>
+&lt;td>容器 memory cgroup 里当前还活着的进程数&lt;/td>
+&lt;td>&lt;code>wc -l &amp;lt; /sys/fs/cgroup/memory/kubepods/.../&amp;lt;container-id&amp;gt;/cgroup.procs&lt;/code>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>cg&lt;/td>
+&lt;td>cgroup dir&lt;/td>
+&lt;td>该容器的 cgroup 目录是否还存在&lt;/td>
+&lt;td>&lt;code>test -d /sys/fs/cgroup/memory/.../&amp;lt;container-id&amp;gt;&lt;/code> → Y/N&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>rs&lt;/td>
+&lt;td>runc state&lt;/td>
+&lt;td>runc 维护的容器状态文件是否还存在&lt;/td>
+&lt;td>&lt;code>test -f /run/containerd/runc/k8s.io/&amp;lt;id&amp;gt;/state.json&lt;/code> → Y/N&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>bd&lt;/td>
+&lt;td>bundle&lt;/td>
+&lt;td>containerd 的容器 bundle 目录（含 config.json、log.json、rootfs 挂载点）是否还存在&lt;/td>
+&lt;td>&lt;code>test -d /run/containerd/io.containerd.runtime.v2.task/k8s.io/&amp;lt;id&amp;gt;&lt;/code> → Y/N&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>&lt;strong>判读指南&lt;/strong>：&lt;/p>
+&lt;ul>
+&lt;li>正常生命周期：procs&amp;gt;0, cg=Y, rs=Y, bd=Y →（清理时）→ procs=0, cg=N, rs=N, bd=N&lt;/li>
+&lt;li>bug 特征：rs=N, bd=N, cg=Y（state 和 bundle 都删了，但 cgroup 目录没删），就是残留&lt;/li>
+&lt;li>时序矛盾特征：某一帧出现 procs&amp;gt;0, rs=N, bd=N —— 意味着 runc delete 在 cgroup 还非空时就已经返回并清理了 state/bundle，这是 cgroup 清理失败的直接证据&lt;/li>
+&lt;/ul>
+&lt;pre tabindex="0">&lt;code>08:21:05.582 procs=1 ← NPD 启动
+08:21:05.796 procs=3
+08:21:06.008 procs=13 ← plugin 开始 fork
+08:21:06.233 procs=19 ← 稳态（19 个进程）
+...
+08:21:11.537 procs=7 ← OOM 开始，kernel 逐个 SIGKILL
+08:21:12.074 procs=6
+08:21:13.823 procs=4 rs=N bd=N ← runc delete 已完成（state/bundle 已删）
+ 但 cgroup 里还有 4 个进程！
+08:21:13.931 procs=0 rs=N bd=N ← 100ms 后进程才全部退出
+最终：cgroup 目录残留 12 个
+&lt;/code>&lt;/pre>&lt;p>runc 的 310ms 重试窗口结束时，cgroup 里还有 4 个以上进程未完成退出，所有 rmdir 必然返回 EBUSY。&lt;/p>
+&lt;p>这直接证明 cgroupManager.Destroy() 内部的 rmdir 是在非空 cgroup 上尝试的，必然失败，但 runc 却返回了 exit 0。&lt;/p>
+&lt;h3 id="45-错误链如何被完全吞没">4.5 错误链如何被完全吞没&lt;/h3>
+&lt;ol>
+&lt;li>&lt;code>RemovePaths&lt;/code> 返回 &lt;code>&amp;quot;Failed to remove paths: ...&amp;quot;&lt;/code> 错误；&lt;/li>
+&lt;li>&lt;code>cgroupManager.Destroy()&lt;/code> 返回该错误；&lt;/li>
+&lt;li>&lt;code>state_linux.go:destroy(c)&lt;/code> 返回该错误；&lt;/li>
+&lt;li>&lt;code>container.Destroy()&lt;/code> 返回该错误；&lt;/li>
+&lt;li>&lt;code>runc/utils_linux.go:115&lt;/code> 的 &lt;code>destroy()&lt;/code> 只调用 &lt;code>logrus.Error(err)&lt;/code> 写入 &lt;code>&amp;lt;bundle&amp;gt;/log.json&lt;/code>，&lt;strong>函数无返回值&lt;/strong>；&lt;/li>
+&lt;li>&lt;code>runc/delete.go:75&lt;/code> 的 &lt;code>destroy(container)&lt;/code> 调用后 fall through 到 &lt;code>return nil&lt;/code> → &lt;strong>runc 进程 exit 0&lt;/strong>；&lt;/li>
+&lt;li>go-runc 的 &lt;code>runOrError&lt;/code> 看到 exit 0 → 返回 nil；&lt;/li>
+&lt;li>containerd 的 &lt;code>r.Delete(Force:true)&lt;/code> 返回 nil；&lt;/li>
+&lt;li>&lt;code>manager.Stop&lt;/code> 不打印 &lt;code>&amp;quot;failed to remove runc container&amp;quot;&lt;/code>，继续执行 &lt;code>mount.UnmountAll&lt;/code>；&lt;/li>
+&lt;li>&lt;code>binary.Delete&lt;/code> 调用 &lt;code>b.bundle.Delete()&lt;/code> → &lt;strong>删除 bundle 目录，连同 log.json 一起丢失&lt;/strong>；&lt;/li>
+&lt;li>containerd 日志里完全看不到任何 runc 错误。&lt;/li>
+&lt;/ol>
+&lt;p>至此，cgroup 清理失败的事实被完全掩盖，在日志中不留任何痕迹。&lt;/p>
+&lt;hr>
+&lt;h2 id="5-kubelet-为何不兜底">5 kubelet 为何不兜底&lt;/h2>
+&lt;p>kubelet 中存在一个名为 &lt;code>cleanupOrphanedPodCgroups&lt;/code> 的兜底机制（&lt;code>kubernetes/pkg/kubelet/kubelet_pods.go:2460&lt;/code>），但其触发条件是 &lt;strong>Pod 整体消失（成为孤儿 Pod）&lt;/strong>。&lt;/p>
+&lt;p>在 NPD 的故障场景中，Pod 本身一直处于 CrashLoopBackOff 状态，Pod 对象始终存在，因此 kubelet 永远不会对该 Pod 触发 &lt;code>cleanupOrphanedPodCgroups&lt;/code>。残留的容器子 cgroup 没有任何组件负责清理。&lt;/p>
+&lt;hr>
+&lt;h2 id="6-pod-重建时节点高负载的放大机制">6 Pod 重建时节点高负载的放大机制&lt;/h2>
+&lt;h3 id="61-三条叠加的放大路径">6.1 三条叠加的放大路径&lt;/h3>
+&lt;h4 id="路径-akubelet-主动-walk-所有子-cgroup-查找进程主要-cpu-消耗来源">路径 A：kubelet 主动 walk 所有子 cgroup 查找进程（主要 CPU 消耗来源）&lt;/h4>
+&lt;p>Pod 被删除 → kubelet 进入终止清理流程 → 调用 &lt;code>podContainerManagerImpl.Destroy&lt;/code>（&lt;code>pkg/kubelet/cm/pod_container_manager_linux.go:196&lt;/code>）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> (&lt;span style="color:#a6e22e">m&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">podContainerManagerImpl&lt;/span>) &lt;span style="color:#a6e22e">Destroy&lt;/span>(&lt;span style="color:#a6e22e">podCgroup&lt;/span> &lt;span style="color:#a6e22e">CgroupName&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">tryKillingCgroupProcesses&lt;/span>(&lt;span style="color:#a6e22e">podCgroup&lt;/span>); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> { &lt;span style="color:#f92672">...&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">cgroupManager&lt;/span>.&lt;span style="color:#a6e22e">Destroy&lt;/span>(&lt;span style="color:#a6e22e">containerConfig&lt;/span>); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> { &lt;span style="color:#f92672">...&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>tryKillingCgroupProcesses&lt;/code> 最多重试 &lt;strong>5 次&lt;/strong>（&lt;code>pod_container_manager_linux.go:171&lt;/code>），每次都调用 &lt;code>cgroupManager.Pids(podCgroup)&lt;/code>。&lt;/p>
+&lt;p>&lt;code>cgroupManagerImpl.Pids&lt;/code>（&lt;code>cgroup_manager_linux.go:483-530&lt;/code>）的实现是关键爆炸点：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> (&lt;span style="color:#a6e22e">m&lt;/span> &lt;span style="color:#f92672">*&lt;/span>&lt;span style="color:#a6e22e">cgroupManagerImpl&lt;/span>) &lt;span style="color:#a6e22e">Pids&lt;/span>(&lt;span style="color:#a6e22e">name&lt;/span> &lt;span style="color:#a6e22e">CgroupName&lt;/span>) []&lt;span style="color:#66d9ef">int&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">val&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">m&lt;/span>.&lt;span style="color:#a6e22e">subsystems&lt;/span>.&lt;span style="color:#a6e22e">MountPoints&lt;/span> { &lt;span style="color:#75715e">// ← 12 个 subsystem
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">dir&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">path&lt;/span>.&lt;span style="color:#a6e22e">Join&lt;/span>(&lt;span style="color:#a6e22e">val&lt;/span>, &lt;span style="color:#a6e22e">cgroupFsName&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">visitor&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">func&lt;/span>(&lt;span style="color:#a6e22e">path&lt;/span> &lt;span style="color:#66d9ef">string&lt;/span>, &lt;span style="color:#a6e22e">info&lt;/span> &lt;span style="color:#a6e22e">os&lt;/span>.&lt;span style="color:#a6e22e">FileInfo&lt;/span>, &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#66d9ef">error&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">pids&lt;/span>, &lt;span style="color:#a6e22e">err&lt;/span> = &lt;span style="color:#a6e22e">getCgroupProcs&lt;/span>(&lt;span style="color:#a6e22e">path&lt;/span>) &lt;span style="color:#75715e">// ← 对每个子目录都 open/read cgroup.procs
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> = &lt;span style="color:#a6e22e">filepath&lt;/span>.&lt;span style="color:#a6e22e">Walk&lt;/span>(&lt;span style="color:#a6e22e">dir&lt;/span>, &lt;span style="color:#a6e22e">visitor&lt;/span>); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> { &lt;span style="color:#f92672">...&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">sets&lt;/span>.&lt;span style="color:#a6e22e">List&lt;/span>(&lt;span style="color:#a6e22e">pidsToKill&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>filepath.Walk&lt;/code> 会递归遍历 pod cgroup 下的所有子目录，对每个目录都执行 &lt;code>stat&lt;/code> + &lt;code>open/read cgroup.procs&lt;/code>。&lt;/p>
+&lt;p>计算量估算：&lt;/p>
+&lt;pre tabindex="0">&lt;code>12 subsystem × 8147 残留子 cgroup × 5 次重试
+≈ 488,820 次 stat + 488,820 次 open/read
+&lt;/code>&lt;/pre>&lt;p>即使单次 I/O 只消耗几十微秒，总耗时也达到数十秒，累积的系统调用和 cgroupfs inode 锁压力足以将 sys% 打高。&lt;/p>
+&lt;h4 id="路径-blibcontainer-递归-rmdir连锁-cgroup_mutex-争抢">路径 B：libcontainer 递归 rmdir（连锁 cgroup_mutex 争抢）&lt;/h4>
+&lt;p>&lt;code>tryKillingCgroupProcesses&lt;/code> 之后，kubelet 调用 libcontainer 的 &lt;code>manager.Destroy&lt;/code>（&lt;code>cgroup_manager_linux.go:306&lt;/code>）。libcontainer 的 v1 fs driver &lt;code>Destroy&lt;/code> 实现是 &lt;code>cgroups.RemovePaths(m.paths)&lt;/code>。&lt;/p>
+&lt;p>&lt;code>RemovePath&lt;/code> 的递归逻辑（&lt;code>runc/libcontainer/cgroups/utils.go:241&lt;/code>）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-go" data-lang="go">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">func&lt;/span> &lt;span style="color:#a6e22e">RemovePath&lt;/span>(&lt;span style="color:#a6e22e">path&lt;/span> &lt;span style="color:#66d9ef">string&lt;/span>) &lt;span style="color:#66d9ef">error&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">rmdir&lt;/span>(&lt;span style="color:#a6e22e">path&lt;/span>); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> { &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">infos&lt;/span>, &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#a6e22e">os&lt;/span>.&lt;span style="color:#a6e22e">ReadDir&lt;/span>(&lt;span style="color:#a6e22e">path&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">...&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">for&lt;/span> &lt;span style="color:#a6e22e">_&lt;/span>, &lt;span style="color:#a6e22e">info&lt;/span> &lt;span style="color:#f92672">:=&lt;/span> &lt;span style="color:#66d9ef">range&lt;/span> &lt;span style="color:#a6e22e">infos&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">info&lt;/span>.&lt;span style="color:#a6e22e">IsDir&lt;/span>() {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> = &lt;span style="color:#a6e22e">RemovePath&lt;/span>(&lt;span style="color:#a6e22e">filepath&lt;/span>.&lt;span style="color:#a6e22e">Join&lt;/span>(&lt;span style="color:#a6e22e">path&lt;/span>, &lt;span style="color:#a6e22e">info&lt;/span>.&lt;span style="color:#a6e22e">Name&lt;/span>())); &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">!=&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> { &lt;span style="color:#66d9ef">break&lt;/span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span> &lt;span style="color:#f92672">==&lt;/span> &lt;span style="color:#66d9ef">nil&lt;/span> { &lt;span style="color:#a6e22e">err&lt;/span> = &lt;span style="color:#a6e22e">rmdir&lt;/span>(&lt;span style="color:#a6e22e">path&lt;/span>) }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">err&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>RemovePaths&lt;/code> 外层还有 &lt;strong>5 次重试&lt;/strong>（&lt;code>utils.go:272&lt;/code>）。&lt;/p>
+&lt;p>计算量估算：&lt;/p>
+&lt;pre tabindex="0">&lt;code>12 subsystem × 8147 子 cgroup × 最多 5 次外层重试
+≈ 488,820 次 rmdir 系统调用
+&lt;/code>&lt;/pre>&lt;p>cgroup v1 的 rmdir 在内核侧需要执行以下步骤：&lt;/p>
+&lt;ol>
+&lt;li>获取&lt;strong>全局锁&lt;/strong> &lt;code>cgroup_mutex&lt;/code>（&lt;code>kernel/cgroup/cgroup-v1.c&lt;/code>）；&lt;/li>
+&lt;li>执行各控制器回调 &lt;code>css_offline&lt;/code>；&lt;/li>
+&lt;li>等待 RCU grace period；&lt;/li>
+&lt;li>释放引用计数并真正删除 kernfs 节点。&lt;/li>
+&lt;/ol>
+&lt;p>&lt;code>cgroup_mutex&lt;/code> 是&lt;strong>全局锁&lt;/strong>，意味着在这段时间内：&lt;/p>
+&lt;ul>
+&lt;li>其他 Pod 启动时的 cgroup 创建操作会排队；&lt;/li>
+&lt;li>kubelet / cAdvisor 的周期性 cgroup stats 读取会排队；&lt;/li>
+&lt;li>containerd shim 创建新容器的 cgroup 操作会排队；&lt;/li>
+&lt;li>整个节点的 cgroup 子系统都被这一个 Pod 的删除动作&amp;quot;堵住&amp;quot;。&lt;/li>
+&lt;/ul>
+&lt;h4 id="路径-ccadvisor-持续扫描pod-存活期间的常态负担">路径 C：cAdvisor 持续扫描（Pod 存活期间的常态负担）&lt;/h4>
+&lt;p>即使不删除 Pod，这 8147 个残留目录也不是&amp;quot;零成本&amp;quot;的。kubelet 内置的 cAdvisor 每 &lt;strong>10-15 秒&lt;/strong>扫描一次所有 cgroup：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>pkg/kubelet/stats/cadvisor_stats_provider.go&lt;/code> 调用 &lt;code>ContainerInfoV2&lt;/code>；&lt;/li>
+&lt;li>cAdvisor 对每个发现的 cgroup 子目录读取 &lt;code>memory.stat&lt;/code>、&lt;code>cpu.stat&lt;/code>、&lt;code>cpuacct.usage&lt;/code>、&lt;code>blkio.*&lt;/code> 等文件。&lt;/li>
+&lt;/ul>
+&lt;p>稳态下这部分 I/O 虽然未达到&amp;quot;高负载&amp;quot;级别，但会持续消耗 CPU、增加 cgroupfs 访问压力，同时也可能污染 kubelet 的 stats 上报数据（将大量空容器的 zero stats 一并上报）。Pod 重建时，该扫描任务与路径 A/B 叠加，进一步放大短时 spike。&lt;/p>
+&lt;h3 id="62-放大模型总览">6.2 放大模型总览&lt;/h3>
+&lt;pre tabindex="0">&lt;code> NPD memory=200Mi 配置过小
+ │
+ ▼
+ 反复 OOM → cgroup 残留 8147 个（runc bug，详见 §4）
+ │
+ kubectl delete pod / Pod 被驱逐
+ │
+ ▼
+ ┌───────────────────────────────────────────────────────┐
+ │ kubelet: PodContainerManager.Destroy() │
+ │ （pod_container_manager_linux.go:196） │
+ └─┬────────────────────────────┬────────────────────────┘
+ │ │
+ ▼ ▼
+ tryKillingCgroupProcesses cgroupManager.Destroy
+ （最多 5 次外层重试） （libcontainer.RemovePaths）
+ │ │
+ │ 每次调用 │ 每次外层 retries=5
+ │ cgroupManagerImpl.Pids │ rmdir 每个路径
+ │ filepath.Walk │
+ │ │
+ │ × 12 个 subsystem │ × 12 个 subsystem
+ │ × 5 次重试 │ × 5 次重试
+ │ × 8147 个子 cgroup │ × 8147 个子 cgroup
+ ▼ ▼
+ ≈ 488,820 次 stat + read ≈ 488,820 次 rmdir 系统调用
+ （stat + open + read） （每次都需 cgroup_mutex）
+ │ │
+ └────────────┬───────────────┘
+ │ 另外还有：
+ │ • cAdvisor 周期扫描（10-15s）
+ │ 读所有 memory.stat/cpu.stat
+ │ • 其他 Pod 启动时的 cgroup 创建
+ │ • containerd 新建容器的 cgroup 操作
+ ▼
+ ╔═════════════════════════════════════════════════╗
+ ║ Linux kernel: cgroup_mutex (全局锁) ║
+ ║ + VFS inode lock ║
+ ║ 所有 cgroup 相关操作串行化 ║
+ ╚════════════════════════╤════════════════════════╝
+ ▼
+ sys% ↑↑ softirq ↑↑ context switch ↑↑
+ │
+ ▼
+ 节点 load 暴涨 → 其他 Pod 受影响（IO / 调度延迟）
+&lt;/code>&lt;/pre>&lt;h3 id="63-为何表现为高负载而非单纯的变慢">6.3 为何表现为&amp;quot;高负载&amp;quot;而非单纯的&amp;quot;变慢&amp;quot;&lt;/h3>
+&lt;ul>
+&lt;li>&lt;strong>sys% 飙高而非 us%&lt;/strong>：主要开销在内核态——&lt;code>cgroup_mutex&lt;/code> 的 spinlock、rcu_sync、VFS inode lock；&lt;/li>
+&lt;li>&lt;strong>全节点波及&lt;/strong>：&lt;code>cgroup_mutex&lt;/code> 是全局锁，所有 cgroup 操作被串行化；&lt;/li>
+&lt;li>&lt;strong>CPU 上下文切换飙升&lt;/strong>：大量 kubelet / containerd / 其他组件的 goroutine/线程阻塞在锁上 → runqueue 变长；&lt;/li>
+&lt;li>&lt;strong>内存回收链路受影响&lt;/strong>：memcg 的 &lt;code>css_offline&lt;/code> 路径也要获取 &lt;code>cgroup_mutex&lt;/code>；&lt;/li>
+&lt;li>&lt;strong>监控指标表现&lt;/strong>：&lt;code>vmstat 1&lt;/code> 看到 &lt;code>sy&lt;/code> 列飙高、&lt;code>cs&lt;/code> 飙高、&lt;code>in&lt;/code> 飙高；&lt;code>top&lt;/code> 看到 &lt;code>si&lt;/code>（softirq）和 &lt;code>sy&lt;/code> 异常，&lt;code>us&lt;/code> 相对正常。&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h2 id="7-跨组件完整时序图">7 跨组件完整时序图&lt;/h2>
+&lt;p>以下为一次 NPD OOM 事件中 &lt;strong>kernel / NPD / shim / containerd / runc&lt;/strong> 的完整互动时序：&lt;/p>
+&lt;pre tabindex="0">&lt;code>时间轴 kernel/memcg NPD 进程组 shim containerd runc
+────── ─────────── ─────────── ─────────── ──────────── ─────
+ T=0 init (pid=X)
+ 19 个进程
+ T=0.0s memcg 检测到
+ 超 limit
+ T=0.0s OOM killer
+ 挑选 victim
+ T=0.0s+ SIGKILL init init 退出
+ │
+ T=0.1s SIGKILL ...其余进程
+ 子进程... 陆续退出中
+ 收到 SIGCHLD
+ processExits
+ 处理 init 退出
+ │
+ ttrpc 连接
+ 在事件发送
+ 前后断开 ╳
+ [WithOnClose 回调]
+ &amp;#34;shim disconnected&amp;#34;
+ &amp;#34;cleaning up after...&amp;#34;
+ │
+ binaryCall.Delete
+ │ fork 新 shim ──┐
+ ▼
+ (新 shim binary)
+ manager.Stop
+ │
+ r.Delete(Force:true) ──fork──&amp;gt; runc delete
+ │ status=Stopped
+ │ destroy(c)
+ │ signalAll
+ │ SIGKILL (已是)
+ │ p.Wait ECHILD (不等待)
+ │ cgroupManager
+ │ .Destroy
+ │ RemovePaths
+ │ rmdir#1..5
+ T=0.5s ...进程仍在 │ 全部 EBUSY
+ 逐个退出... │ ✗ 清理失败
+ │ 错误→log.json
+ │ os.RemoveAll
+ │ runc state ✓
+ ▼ exit 0 (!)
+ r.Delete 返回 nil
+ (无任何 error 日志)
+ UnmountAll rootfs
+ bundle.Delete()
+ (log.json 一并删)
+ shim.Delete 返回
+ 发 TaskExit/TaskDelete
+ │
+ T=2.0s 最后一个进程
+ 退出
+ cgroup 为空
+ 但 12 个目录
+ 仍然存在 ←───── (无人再 rmdir)
+ T=... cAdvisor 仍会周期扫描残留 cgroup 读 stats，数量持续累积
+&lt;/code>&lt;/pre>&lt;p>图中标注了三个关键断点（任意一个修复都能减轻问题）：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>p.Wait ECHILD&lt;/code> 未等待：runc 1.x 未修复，runc 1.2 有一定改进；&lt;/li>
+&lt;li>&lt;code>rmdir 全 EBUSY&lt;/code>：runc 1.2 commit &lt;code>d3d7f7d&lt;/code> 改为持续重试，&lt;strong>彻底修复&lt;/strong>；&lt;/li>
+&lt;li>&lt;code>exit 0&lt;/code>：runc 1.2 commit &lt;code>7396ca9&lt;/code> 改为错误透传，&lt;strong>让问题可见&lt;/strong>。&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;h2 id="8-修复方案">8 修复方案&lt;/h2>
+&lt;h3 id="81-应用侧修复推荐最小改动">8.1 应用侧修复（推荐，最小改动）&lt;/h3>
+&lt;p>&lt;strong>根本思路：不让 NPD 发生 OOM，自然不触发 runc bug。&lt;/strong>&lt;/p>
+&lt;h4 id="方案-a必做调大-npd-memory-limit">方案 A（必做）：调大 NPD memory limit&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-yaml" data-lang="yaml">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">resources&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">limits&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">cpu&lt;/span>: &lt;span style="color:#ae81ff">500m&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">memory&lt;/span>: &lt;span style="color:#ae81ff">512Mi &lt;/span> &lt;span style="color:#75715e"># 从 200Mi → 512Mi（或 1Gi）&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">requests&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">cpu&lt;/span>: &lt;span style="color:#ae81ff">100m&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">memory&lt;/span>: &lt;span style="color:#ae81ff">256Mi&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>依据：NPD v2.1.2 + 23 个 plugin + 19 个稳态进程，200Mi 严重偏紧。&lt;code>dmesg&lt;/code> 里 OOM 受害者多为 &lt;code>container-scann&lt;/code> 这类 shell-based plugin 子进程。&lt;/p>
+&lt;h4 id="方案-b可选精简-npd-plugin-配置">方案 B（可选）：精简 NPD plugin 配置&lt;/h4>
+&lt;p>检查 &lt;code>configmap/npdplus-npd-config&lt;/code>，考虑移除或延长轮询间隔：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>custom-container-scanner.json&lt;/code>（OOM 日志里的直接触发点）；&lt;/li>
+&lt;li>&lt;code>custom-plugin-stuck-process.json&lt;/code>（扫描全节点进程，fork 数量多）；&lt;/li>
+&lt;li>&lt;code>log-counter-kubelet.json&lt;/code>（持续扫描 kubelet 日志）。&lt;/li>
+&lt;/ul>
+&lt;h4 id="方案-c可选升级-npd-版本">方案 C（可选）：升级 NPD 版本&lt;/h4>
+&lt;p>v2.1.2 → v0.8.20+ 或 v2.x 新版本，修复了若干内存泄漏与 fork 开销问题。&lt;/p>
+&lt;h3 id="82-历史残留一次性清理">8.2 历史残留一次性清理&lt;/h3>
+&lt;p>在修复根因之前，需要先清理已累积的残留 cgroup 目录。推荐的分批清理脚本逻辑如下（完整脚本见 &lt;code>systemd/cleanup-orphan-cgroups.sh&lt;/code>）：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">#!/bin/bash
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#75715e"># 安全三重校验：cgroup 空 + bundle 不存在 + runc state 不存在&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">for&lt;/span> sub in /sys/fs/cgroup/*/kubepods; &lt;span style="color:#66d9ef">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">[&lt;/span> -d &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$sub&lt;span style="color:#e6db74">&amp;#34;&lt;/span> &lt;span style="color:#f92672">]&lt;/span> &lt;span style="color:#f92672">||&lt;/span> &lt;span style="color:#66d9ef">continue&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> find &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$sub&lt;span style="color:#e6db74">&amp;#34;&lt;/span> -mindepth &lt;span style="color:#ae81ff">3&lt;/span> -maxdepth &lt;span style="color:#ae81ff">3&lt;/span> -type d 2&amp;gt;/dev/null | &lt;span style="color:#66d9ef">while&lt;/span> read d; &lt;span style="color:#66d9ef">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> id&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>basename &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$d&lt;span style="color:#e6db74">&amp;#34;&lt;/span>&lt;span style="color:#66d9ef">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> &lt;span style="color:#f92672">[&lt;/span> -z &lt;span style="color:#e6db74">&amp;#34;&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>cat &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$d&lt;span style="color:#e6db74">/cgroup.procs&amp;#34;&lt;/span> 2&amp;gt;/dev/null&lt;span style="color:#66d9ef">)&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span> &lt;span style="color:#f92672">]&lt;/span> &lt;span style="color:#ae81ff">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">&lt;/span> &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> &lt;span style="color:#f92672">[&lt;/span> ! -d &lt;span style="color:#e6db74">&amp;#34;/run/containerd/io.containerd.runtime.v2.task/k8s.io/&lt;/span>$id&lt;span style="color:#e6db74">&amp;#34;&lt;/span> &lt;span style="color:#f92672">]&lt;/span> &lt;span style="color:#ae81ff">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">&lt;/span> &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> &lt;span style="color:#f92672">[&lt;/span> ! -f &lt;span style="color:#e6db74">&amp;#34;/run/containerd/runc/k8s.io/&lt;/span>$id&lt;span style="color:#e6db74">/state.json&amp;#34;&lt;/span> &lt;span style="color:#f92672">]&lt;/span>; &lt;span style="color:#66d9ef">then&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> rmdir &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$d&lt;span style="color:#e6db74">&amp;#34;&lt;/span> 2&amp;gt;/dev/null
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">fi&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">done&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">done&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>要点：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>分批 + sleep&lt;/strong>：每清理 500 个 rmdir 之后 sleep 1 秒，错峰释放 &lt;code>cgroup_mutex&lt;/code>；&lt;/li>
+&lt;li>&lt;strong>三重校验&lt;/strong>：cgroup.procs 为空 + bundle 不存在 + runc state 不存在，确保只清理真正的孤儿目录；&lt;/li>
+&lt;li>&lt;strong>清理期间用 &lt;code>vmstat 1&lt;/code> 监控 sys%&lt;/strong>，如发现 sys% 持续超过 30%，加大 sleep 间隔；&lt;/li>
+&lt;li>&lt;strong>清理干净后再 delete Pod&lt;/strong>：重建时 kubelet Destroy 处理的子 cgroup 数量接近 0，几乎无负载。&lt;/li>
+&lt;/ul>
+&lt;p>该脚本可以打包成 DaemonSet 定时任务作为长期兜底，每 10-30 分钟运行一次。&lt;/p>
+&lt;h3 id="83-上游-runc-修复彻底但侵入较大">8.3 上游 runc 修复（彻底但侵入较大）&lt;/h3>
+&lt;p>本报告涉及的两个关键 runc bug，&lt;strong>在 runc 1.2 中已有官方修复&lt;/strong>。&lt;/p>
+&lt;h4 id="修复-1让-destroy-错误向上传递">修复 1：让 &lt;code>destroy()&lt;/code> 错误向上传递&lt;/h4>
+&lt;p>社区 commit：&lt;a href="https://github.com/opencontainers/runc/commit/7396ca90fa47d0458da4188061b24ca1bff465bf">opencontainers/runc@7396ca9&lt;/a>&lt;/p>
+&lt;p>要点：&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>destroy()&lt;/code> 函数签名增加 &lt;code>error&lt;/code> 返回值；&lt;/li>
+&lt;li>所有 &lt;code>delete.go&lt;/code> 里的调用点都改为透传错误（&lt;code>case libcontainer.Stopped: return destroy(container)&lt;/code> 以及类似位置）。&lt;/li>
+&lt;/ul>
+&lt;p>效果：cgroup 清理失败时，runc 进程以非零状态退出；go-runc 层面能捕捉到 exit code，&lt;code>r.Delete(Force:true)&lt;/code> 返回 error；containerd 的 &lt;code>manager.Stop&lt;/code> 能打出 &lt;code>&amp;quot;failed to remove runc container&amp;quot;&lt;/code> 日志——&lt;strong>问题变得可观测&lt;/strong>。&lt;/p>
+&lt;p>注意：仅此修复只是让错误可见，containerd 的 &lt;code>manager.Stop&lt;/code> 收到错误后也只是 &lt;code>Warn&lt;/code> 而不做进一步处理（&lt;code>manager_linux.go:265-268&lt;/code>），cgroup 残留&lt;strong>仍会发生&lt;/strong>，需要配合修复 2 才能根治。&lt;/p>
+&lt;h4 id="修复-2removepath-改为持续重试直到成功或确认失败">修复 2：&lt;code>RemovePath&lt;/code> 改为持续重试直到成功或确认失败&lt;/h4>
+&lt;p>社区 commit：&lt;a href="https://github.com/opencontainers/runc/commit/d3d7f7d85abfe7bd6f4ddbe45ad6b1c188dcf194">opencontainers/runc@d3d7f7d&lt;/a>&lt;/p>
+&lt;p>要点：&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>不再用固定次数重试&lt;/strong>，改为&amp;quot;一直重试直到 cgroup 成功删除或判定不可删除&amp;quot;；&lt;/li>
+&lt;li>重试由&amp;quot;cgroup 是否还存在&amp;quot;驱动（通过 &lt;code>os.Stat&lt;/code> 返回 &lt;code>IsNotExist&lt;/code> 判定成功），而非凑够 N 次就放弃；&lt;/li>
+&lt;li>短延迟轮询（几十毫秒级），配合上下文超时控制。&lt;/li>
+&lt;/ul>
+&lt;p>效果：无论 OOM 清理需要 0.3 秒还是 5 秒，runc 都会一直轮询直到 cgroup 为空并 rmdir 成功；彻底解决&amp;quot;重试次数不够&amp;quot;的根因，不再受经验值限制。&lt;/p>
+&lt;h4 id="修复-3可选优化-signalallprocesses-的等待语义">修复 3（可选）：优化 &lt;code>signalAllProcesses&lt;/code> 的等待语义&lt;/h4>
+&lt;p>runc 1.1.12 的 &lt;code>signalAllProcesses&lt;/code> 用 &lt;code>p.Wait()&lt;/code> 等待进程退出，对&amp;quot;runc 不是这些进程父进程&amp;quot;的场景直接返回 &lt;code>ECHILD&lt;/code> 而不等待（&lt;code>init_linux.go:615-621&lt;/code>）。&lt;/p>
+&lt;p>改进思路：改用 &lt;code>kill(pid, 0)&lt;/code> 或 &lt;code>/proc/&amp;lt;pid&amp;gt;&lt;/code> 的存在性作为轮询退出条件，配合超时控制。runc 1.2 系列有相关改进，但不如修复 2 那样有一个集中的 commit，更多是增量优化。&lt;/p>
+&lt;p>在修复 2 生效后，修复 3 的紧迫性大幅下降：即使 &lt;code>signalAllProcesses&lt;/code> 不等待进程退出，&lt;code>RemovePath&lt;/code> 的持续轮询也会顶上，最终一定能完成删除。&lt;/p>
+&lt;h3 id="84-修复方案对比">8.4 修复方案对比&lt;/h3>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>方案&lt;/th>
+&lt;th>改动范围&lt;/th>
+&lt;th>见效时间&lt;/th>
+&lt;th>风险&lt;/th>
+&lt;th>推荐度&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>调大 NPD memory limit&lt;/td>
+&lt;td>改 1 个 DaemonSet&lt;/td>
+&lt;td>立即&lt;/td>
+&lt;td>极低&lt;/td>
+&lt;td>⭐⭐⭐⭐⭐&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>精简 NPD plugin&lt;/td>
+&lt;td>改 configmap&lt;/td>
+&lt;td>立即&lt;/td>
+&lt;td>低&lt;/td>
+&lt;td>⭐⭐⭐⭐&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>升级 NPD 版本&lt;/td>
+&lt;td>改镜像 tag&lt;/td>
+&lt;td>立即&lt;/td>
+&lt;td>中&lt;/td>
+&lt;td>⭐⭐⭐&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>历史残留清理脚本&lt;/td>
+&lt;td>新增 DaemonSet&lt;/td>
+&lt;td>立即&lt;/td>
+&lt;td>极低&lt;/td>
+&lt;td>⭐⭐⭐⭐⭐（必做）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>升级 runc 到 1.2+&lt;/strong>&lt;/td>
+&lt;td>替换 runc 二进制并全节点重启&lt;/td>
+&lt;td>周级&lt;/td>
+&lt;td>中&lt;/td>
+&lt;td>⭐⭐⭐⭐（根治上游 bug）&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Backport 1.2 的 2 个 commit 到当前 runc&lt;/td>
+&lt;td>自行编译 runc 分发&lt;/td>
+&lt;td>周级&lt;/td>
+&lt;td>较高&lt;/td>
+&lt;td>⭐⭐（过渡方案）&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>综合建议：先按 §8.2 分批清理历史残留 → 再调大 NPD memory limit（§8.1）避免再次触发 → 长期推动升级 runc 到 1.2+（§8.3，已包含这两个 bug 的官方修复）。&lt;/p>
+&lt;hr>
+&lt;h2 id="9-所有事实的自洽验证">9 所有事实的自洽验证&lt;/h2>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>观察事实&lt;/th>
+&lt;th>根因解释&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>12 个 subsystem 全残留&lt;/td>
+&lt;td>&lt;code>RemovePaths&lt;/code> 对所有 subsystem 的 rmdir 都返回 EBUSY&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>bundle、runc state 被删&lt;/td>
+&lt;td>runc 其余清理步骤正常完成&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>containerd 无任何 error 日志&lt;/td>
+&lt;td>runc exit 0 + 错误日志写到 log.json 然后 log.json 被删&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>手动 rmdir 瞬间成功&lt;/td>
+&lt;td>事后 cgroup 已空，只是没有组件再来执行 rmdir&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>手动 &lt;code>kill -9 init&lt;/code> 不残留&lt;/td>
+&lt;td>cgroup 里只有 1 个进程，瞬间清理完毕&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>采样到 &lt;code>procs=4, rs=N, bd=N&lt;/code>&lt;/td>
+&lt;td>直接证据：runc delete 返回时 cgroup 非空&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;code>procs: 4 → 0&lt;/code> 需 100+ms&lt;/td>
+&lt;td>验证了实际清理时间远超 runc 重试窗口&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>8147 个累积残留&lt;/td>
+&lt;td>每次 OOM 必现 × 约一个月&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;hr>
+&lt;h2 id="10-排查过程中用到的关键命令">10 排查过程中用到的关键命令&lt;/h2>
+&lt;p>以下命令保留给后续类似问题的排查复用：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 1) 查 cgroup 残留&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>find /sys/fs/cgroup -type d -name &lt;span style="color:#e6db74">&amp;#34;&amp;lt;container-id&amp;gt;*&amp;#34;&lt;/span> 2&amp;gt;/dev/null
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 2) 确认残留 cgroup 里已无进程&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">for&lt;/span> d in &lt;span style="color:#66d9ef">$(&lt;/span>find /sys/fs/cgroup -type d -name &lt;span style="color:#e6db74">&amp;#34;&amp;lt;container-id&amp;gt;*&amp;#34;&lt;/span>&lt;span style="color:#66d9ef">)&lt;/span>; &lt;span style="color:#66d9ef">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;== &lt;/span>$d&lt;span style="color:#e6db74"> ==&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> cat &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$d&lt;span style="color:#e6db74">/cgroup.procs&amp;#34;&lt;/span> 2&amp;gt;/dev/null
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">done&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 3) 查看累积残留规模&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ls /sys/fs/cgroup/memory/kubepods/burstable/pod&amp;lt;UID&amp;gt;/ | wc -l
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 4) 对比 runc state 与 bundle 一致性&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>comm -23 &lt;span style="color:#ae81ff">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">&lt;/span> &amp;lt;&lt;span style="color:#f92672">(&lt;/span>ls /run/containerd/runc/k8s.io/ | sort&lt;span style="color:#f92672">)&lt;/span> &lt;span style="color:#ae81ff">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">&lt;/span> &amp;lt;&lt;span style="color:#f92672">(&lt;/span>ls /run/containerd/io.containerd.runtime.v2.task/k8s.io/ | sort&lt;span style="color:#f92672">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 5) 实时观察单次容器生命周期（精度 100ms）&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">while&lt;/span> true; &lt;span style="color:#66d9ef">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> F&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>crictl ps --name &amp;lt;container-name&amp;gt; --no-trunc -q 2&amp;gt;/dev/null | head -1&lt;span style="color:#66d9ef">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">[&lt;/span> -n &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$F&lt;span style="color:#e6db74">&amp;#34;&lt;/span> &lt;span style="color:#f92672">]&lt;/span> &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> break
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sleep 0.1
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">done&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>CG&lt;span style="color:#f92672">=&lt;/span>/sys/fs/cgroup/memory/kubepods/burstable/pod&amp;lt;UID&amp;gt;/$F
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">for&lt;/span> i in &lt;span style="color:#66d9ef">$(&lt;/span>seq &lt;span style="color:#ae81ff">1&lt;/span> 200&lt;span style="color:#66d9ef">)&lt;/span>; &lt;span style="color:#66d9ef">do&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> TS&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>date +%H:%M:%S.%N | cut -c1-15&lt;span style="color:#66d9ef">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> PROCS&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>cat $CG/cgroup.procs 2&amp;gt;/dev/null | wc -l&lt;span style="color:#66d9ef">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> RS&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>test -f /run/containerd/runc/k8s.io/$F/state.json &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> echo Y &lt;span style="color:#f92672">||&lt;/span> echo N&lt;span style="color:#66d9ef">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> BD&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span>test -d /run/containerd/io.containerd.runtime.v2.task/k8s.io/$F &lt;span style="color:#f92672">&amp;amp;&amp;amp;&lt;/span> echo Y &lt;span style="color:#f92672">||&lt;/span> echo N&lt;span style="color:#66d9ef">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> echo &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$TS&lt;span style="color:#e6db74"> procs=&lt;/span>$PROCS&lt;span style="color:#e6db74"> rs=&lt;/span>$RS&lt;span style="color:#e6db74"> bd=&lt;/span>$BD&lt;span style="color:#e6db74">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sleep 0.1
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">done&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 6) 读 OCI spec 确认 namespace 配置&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>cat /run/containerd/io.containerd.runtime.v2.task/k8s.io/$F/config.json &lt;span style="color:#ae81ff">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#ae81ff">&lt;/span> | python3 -c &lt;span style="color:#e6db74">&amp;#34;import sys,json; [print(n) for n in json.load(sys.stdin)[&amp;#39;linux&amp;#39;][&amp;#39;namespaces&amp;#39;]]&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 7) 读 runc state.json 查看 cgroup_paths&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>cat /run/containerd/runc/k8s.io/$F/state.json | python3 -m json.tool | grep -iE &lt;span style="color:#e6db74">&amp;#34;cgroup|bundle&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;hr>
+&lt;h2 id="11-结论">11 结论&lt;/h2>
+&lt;p>NPD Pod 重建时节点出现高负载的根本原因是一条多环节连锁的缺陷链：NPD 的 memory limit 配置过小（200Mi）导致容器频繁 memcg OOM；OOM 后 containerd 通过 cleanupAfterDeadShim 路径调用 runc delete；runc 1.1.12 的 &lt;code>delete.go&lt;/code> 和 &lt;code>utils_linux.go&lt;/code> 两处错误丢弃缺陷，加上 &lt;code>RemovePaths&lt;/code> 的 310ms 重试窗口远小于 memcg OOM 实际清理进程所需的 ~2000ms，导致每次容器退出后 cgroup 目录均未被正确删除；经过约一个月的累积，8147 个残留子 cgroup 在 Pod 重建时被 kubelet 的 Destroy 流程递归遍历和 rmdir，在 cgroup v1 的全局锁 &lt;code>cgroup_mutex&lt;/code> 上形成严重争抢，最终引发节点 sys% 飙高并波及全节点。&lt;/p>
+&lt;p>修复顺序：先分批清理历史残留 → 调大 NPD memory limit 避免再次触发 → 长期推动升级 runc 到 1.2+ 以彻底修复上游缺陷。&lt;/p></description></item><item><title>Kubernetes APIServer 鉴权机制</title><link>https://www.vimiix.com/posts/2025-10-16-kubernetes-apiserver-authorization-mechanism/</link><pubDate>Thu, 16 Oct 2025 07:54:28 +0000</pubDate><guid>https://www.vimiix.com/posts/2025-10-16-kubernetes-apiserver-authorization-mechanism/</guid><description>&lt;h2 id="1-引言">1. 引言&lt;/h2>
 &lt;p>在 Kubernetes 集群中，&lt;a href="./posts/2025-09-30-kubernetes-apiserver-authentication-mechanism">认证（Authentication）&lt;/a>解决了“你是谁”的问题，而鉴权（Authorization）则解决了“你能做什么”的问题。鉴权是 Kubernetes 安全框架的核心支柱之一，它位于认证之后，用于确定一个已经通过身份认证的用户或服务账户（ServiceAccount）是否拥有对特定资源执行特定操作的权限。Kubernetes 采用了一种声明式的、基于属性的访问控制（ABAC）和基于角色的访问控制（RBAC）等模型来实现精细化的权限管理。本文将简单介绍 Kubernetes 的鉴权机制，包括其架构、工作流程、核心模型及详细实现原理。&lt;/p>
 &lt;h2 id="2-鉴权架构">2. 鉴权架构&lt;/h2>
 &lt;p>Kubernetes API Server 是集群所有操作的唯一入口，它也是鉴权决策的中心。当一个请求通过认证后，API Server 会将该请求传递给鉴权模块进行处理。&lt;/p>
@@ -1332,326 +2106,4 @@ Update unit tests. ❌;&lt;/p>
 &lt;/figure>
 
 
-&lt;/p></description></item><item><title>psycopg2基于openGauss中execPramasBatch和execPreparedBatch接口测试</title><link>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</link><pubDate>Fri, 04 Aug 2023 21:50:48 +0000</pubDate><guid>https://www.vimiix.com/posts/2023-08-04-psycopg2-batch-api-base-on-opengauss-api/</guid><description>&lt;blockquote>
-&lt;p>如果要查看 Psycopg2 不同接口之间批量操作对比测试，请访问&lt;a href="https://www.vimiix.com/posts/2023-07-12-psycopg2-batch-api-benchmark/">这篇笔记&lt;/a>&lt;/p>
-&lt;/blockquote>
-&lt;h2 id="测试环境">测试环境&lt;/h2>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>组件&lt;/th>
-&lt;th>说明&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>客户端操作系统&lt;/td>
-&lt;td>Rocky Linux 8&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>服务端配置&lt;/td>
-&lt;td>2C6G, 40G HDD&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>CPU&lt;/td>
-&lt;td>Intel Xeon Processor (Icelake)&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>数据库&lt;/td>
-&lt;td>MogDB 5.0&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>网络&lt;/td>
-&lt;td>300M宽带&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>Python&lt;/td>
-&lt;td>3.6.8&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>Psycopg2&lt;/td>
-&lt;td>&lt;a href="https://gitee.com/vimiix/openGauss-connector-python-psycopg2/tree/dev">vimiix/openGauss-connector-python-psycopg2&lt;/a>&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;blockquote>
-&lt;p>注意：&lt;/p>
-&lt;ol>
-&lt;li>由于真正的性能和服务器的配置，网络情况相关性也比较大，本测试所有的测试用例环境条件一致，只有参数作为变量，所以请不要注重数值本身，重点关注不同情况下的性能比例&lt;/li>
-&lt;li>本测试只取了 100/1000/10000 这个page_size，具有一定的性能趋势，但不代表一味的增大 page_size 就可以提高性能，必然存在一个性能拐点的参数值，而且不同的场景存在不同的性能拐点，要找到性能拐点仍需根据实际情况进行更多的测试。&lt;/li>
-&lt;/ol>
-&lt;/blockquote>
-&lt;h2 id="插入-insert">插入 INSERT&lt;/h2>
-&lt;h3 id="execute_values">execute_values&lt;/h3>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows\page_size&lt;/th>
-&lt;th>100(default)&lt;/th>
-&lt;th>1000&lt;/th>
-&lt;th>10000&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>2089&lt;/td>
-&lt;td>349&lt;/td>
-&lt;td>204&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>10842&lt;/td>
-&lt;td>1801&lt;/td>
-&lt;td>707&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>21445&lt;/td>
-&lt;td>3625&lt;/td>
-&lt;td>1257&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/iNwbLv.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="execute_params_batch">execute_params_batch&lt;/h3>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows\page_size&lt;/th>
-&lt;th>100(default)&lt;/th>
-&lt;th>1000&lt;/th>
-&lt;th>10000&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>2243&lt;/td>
-&lt;td>504&lt;/td>
-&lt;td>312&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>11574&lt;/td>
-&lt;td>2591&lt;/td>
-&lt;td>1539&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>22552&lt;/td>
-&lt;td>5511&lt;/td>
-&lt;td>2980&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/748CoC.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="execute_prepared_batch">execute_prepared_batch&lt;/h3>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows\page_size&lt;/th>
-&lt;th>100(default)&lt;/th>
-&lt;th>1000&lt;/th>
-&lt;th>10000&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>2328&lt;/td>
-&lt;td>506&lt;/td>
-&lt;td>339&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>11307&lt;/td>
-&lt;td>2836&lt;/td>
-&lt;td>1480&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>22976&lt;/td>
-&lt;td>5920&lt;/td>
-&lt;td>3425&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/yeQRc8.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="相同行数时不同-page_size-的接口性能对比">相同行数时，不同 page_size 的接口性能对比&lt;/h3>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/OQynhS.png" alt="image.png" />
-&lt;/figure>
-
-
-
-
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/PXguIq.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h2 id="更新-update">更新 UPDATE&lt;/h2>
-&lt;h3 id="execute_values-1">execute_values&lt;/h3>
-&lt;blockquote>
-&lt;p>用法比较饶，需要把 values 的部分单独用一个 %s 占位&lt;/p>
-&lt;/blockquote>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows\page_size&lt;/th>
-&lt;th>100(default)&lt;/th>
-&lt;th>1000&lt;/th>
-&lt;th>10000&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>3884&lt;/td>
-&lt;td>562&lt;/td>
-&lt;td>393&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>15367&lt;/td>
-&lt;td>3429&lt;/td>
-&lt;td>2601&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>25882&lt;/td>
-&lt;td>11313&lt;/td>
-&lt;td>5356&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/roeISI.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="execute_params_batch-1">execute_params_batch&lt;/h3>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows\page_size&lt;/th>
-&lt;th>100(default)&lt;/th>
-&lt;th>1000&lt;/th>
-&lt;th>10000&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>2746&lt;/td>
-&lt;td>810&lt;/td>
-&lt;td>579&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>13359&lt;/td>
-&lt;td>4478&lt;/td>
-&lt;td>3026&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>28432&lt;/td>
-&lt;td>8529&lt;/td>
-&lt;td>5923&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/iPGUHF.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h3 id="execute_prepared_batch-1">execute_prepared_batch&lt;/h3>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>rows\page_size&lt;/th>
-&lt;th>100(default)&lt;/th>
-&lt;th>1000&lt;/th>
-&lt;th>10000&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>10,000&lt;/td>
-&lt;td>2747&lt;/td>
-&lt;td>896&lt;/td>
-&lt;td>635&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>50,000&lt;/td>
-&lt;td>12860&lt;/td>
-&lt;td>6153&lt;/td>
-&lt;td>3626&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>100,000&lt;/td>
-&lt;td>28445&lt;/td>
-&lt;td>10103&lt;/td>
-&lt;td>10828&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/c64pUD.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h2 id="相同行数时不同-page_size-的接口性能对比-1">相同行数时，不同 page_size 的接口性能对比&lt;/h2>
-&lt;p>
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/pFengW.png" alt="image.png" />
-&lt;/figure>
-
-
-
-
-&lt;figure>
- &lt;img src="https://static.vimiix.com/upic/2024-09-20/cWneQ2.png" alt="image.png" />
-&lt;/figure>
-
-
-&lt;/p>
-&lt;h2 id="结论">结论&lt;/h2>
-&lt;ol>
-&lt;li>任何接口，在对于大批量操作时，调大 page_size 均可以得到有效的性能提升&lt;/li>
-&lt;li>从数据来看， execute_values 的性能不管在INSERT还是UPDATE的表现，都稍稍好于 execute_params_batch 和 execute_prepared_batch（由于测试的局限性，可能也不一定）。execute_params_batch 和 execute_prepared_batch 两个接口性能差别不大，底层走的是一套接口。&lt;/li>
-&lt;li>从使用上来说，execute_values 使用比较饶，如果要使用这个接口更新，写SQL的复杂度大于其他两个，比如相同的更新操作：
-&lt;ul>
-&lt;li>execute_values： &lt;code>UPDATE t3 as t SET j = data.j FROM (VALUES %s) AS data (j, i) WHERE t.i = data.i&lt;/code>&lt;/li>
-&lt;li>其他两个：&lt;code>UPDATE t3 SET j=$1 WHERE t3.i=$2&lt;/code>&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol></description></item></channel></rss>
+&lt;/p></description></item></channel></rss>
